@@ -30,7 +30,7 @@ class AuthController extends Controller
             'password'          => 'required',
             'confirm_password'  => 'required',
         ]);
-        if (User::where('email', '=', Input::get('email')->count() > 0) {
+        if (User::where('email', '=', Input::get('email')->count()>0) {
             return $response = array('error' => 1,'message' => 'User with this email already exists.');
         }
         if (!strcmp(Input::get('password'), Input::get('confirm_password'))) {

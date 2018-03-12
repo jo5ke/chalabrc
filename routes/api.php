@@ -20,3 +20,7 @@ Route::post('/register', 'AuthController@register')->name('register');
 
 Route::post('user/register', 'APIRegisterController@register');
 Route::post('user/login', 'APILoginController@login');
+
+Route::middleware('jwt.auth')->get('users', function(Request $request) {
+    return auth()->user();
+});
