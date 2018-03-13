@@ -19,7 +19,8 @@ class APIRegisterController extends Controller
             'password'=> 'required'
         ]);
         if ($validator->fails()) {
-            return response()->json($validator->errors());
+            return $this->json($validator->errors(),404);
+            // return response()->json($validator->errors());
         }
         User::create([
             'name' => $request->get('name'),
@@ -31,6 +32,7 @@ class APIRegisterController extends Controller
         $token = JWTAuth::fromUser($user);
         
      //  return Response::json(compact('token'));
-        return response()->json($user);
+     //   return response()->json($user);
+         return $this->json($user);
     }
 }
