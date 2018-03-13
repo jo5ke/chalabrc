@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\News as News;
+use App\User as User;
+use App\League as League;
 
 
 class HomeController extends Controller
@@ -35,17 +37,17 @@ class HomeController extends Controller
 
     public function getLatestNews()
     {
-        $results = News::all()->orderBy('created_at', 'desc')->first();
+        $results = News::orderBy('created_at', 'desc')->latest();
         if (isEmpty($results)) {
             return $response = 'There are no news yet.';
         }
         return $results;
     }
 
-    public function topFivePlayers()
-    {
-        $results = User::all()->take(5)->orderBy('points', 'desc')->get();
-        if (isEmpty($results)) {
+    public function getTopFivePlayers()
+    {//RADI
+        $results = User::orderBy('points', 'desc')->take(5)->get();
+        if (!empty($results)) {
             return $response = 'There was a problem fetching players.';
         }
         return $results;
@@ -53,9 +55,9 @@ class HomeController extends Controller
 
     public function topFivePlayersDivision(Request $request)
     {
-        $results = User::with('leagues')->take(5)->where('id', $request->id)->get();
-        if (isEmpty($results)) {
-            return $response = 'There was a problem fetching players.'
+        $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
+        if (!empty($results)) {
+            return $response = 'There was a problem fetching players.';
         }
         return $results;
     }
