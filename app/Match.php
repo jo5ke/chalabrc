@@ -18,6 +18,6 @@ class Match extends Model
 
     public function clubs()
     {
-        return $this->belongsToMany('App\Club' , 'match_club');
+        return $this->belongsToMany('App\Club' , 'match_club')->withTimestamps();
     }
 }

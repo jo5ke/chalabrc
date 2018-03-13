@@ -32,5 +32,10 @@ class User extends Authenticatable
         return $this->hasMany('App\Squad');
     }
 
+    public function leagues()
+    {
+        return $this->belongsToMany('App\League','user_league')->withTimestamps();
+    }
+
 
 }
