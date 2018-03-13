@@ -23,40 +23,40 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        return view('home');
-    }
 
     public function getNews()
     {
-        $news = News::all()->get();
-        if (isEmpty($news)) {
+        $results = News::all()->get();
+        if (isEmpty($results)) {
             return $response = 'There are no news yet.';
         }
-        return $news;
+        return $results;
     }
 
     public function getLatestNews()
     {
-        $news = News::all()->orderBy('created_at', 'desc')->first();
-        if (isEmpty($news)) {
+        $results = News::all()->orderBy('created_at', 'desc')->first();
+        if (isEmpty($results)) {
             return $response = 'There are no news yet.';
         }
-        return $news;
+        return $results;
     }
 
     public function topFivePlayers()
     {
-        $users = User::all()->take(5)->orderBy('points', 'desc')->get();
-        if (isEmpty($users)) {
-            return $response = 'There was a problem fetching these players.';
+        $results = User::all()->take(5)->orderBy('points', 'desc')->get();
+        if (isEmpty($results)) {
+            return $response = 'There was a problem fetching players.';
         }
-        return $users;
+        return $results;
     }
 
-    public function topFiveDivision(Request $request)
+    public function topFivePlayersDivision(Request $request)
     {
-        $results = User::where('id', $request->id)->with('players');
+        $results = User::with('leagues')->take(5)->where('id', $request->id)->get();
+        if (isEmpty($results)) {
+            return $response = 'There was a problem fetching players.'
+        }
+        return $results;
     }
 }
