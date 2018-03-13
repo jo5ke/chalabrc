@@ -20,7 +20,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::post('user/register', 'APIRegisterController@register');
 Route::post('user/login', 'APILoginController@login');
 
-Route::middleware('jwt.auth')->post('/users', function(Request $request) {
+Route::middleware('jwt.auth')->get('/users', function(Request $request) {
     return auth()->user();
 });
 Route::get('news', 'HomeController@getNews')->name('getNews');
