@@ -11,8 +11,13 @@ class Match extends Model
         return $this->belongsTo('App\Round');
     }
 
+    // public function clubs()
+    // {
+    //     return $this->hasMany('App\Club');
+    // }
+
     public function clubs()
     {
-        return $this->hasMany('App\Club');
+        return $this->belongsToMany('App\Club' , 'match_club');
     }
 }

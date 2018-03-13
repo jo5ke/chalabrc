@@ -11,4 +11,9 @@ class Squad extends Model
     {
         return $this->belongsTo('App\User');
     }
+
+    public function players()
+    {
+        return $this->belongsToMany('App\Players','squad_player')->withTimestamps();
+    }
 }

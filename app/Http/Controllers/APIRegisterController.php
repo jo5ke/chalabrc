@@ -26,9 +26,11 @@ class APIRegisterController extends Controller
             'email' => $request->get('email'),
             'password' => bcrypt($request->get('password')),
         ]);
-        $user = User::first();
+     //   $user = User::first();
+        $user = User::where('email', $request->email)->first();
         $token = JWTAuth::fromUser($user);
         
-        return Response::json(compact('token'));
+     //  return Response::json(compact('token'));
+        return response()->json($user);
     }
 }

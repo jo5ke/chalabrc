@@ -10,4 +10,9 @@ class Player extends Model
     {
         return $this->belongsTo('App\Club');
     }
+
+    public function squads()
+    {
+        return $this->belongsToMany('App\Squad','squad_player')->withTimestamps();
+    }
 }
