@@ -26,4 +26,4 @@ Route::middleware('jwt.auth')->get('/users', function(Request $request) {
 Route::get('news', 'HomeController@getNews')->name('getNews');
 Route::get('getLatesNews', 'HomeController@getLatestNews')->name('getLatestNews');
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
-Route::post('topFivePlayers', 'HomeController@topFivePlayersDivision');
+Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
