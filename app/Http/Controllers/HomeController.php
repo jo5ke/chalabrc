@@ -56,6 +56,7 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    // "id" = id lige (1 i 2)
     public function topFivePlayersDivision(Request $request)
     {
         $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
