@@ -47,7 +47,7 @@ class HomeController extends Controller
     }
 
     public function getTopFivePlayers()
-    {//RADI
+    {
         $results = User::orderBy('points', 'desc')->take(5)->get();
         if (!empty($results)) {
             $response = 'There was a problem fetching players.';

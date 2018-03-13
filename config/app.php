@@ -146,6 +146,7 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+        Thujohn\Twitter\TwitterServiceProvider::class,
         'Tymon\JWTAuth\Providers\JWTAuthServiceProvider',
 
 
@@ -212,6 +213,7 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'JWTAuth' => 'Tymon\JWTAuth\Facades\JWTAuth',
         'JWTFactory' => 'Tymon\JWTAuth\Facades\JWTFactory',
+        'Twitter' => Thujohn\Twitter\Facades\Twitter::class,
 
     ],
 
