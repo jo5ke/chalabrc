@@ -23,3 +23,4 @@ Route::post('user/login', 'APILoginController@login');
 Route::middleware('jwt.auth')->post('/users', function(Request $request) {
     return auth()->user();
 });
+Route::get('news', 'HomeController@getNews')->name('getNews');
