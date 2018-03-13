@@ -30,35 +30,39 @@ class HomeController extends Controller
     {
         $results = News::all()->get();
         if (isEmpty($results)) {
-            return $response = 'There are no news yet.';
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
         }
-        return $results;
+        return $this->json($results);
     }
 
     public function getLatestNews()
     {
         $results = News::orderBy('created_at', 'desc')->latest();
         if (isEmpty($results)) {
-            return $response = 'There are no news yet.';
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
         }
-        return $results;
+        return $this->json($results);
     }
 
     public function getTopFivePlayers()
     {//RADI
         $results = User::orderBy('points', 'desc')->take(5)->get();
         if (!empty($results)) {
-            return $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
         }
-        return $results;
+        return $this->json($results);
     }
 
     public function topFivePlayersDivision(Request $request)
     {
         $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
         if (!empty($results)) {
-            return $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
         }
-        return $results;
+        return $this->json($results);
     }
 }
