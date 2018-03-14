@@ -51,8 +51,8 @@ Route::post('getRound', 'AdminController@getRound');
 
 Route::get('getSeasons', 'AdminController@getSeasons');
 Route::post('getSeason', 'AdminController@getSeason');
-//Round create routes here
+//Season create routes here
 
 Route::get('getUsers', 'AdminController@getUsers');
 Route::post('getUser', 'AdminController@getUser');
-//Round create routes here
+//User create routes here
