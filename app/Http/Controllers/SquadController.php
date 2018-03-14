@@ -90,7 +90,7 @@ class SquadController extends Controller
     {
         $user = auth()->user();
         $results = Squad::where('league_id', $request->l_id)->where('user_id',$user->id);
-        if (!empty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -109,7 +109,7 @@ class SquadController extends Controller
             "team" => $team,
             "players" => $players
         ];
-        if (!empty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -123,7 +123,7 @@ class SquadController extends Controller
         $user = auth()->user()->first();
         $players = Player::all();
         $player = $players->where('user_id',$user->id)->where('player_id', $p_id)->first();
-        if (!empty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -134,7 +134,7 @@ class SquadController extends Controller
     public function getAllPlayers()
     {
         $players = Player::all();
-        if (!empty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -148,7 +148,7 @@ class SquadController extends Controller
     public function getAllClubs(Request $request)
     {
         $clubs = Club::where('league_id',$request->l_id)->get();
-        if (!empty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -158,7 +158,7 @@ class SquadController extends Controller
     public function getClub(Request $request)
     {
         $club = Club::where('league_id',$request->l_id)->get();
-        if (!empty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }

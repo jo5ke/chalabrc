@@ -28,8 +28,8 @@ class HomeController extends Controller
 
     public function getNews()
     {
-        $results = News::all()->get();
-        if (isEmpty($results)) {
+        $results = News::all();
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -39,7 +39,7 @@ class HomeController extends Controller
     public function getLatestNews()
     {
         $results = News::orderBy('created_at', 'desc')->latest();
-        if (isEmpty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -49,7 +49,7 @@ class HomeController extends Controller
     public function getTopFivePlayers()
     {
         $results = User::orderBy('points', 'desc')->take(5)->get();
-        if (!empty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -60,7 +60,7 @@ class HomeController extends Controller
     public function topFivePlayersDivision(Request $request)
     {
         $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
-        if (!empty($results)) {
+        if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
