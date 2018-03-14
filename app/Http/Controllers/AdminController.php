@@ -107,4 +107,24 @@ class AdminController extends Controller
         }
         return $this->json($results);
     }
+
+   	public function getUsers()
+    {
+        $results = User::all();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+   	public function getUser(Request $request)
+    {
+        $results = User::where('id', $request->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
 }
