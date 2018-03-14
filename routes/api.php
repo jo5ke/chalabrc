@@ -29,7 +29,9 @@ Route::get('news', 'HomeController@getNews')->name('getNews');
 Route::get('getLatesNews', 'HomeController@getLatestNews')->name('getLatestNews');
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
-Route::get('players', 'PlayerController@getPlayers');
+Route::get('players/getPlayers', 'PlayerController@getPlayers');
+
+Route::get('myTeam/getPlayers', 'SquadController@getAllPlayers');
 
 
 
@@ -45,6 +47,7 @@ Route::post('admin/getLeague', 'AdminController@getLeague');
 
 Route::get('admin/getMatches', 'AdminController@getMatches');
 Route::post('admin/getMatch', 'AdminController@getMatch');
+Route::post('admin/createMatch', 'AdminController@postMatch');
 //Match create routes here
 
 Route::get('admin/getRounds', 'AdminController@getRounds');

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Match extends Model
 {
+    protected $fillable = ['*'];
     public function round()
     {
         return $this->belongsTo('App\Round');

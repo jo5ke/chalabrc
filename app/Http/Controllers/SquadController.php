@@ -140,8 +140,6 @@ class SquadController extends Controller
             return $this->json($response, 404);
         }
         return $this->json($players);
-        
-        
     }
 
     //  get the info and its players
