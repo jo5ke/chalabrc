@@ -47,4 +47,8 @@ Route::post('getMatch', 'AdminController@getMatch');
 
 Route::get('getRounds', 'AdminController@getRounds');
 Route::post('getRound', 'AdminController@getRound');
-//Match create routes here
+//Round create routes here
+
+Route::get('getSeasons', 'AdminController@getSeasons');
+Route::post('getSeason', 'AdminController@getSeason');
+//Round create routes here

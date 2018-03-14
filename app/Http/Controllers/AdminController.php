@@ -87,4 +87,24 @@ class AdminController extends Controller
         }
         return $this->json($results);
     }
+
+   	public function getSeasons()
+    {
+        $results = Season::all();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+   	public function getSeason(Request $request)
+    {
+        $results = Season::where('id', $request->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
 }
