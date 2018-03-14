@@ -12,7 +12,7 @@ class AdminController extends Controller
     {
         $results = Club::all();
         if ($results->isEmpty()) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -20,11 +20,9 @@ class AdminController extends Controller
 
    	public function getClub(Request $request)
     {
-    	// return $request->id;
         $results = Club::where('id', $request->id)->get();
-        // return $results;
         if ($results->isEmpty()) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -34,7 +32,7 @@ class AdminController extends Controller
     {
         $results = League::all();
         if ($results->isEmpty()) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -42,11 +40,9 @@ class AdminController extends Controller
 
    	public function getLeague(Request $request)
     {
-    	// return $request->id;
         $results = League::where('id', $request->id)->get();
-        // return $results;
         if ($results->isEmpty()) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -56,7 +52,7 @@ class AdminController extends Controller
     {
         $results = Match::all();
         if ($results->isEmpty()) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -64,11 +60,29 @@ class AdminController extends Controller
 
    	public function getMatch(Request $request)
     {
-    	// return $request->id;
         $results = Match::where('id', $request->id)->get();
-        // return $results;
         if ($results->isEmpty()) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+   	public function getRounds()
+    {
+        $results = Round::all();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+   	public function getRound(Request $request)
+    {
+        $results = Round::where('id', $request->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);

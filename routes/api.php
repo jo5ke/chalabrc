@@ -44,3 +44,7 @@ Route::post('getLeague', 'AdminController@getLeague');
 Route::get('getMatches', 'AdminController@getMatches');
 Route::post('getMatch', 'AdminController@getMatch');
 //Match create routes here
+
+Route::get('getRounds', 'AdminController@getRounds');
+Route::post('getRound', 'AdminController@getRound');
+//Match create routes here
