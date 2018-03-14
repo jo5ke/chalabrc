@@ -8,6 +8,7 @@ use JWTFactory;
 use JWTAuth;
 use Validator;
 use Response;
+use Faker\Factory;
 
 class APIRegisterController extends Controller
 {
@@ -29,6 +30,8 @@ class APIRegisterController extends Controller
         ]);
      //   $user = User::first();
         $user = User::where('email', $request->email)->first();
+        $user->uuid = Factory::create()->uuid;
+        $user->save();
         $token = JWTAuth::fromUser($user);
         
      //  return Response::json(compact('token'));

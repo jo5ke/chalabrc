@@ -15,4 +15,10 @@ class League extends Model
     {
         return $this->belongsToMany('App\User','user_league')->withTimestamps();
     }
+
+    public function clubs()
+    {
+        return $this->hasMany('App\Club');
+    }
+
 }

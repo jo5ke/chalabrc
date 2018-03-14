@@ -20,4 +20,9 @@ class Club extends Model
     {
         return $this->belongsToMany('App\Match' , 'match_club')->withTimestamps();
     }
+
+    public function league()
+    {
+        return $this->belongsTo('App\League');
+    }
 }

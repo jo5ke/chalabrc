@@ -97,6 +97,76 @@ class SquadController extends Controller
         return $this->json($results);
     }
 
+    // big function for sending all the data about current player's team
+    public function getMyTeam(Request $request)
+    {
+        $user = auth()->user()->first();
+        $meta = $user->pivot->get();
+        $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+        $players = Player::where('squad_id', $team->id)->where('user_id', $user->id)->get();
+        $results = [ 
+            "user" => $user,
+            "team" => $team,
+            "players" => $players
+        ];
+        if (!empty($results)) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
 
+    // getting all the info about the player(for lists and popups)
+    // "p_id" get route for getting the player info;
+    public function getPlayerInfo(Request $requests)
+    {
+        $user = auth()->user()->first();
+        $players = Player::all();
+        $player = $players->where('user_id',$user->id)->where('player_id', $p_id)->first();
+        if (!empty($results)) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($player);
+    }
+
+    //getting All Players from all Clubs
+    public function getAllPlayers()
+    {
+        $players = Player::all();
+        if (!empty($results)) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($players);
+        
+        
+    }
+
+    //  get the info and its players
+    // "l_id" - league id
+    public function getAllClubs(Request $request)
+    {
+        $clubs = Club::where('league_id',$request->l_id)->get();
+        if (!empty($results)) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($clubs);
+    }
+
+    public function getClub(Request $request)
+    {
+        $club = Club::where('league_id',$request->l_id)->get();
+        if (!empty($results)) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($club);
+    }
+
+
+
+    
 
 }
