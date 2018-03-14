@@ -133,6 +133,7 @@ class SquadController extends Controller
     //getting All Players from all Clubs
     public function getAllPlayers()
     {
+        $players = Player::with('club')->where('league')->where('id',$request->l_id)->get();
         $players = Player::all();
         if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
