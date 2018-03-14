@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Club;
+use App\Match;
 
 class AdminController extends Controller
 {
@@ -61,6 +62,24 @@ class AdminController extends Controller
    	public function getMatch(Request $request)
     {
         $results = Match::where('id', $request->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+   	public function postMatch(Request $request)
+    {
+    	$match = new Match();
+    	$match->club1_id = $request->club1_id;
+    	$match->club2_id = $request->club2_id;
+    	$match->score1  = $request->score1;
+    	$match->score2  = $request->score2;
+    	$match->round_id = $request->round_id;
+    	$match->save();
+
+        $results = Match::where('id', $match->id)->get();
         if ($results->isEmpty()) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
