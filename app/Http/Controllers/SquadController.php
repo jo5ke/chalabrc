@@ -101,7 +101,7 @@ class SquadController extends Controller
     public function getMyTeam(Request $request)
     {
         $user = auth()->user()->first();
-        $meta = $user->pivot->get();
+        $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
         $players = Player::where('squad_id', $team->id)->where('user_id', $user->id)->get();
         $results = [ 
