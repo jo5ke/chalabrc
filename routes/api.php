@@ -29,30 +29,32 @@ Route::get('news', 'HomeController@getNews')->name('getNews');
 Route::get('getLatesNews', 'HomeController@getLatestNews')->name('getLatestNews');
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
+Route::get('players', 'PlayerController@getPlayers');
+
 
 
 // Admin routes
-Route::get('getClubs', 'AdminController@getClubs');
-Route::post('getClub', 'AdminController@getClub');
+Route::get('admin/getClubs', 'AdminController@getClubs');
+Route::post('admin/getClub', 'AdminController@getClub');
 //Club create routes here
 
-Route::get('getLeagues', 'AdminController@getLeagues');
-Route::post('getLeague', 'AdminController@getLeague');
+Route::get('admin/getLeagues', 'AdminController@getLeagues');
+Route::post('admin/getLeague', 'AdminController@getLeague');
 //League create routes here
 
 
-Route::get('getMatches', 'AdminController@getMatches');
-Route::post('getMatch', 'AdminController@getMatch');
+Route::get('admin/getMatches', 'AdminController@getMatches');
+Route::post('admin/getMatch', 'AdminController@getMatch');
 //Match create routes here
 
-Route::get('getRounds', 'AdminController@getRounds');
-Route::post('getRound', 'AdminController@getRound');
+Route::get('admin/getRounds', 'AdminController@getRounds');
+Route::post('admin/getRound', 'AdminController@getRound');
 //Round create routes here
 
-Route::get('getSeasons', 'AdminController@getSeasons');
-Route::post('getSeason', 'AdminController@getSeason');
+Route::get('admin/getSeasons', 'AdminController@getSeasons');
+Route::post('admin/getSeason', 'AdminController@getSeason');
 //Season create routes here
 
-Route::get('getUsers', 'AdminController@getUsers');
-Route::post('getUser', 'AdminController@getUser');
+Route::get('admin/getUsers', 'AdminController@getUsers');
+Route::post('admin/getUser', 'AdminController@getUser');
 //User create routes here
