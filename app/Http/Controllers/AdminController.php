@@ -166,7 +166,7 @@ class AdminController extends Controller
     {
         $club = Club::where('id',$request->id)->first();
         
-        if ($club->isEmpty()) {
+        if ($club === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
