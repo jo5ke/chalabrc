@@ -146,4 +146,35 @@ class AdminController extends Controller
         }
         return $this->json($results);
     }
+
+    public function postClub(Request $request)
+    {
+        $club = new Club;
+        $club->name = $request->name;
+        $club->league_id = $request->l_id;
+        $club->save();
+
+        $results = Club::where('id', $club->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function removeClub(Request $request)
+    {
+        $club = Club::where('id',$request->id)->first();
+        
+        if ($club->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        $club->delete();
+        return $this->json($club);
+    }
+
+
+
+
 }
