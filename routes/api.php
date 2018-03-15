@@ -39,6 +39,8 @@ Route::get('myTeam/getPlayers', 'SquadController@getAllPlayers');
 Route::get('admin/getClubs', 'AdminController@getClubs');
 Route::post('admin/getClub', 'AdminController@getClub');
 //Club create routes here
+Route::post('admin/postClub', 'AdminController@postClub');
+Route::post('admin/removeClub', 'AdminController@removeClub');
 
 Route::get('admin/getLeagues', 'AdminController@getLeagues');
 Route::post('admin/getLeague', 'AdminController@getLeague');
