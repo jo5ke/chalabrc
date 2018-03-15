@@ -206,7 +206,6 @@ class AdminController extends Controller
     {
         $club = new Club;
         $club->name = $request->name;
-        $club->league_id = $request->l_id;
         $club->save();
 
         $results = Club::where('id', $club->id)->get();
