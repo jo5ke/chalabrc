@@ -29,6 +29,20 @@ class AdminController extends Controller
         return $this->json($results);
     }
 
+    public function postClub(Request $request)
+    {
+    	$club = new Club();
+    	$club->name = $request->name;
+    	$club->save();
+
+        $results = Club::where('id', $club->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
    	public function getLeagues()
     {
         $results = League::all();
@@ -51,12 +65,12 @@ class AdminController extends Controller
 
     public function postLeague(Request $request)
     {
-    	$match = new League();
+    	$league = new League();
     	$league->name = $request->name;
     	$league->number_of_rounds = $request->number_of_rounds;
     	$league->save();
 
-        $results = League::where('id', $match->id)->get();
+        $results = League::where('id', $league->id)->get();
         if ($results->isEmpty()) {
             $response = 'There was a problem saving your data.';
             return $this->json($response, 404);
