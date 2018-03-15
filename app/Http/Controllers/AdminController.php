@@ -49,6 +49,21 @@ class AdminController extends Controller
         return $this->json($results);
     }
 
+    public function postLeague(Request $request)
+    {
+    	$match = new League();
+    	$league->name = $request->name;
+    	$league->number_of_rounds = $request->number_of_rounds;
+    	$league->save();
+
+        $results = League::where('id', $match->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
   	public function getMatches()
     {
         $results = Match::all();
@@ -107,6 +122,19 @@ class AdminController extends Controller
         return $this->json($results);
     }
 
+    public function postRound(Request $request)
+    {
+    	$round = new Round();
+    	$round->save();
+
+        $results = Round::where('id', $round->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
    	public function getSeasons()
     {
         $results = Season::all();
@@ -122,6 +150,19 @@ class AdminController extends Controller
         $results = Season::where('id', $request->id)->get();
         if ($results->isEmpty()) {
             $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function postSeason(Request $request)
+    {
+    	$season = new Season();
+    	$season->save();
+
+        $results = Season::where('id', $season->id)->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem saving your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);
