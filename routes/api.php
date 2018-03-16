@@ -25,13 +25,30 @@ Route::post('user/login', 'APILoginController@login');
 Route::middleware('jwt.auth')->get('/users', function(Request $request) {
     return auth()->user();
 });
+
+//Home page controller
 Route::get('news', 'HomeController@getNews')->name('getNews');
 Route::get('getLatesNews', 'HomeController@getLatestNews')->name('getLatestNews');
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
+
+//Player page Controller
 Route::get('players/getPlayers', 'PlayerController@getPlayers');
 
-Route::get('myTeam/getPlayers', 'SquadController@getAllPlayers');
+//My Team page controller
+
+Route::get('myTeam/getMyTeamPage', 'SquadController@getMyTeamPage');
+Route::post('myTeam/updateSquad', 'SquadController@updateSquad');
+Route::post('myTeam/buyPlayer', 'SquadController@buyPlayer');
+Route::post('myTeam/sellPlayer', 'SquadController@sellPlayer');
+// duplicated routes(admin)
+Route::get('myTeam/getClubs', 'AdminController@getClubs');
+Route::post('myTeam/getClub', 'AdminController@getClub');
+Route::post('myTeam/getPlayer', 'SquadController@getPlayer');
+Route::get('myTeam/getPlayers', 'SquadController@getPlayers');
+Route::post('myTeam/getSquad', 'SquadController@getSquad');
+
+
 
 
 

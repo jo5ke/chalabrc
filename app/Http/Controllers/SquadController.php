@@ -90,7 +90,7 @@ class SquadController extends Controller
     {
         $user = auth()->user();
         $results = Squad::where('league_id', $request->l_id)->where('user_id',$user->id);
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -98,7 +98,7 @@ class SquadController extends Controller
     }
 
     // big function for sending all the data about current player's team
-    public function getMyTeam(Request $request)
+    public function getMyTeamPage(Request $request)
     {
         $user = auth()->user()->first();
         $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
@@ -109,7 +109,7 @@ class SquadController extends Controller
             "team" => $team,
             "players" => $players
         ];
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -118,12 +118,12 @@ class SquadController extends Controller
 
     // getting all the info about the player(for lists and popups)
     // "p_id" get route for getting the player info;
-    public function getPlayerInfo(Request $requests)
+    public function getPlayer(Request $requests)
     {
         $user = auth()->user()->first();
         $players = Player::all();
         $player = $players->where('user_id',$user->id)->where('player_id', $p_id)->first();
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -131,11 +131,11 @@ class SquadController extends Controller
     }
 
     //getting All Players from all Clubs
-    public function getAllPlayers()
+    public function getPlayers()
     {
         $players = Player::with('club')->where('league')->where('id',$request->l_id)->get();
         $players = Player::all();
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -144,10 +144,10 @@ class SquadController extends Controller
 
     //  get the info and its players
     // "l_id" - league id
-    public function getAllClubs(Request $request)
+    public function getClubs(Request $request)
     {
         $clubs = Club::where('league_id',$request->l_id)->get();
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -157,11 +157,37 @@ class SquadController extends Controller
     public function getClub(Request $request)
     {
         $club = Club::where('league_id',$request->l_id)->get();
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
         return $this->json($club);
+    }
+
+    // dodati array igraca na terenu i array zamena
+    public function updateSquad(Request $request)
+    {
+        $starting_ids = $request->DODATI_start;
+        $subs_ids = $request->DODATI_subs;
+        $full_squad = array_merge($starting_ids,$subs_ids);
+
+        $squad = auth()->user()->squad;
+        $squad->players()->attach($full_squad);
+        if ($results === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($club);
+    }
+
+    public function buyPlayer(Request $reqeust)
+    {
+        //to be added
+    }
+
+    public function sellPlayer(Request $reqeust)
+    {
+        //to be added
     }
 
 
