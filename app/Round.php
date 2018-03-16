@@ -15,4 +15,9 @@ class Round extends Model
     {
         return $this->hasMany('App\Match');
     }
+
+    public function players()
+    {
+        return $this->belongsToMany('App\Players','player_round')->withTimestamps();
+    }
 }

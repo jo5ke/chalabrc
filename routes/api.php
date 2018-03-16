@@ -36,37 +36,35 @@ Route::get('myTeam/getPlayers', 'SquadController@getAllPlayers');
 
 
 // Admin routes
+
+//club
 Route::get('admin/getClubs', 'AdminController@getClubs');
 Route::post('admin/getClub', 'AdminController@getClub');
-//Club create routes here
 Route::post('admin/postClub', 'AdminController@postClub');
 Route::post('admin/removeClub', 'AdminController@removeClub');
-
+//league
 Route::get('admin/getLeagues', 'AdminController@getLeagues');
 Route::post('admin/getLeague', 'AdminController@getLeague');
 Route::post('admin/postLeague', 'AdminController@postLeague');
-//League create routes here
-
-
+Route::post('admin/removeLeague', 'AdminController@removeLeague');
+//match
 Route::get('admin/getMatches', 'AdminController@getMatches');
 Route::post('admin/getMatch', 'AdminController@getMatch');
 Route::post('admin/postMatch', 'AdminController@postMatch');
-//Match create routes here
-
+Route::post('admin/removeMatch', 'AdminController@removeMatch');
+//round
 Route::get('admin/getRounds', 'AdminController@getRounds');
 Route::post('admin/getRound', 'AdminController@getRound');
 Route::post('admin/postRound', 'AdminController@postRound');
-
-//Round create routes here
-
+Route::post('admin/removeRound', 'AdminController@removeRound');
+//season
 Route::get('admin/getSeasons', 'AdminController@getSeasons');
 Route::post('admin/getSeason', 'AdminController@getSeason');
 Route::post('admin/postSeason', 'AdminController@postSeason');
-
-//Season create routes here
-
+Route::post('admin/removeSeason', 'AdminController@removeSeason');
+//user
 Route::get('admin/getUsers', 'AdminController@getUsers');
 Route::post('admin/getUser', 'AdminController@getUser');
 Route::post('admin/postUser', 'AdminController@postUser');
+Route::post('admin/removeUser', 'AdminController@removeUser');
 
-//User create routes here
