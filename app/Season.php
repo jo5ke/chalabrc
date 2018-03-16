@@ -15,4 +15,9 @@ class Season extends Model
     {
         return $this->hasMany('App\Round');
     }
+
+    public function transfers()
+    {
+        return $this->hasMany('App\Transfer');
+    }
 }

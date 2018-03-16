@@ -16,4 +16,9 @@ class Squad extends Model
     {
         return $this->belongsToMany('App\Players','squad_player')->withTimestamps();
     }
+
+    public function transfers()
+    {
+        return $this->hasMany('App\Transfer');
+    }
 }

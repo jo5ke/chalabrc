@@ -37,5 +37,10 @@ class User extends Authenticatable
         return $this->belongsToMany('App\League','user_league')->withTimestamps();
     }
 
+    public function transfers()
+    {
+        return $this->hasMany('App\Transfer');
+    }
+
 
 }

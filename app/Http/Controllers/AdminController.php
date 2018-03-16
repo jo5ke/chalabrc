@@ -37,6 +37,7 @@ class AdminController extends Controller
     {
         $club = new Club;
         $club->name = $request->name;
+        $club->league_id = $request->l_id;
         $club->save();
 
         $results = Club::where('id', $club->id)->get();
@@ -139,8 +140,6 @@ class AdminController extends Controller
     	$match = new Match();
     	$match->club1_id = $request->club1_id;
     	$match->club2_id = $request->club2_id;
-    	$match->score1  = $request->score1;
-    	$match->score2  = $request->score2;
     	$match->round_id = $request->round_id;
     	$match->save();
 
@@ -190,7 +189,8 @@ class AdminController extends Controller
 
     public function postRound(Request $request)
     {
-    	$round = new Round();
+        $round = new Round();
+        $round->round_no = $request->round_no;
     	$round->save();
 
         $results = Round::where('id', $round->id)->get();

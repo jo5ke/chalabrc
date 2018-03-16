@@ -18,6 +18,7 @@ class CreatePlayersTable extends Migration
             $table->integer('club_id')->unsigned();  
             $table->string('name',25);          
             $table->string('position',5);          
+            $table->integer('will_play',3)->unsigned()->default(0);          
             $table->timestamps();
         });
     }
