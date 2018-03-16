@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\News as News;
+use App\Article as Article;
 use App\User as User;
 use App\League as League;
 
@@ -28,7 +28,7 @@ class HomeController extends Controller
 
     public function getNews()
     {
-        $results = News::all();
+        $results = Article::all();
         if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
@@ -38,7 +38,7 @@ class HomeController extends Controller
 
     public function getLatestNews()
     {
-        $results = News::orderBy('created_at', 'desc')->latest();
+        $results = Article::orderBy('created_at', 'desc')->latest();
         if ($results->isEmpty()) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);

@@ -84,4 +84,9 @@ Route::get('admin/getUsers', 'AdminController@getUsers');
 Route::post('admin/getUser', 'AdminController@getUser');
 Route::post('admin/postUser', 'AdminController@postUser');
 Route::post('admin/removeUser', 'AdminController@removeUser');
+//news
+Route::get('admin/getArticles', 'AdminController@getArticles');
+Route::post('admin/getArticle', 'AdminController@getArticle');
+Route::post('admin/postArticle', 'AdminController@postArticle');
+Route::post('admin/removeArticle', 'AdminController@removeArticle');
 

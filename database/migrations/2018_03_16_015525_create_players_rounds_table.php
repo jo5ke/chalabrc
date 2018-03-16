@@ -28,7 +28,6 @@ class CreatePlayersRoundsTable extends Migration
             $table->integer('kd_clean')->unsigned()->nullable();
             $table->integer('m_clean')->unsigned()->nullable();
             $table->integer('k_save')->unsigned()->nullable();
-            $table->integer('kd_clean')->unsigned()->nullable();
             $table->integer('kd_3strike')->unsigned()->nullable();
             $table->integer('yellow')->unsigned()->nullable();
             $table->integer('red')->unsigned()->nullable();

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Club;
-use App\Match;
+use App\Club as Club;
+use App\Match as Match;
+use App\Article as Article;
+
 
 class AdminController extends Controller
 {
@@ -108,7 +110,7 @@ class AdminController extends Controller
         return $this->json($league);
     }
 
-    /////////////////////////////////Club ends
+    /////////////////////////////////League ends
 
     //Match CRUD
 
@@ -310,6 +312,58 @@ class AdminController extends Controller
     }
 
     /////////////////////////////////User ends
+
+    //News CRUD
+
+  	public function getArticles()
+      {
+          $results = Article::all();
+          if ($results === null) {
+              $response = 'There was a problem fetching your data.';
+              return $this->json($response, 404);
+          }
+          return $this->json($results);
+      }
+  
+    public function getArticle(Request $request)
+    {
+        $results = Article::where('id', $request->id)->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+  
+    public function postArticle(Request $request)
+    {
+        $article = new Article();
+        $article->title = $request->title;
+        $article->body = $request->body;
+        $article->league_id = $request->l_id;
+        $article->save();
+
+        $results = Article::where('id', $article->id)->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+  
+    public function removeArticle(Request $request)
+    {
+        $article = Article::where('id',$request->id)->first();
+        
+        if ($article === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        $article->delete();
+        return $this->json($article);
+    }
+  
+    /////////////////////////////////News ends
 
 
 

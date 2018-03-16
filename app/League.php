@@ -21,4 +21,9 @@ class League extends Model
         return $this->hasMany('App\Club');
     }
 
+    public function articles()
+    {
+        return $this->hasMany('App\Article');
+    }
+
 }
