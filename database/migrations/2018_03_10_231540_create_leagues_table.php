@@ -15,6 +15,8 @@ class CreateLeaguesTable extends Migration
     {
         Schema::create('leagues', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('name');
+            $table->integer('number_of_rounds')->unsigned();
             $table->timestamps();
         });
     }

@@ -65,12 +65,12 @@ Route::post('admin/getLeague', 'AdminController@getLeague');
 Route::post('admin/postLeague', 'AdminController@postLeague');
 Route::post('admin/removeLeague', 'AdminController@removeLeague');
 //match
-Route::get('admin/getMatches', 'AdminController@getMatches');
+Route::post('admin/getMatches', 'AdminController@getMatches');
 Route::post('admin/getMatch', 'AdminController@getMatch');
 Route::post('admin/postMatch', 'AdminController@postMatch');
 Route::post('admin/removeMatch', 'AdminController@removeMatch');
 //round
-Route::get('admin/getRounds', 'AdminController@getRounds');
+Route::post('admin/getRounds', 'AdminController@getRounds');
 Route::post('admin/getRound', 'AdminController@getRound');
 Route::post('admin/postRound', 'AdminController@postRound');
 Route::post('admin/removeRound', 'AdminController@removeRound');

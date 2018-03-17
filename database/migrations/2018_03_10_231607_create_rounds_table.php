@@ -15,7 +15,8 @@ class CreateRoundsTable extends Migration
     {
         Schema::create('rounds', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('season_id')->unsigned();
+            $table->integer('season_id')->unsigned()->nullable();
+            $table->integer('league_id')->unsigned();
             $table->integer('round_no')->unsigned();            
             $table->timestamps();
         });

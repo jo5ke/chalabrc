@@ -6,6 +6,11 @@ use Illuminate\Http\Request;
 use App\Club as Club;
 use App\Match as Match;
 use App\Article as Article;
+use App\League as League;
+use App\Round as Round;
+use App\Player as Player;
+use App\Season as Season;
+use App\User as User;
 
 
 class AdminController extends Controller
@@ -117,7 +122,7 @@ class AdminController extends Controller
 
   	public function getMatches()
     {
-        $results = Match::all();
+        $results = Match::where('round_id',$request->r_id)->where('league_id',$request->l_id)->get();
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -138,9 +143,17 @@ class AdminController extends Controller
    	public function postMatch(Request $request)
     {
     	$match = new Match();
-    	$match->club1_id = $request->club1_id;
-    	$match->club2_id = $request->club2_id;
-    	$match->round_id = $request->round_id;
+    	// $match->club1_name = $request->c1_name;
+    	// $match->club2_name = $request->c2_name;
+        $match->round_id = $request->r_id;
+        $match->league_id = $request->l_id;
+        $club1= Club::where('id',$request->c1_name)->first();
+        $club2= Club::where('id',$request->c2_name)->first();
+
+        $m2 = Match::where('id',$match->id)->with('clubs')->get();
+     //   return $m2;
+        return $match->clubs()->get();
+        $match->clubs()->attach($club1);
     	$match->save();
 
         $results = Match::where('id', $match->id)->get();
@@ -167,9 +180,9 @@ class AdminController extends Controller
 
     //Round CRUD
 
-   	public function getRounds()
+   	public function getRounds(Request $request)
     {
-        $results = Round::all();
+        $results = Round::where('league_id',$request->l_id)->get();
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -191,6 +204,7 @@ class AdminController extends Controller
     {
         $round = new Round();
         $round->round_no = $request->round_no;
+        $round->league_id = $request->l_id;
     	$round->save();
 
         $results = Round::where('id', $round->id)->get();
@@ -239,7 +253,8 @@ class AdminController extends Controller
 
     public function postSeason(Request $request)
     {
-    	$season = new Season();
+        $season = new Season();
+        $season->name = $request->name;
     	$season->save();
 
         $results = Season::where('id', $season->id)->get();

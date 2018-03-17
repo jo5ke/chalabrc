@@ -16,7 +16,8 @@ class CreateMatchesClubsTable extends Migration
         Schema::create('match_club', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('match_id')->onDelete('cascade');
-            $table->integer('club_id')->onDelete('cascade');
+            $table->string('club1_name');         
+            $table->string('club2_name'); 
             $table->timestamps();
         });
     }

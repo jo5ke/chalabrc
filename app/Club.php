@@ -18,7 +18,7 @@ class Club extends Model
 
     public function matches()
     {
-        return $this->belongsToMany('App\Match' , 'match_club')->withTimestamps();
+        return $this->belongsToMany('App\Match' , 'match_club')->withPivot('club1_name','club2_name')->withTimestamps();
     }
 
     public function league()
