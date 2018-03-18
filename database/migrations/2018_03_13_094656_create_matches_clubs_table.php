@@ -13,9 +13,10 @@ class CreateMatchesClubsTable extends Migration
      */
     public function up()
     {
-        Schema::create('match_club', function (Blueprint $table) {
+        Schema::create('matches_clubs', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('match_id')->onDelete('cascade');
+            $table->integer('club_id')->onDelete('cascade');
             $table->string('club1_name');         
             $table->string('club2_name'); 
             $table->timestamps();
@@ -29,6 +30,6 @@ class CreateMatchesClubsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('match_club');
+        Schema::dropIfExists('matches_clubs');
     }
 }

@@ -55,10 +55,16 @@ Route::post('myTeam/getSquad', 'SquadController@getSquad');
 // Admin routes
 
 //club
-Route::get('admin/getClubs', 'AdminController@getClubs');
+Route::post('admin/getClubs', 'AdminController@getClubs');
 Route::post('admin/getClub', 'AdminController@getClub');
 Route::post('admin/postClub', 'AdminController@postClub');
 Route::post('admin/removeClub', 'AdminController@removeClub');
+//player
+Route::post('admin/getPlayers', 'AdminController@getPlayers');
+Route::post('admin/getPlayersByClub', 'AdminController@getPlayersByClub');
+Route::post('admin/getPlayer', 'AdminController@getPlayer');
+Route::post('admin/postPlayer', 'AdminController@postPlayer');
+Route::post('admin/removePlayer', 'AdminController@removePlayer');
 //league
 Route::get('admin/getLeagues', 'AdminController@getLeagues');
 Route::post('admin/getLeague', 'AdminController@getLeague');
@@ -66,6 +72,7 @@ Route::post('admin/postLeague', 'AdminController@postLeague');
 Route::post('admin/removeLeague', 'AdminController@removeLeague');
 //match
 Route::post('admin/getMatches', 'AdminController@getMatches');
+Route::post('admin/getMatchesByRounds', 'AdminController@getMatchesByRounds');
 Route::post('admin/getMatch', 'AdminController@getMatch');
 Route::post('admin/postMatch', 'AdminController@postMatch');
 Route::post('admin/removeMatch', 'AdminController@removeMatch');

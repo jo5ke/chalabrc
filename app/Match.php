@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Match extends Model
 {
     protected $fillable = ['*'];
+    
     public function round()
     {
         return $this->belongsTo('App\Round');
@@ -19,6 +20,6 @@ class Match extends Model
 
     public function clubs()
     {
-        return $this->belongsToMany('App\Club' , 'match_club')->withPivot('club1_name','club2_name')->withTimestamps();
+        return $this->belongsToMany('App\Club' , 'matches_clubs','match_id','club_id')->withPivot('club1_name','club2_name')->withTimestamps();
     }
 }

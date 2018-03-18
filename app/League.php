@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class League extends Model
 {
+    protected $fillable = [
+        'name','number_of_rounds'
+    ];
+
     public function seasons()
     {
         return $this->hasMany('App\Season');

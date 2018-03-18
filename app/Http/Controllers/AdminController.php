@@ -18,9 +18,9 @@ class AdminController extends Controller
     // *** DO NOT FORGET TO ADD RELATIONS TO QUERIES ONCE EVERYTHING IS DEFINED ***
     
     //Club CRUD section
-   	public function getClubs()
+   	public function getClubs(Request $request)
     {
-        $results = Club::all();
+        $results = Club::where('league_id',$request->l_id)->get();
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -30,7 +30,7 @@ class AdminController extends Controller
 
    	public function getClub(Request $request)
     {
-        $results = Club::where('id', $request->id)->get();
+        $results = Club::where('id', $request->id)->with('players')->get();
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -63,6 +63,71 @@ class AdminController extends Controller
         }
         $club->delete();
         return $this->json($club);
+    }
+
+    /////////////////////////////////Club ends
+
+    //Player CRUD section
+    public function getPlayers()
+    {
+        $results = Player::all();
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getPlayersByClub(Request $request)
+    {
+        $results = Club::where('league_id', $request->l_id)->with('players')->get();
+      //  $results = Player::where('club_id',$request->c_id,'league_id',$request->l_id);
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getPlayer(Request $request)
+    {
+        $results = Player::where('id', $request->id)->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function postPlayer(Request $request)
+    {
+        $player = new Player;
+        $player->first_name = $request->first_name;
+        $player->last_name = $request->last_name;
+        $player->position = $request->position;
+        $player->number = $request->number;
+        $club = Club::where('name',$request->club_name)->first();
+        $player->club_id = $club->id;
+        $player->save();
+
+        $results = Player::where('id', $player->id)->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function removePlayer(Request $request)
+    {
+        $player = Player::where('id',$request->id)->first();
+        
+        if ($player === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        $player->delete();
+        return $this->json($player);
     }
 
     /////////////////////////////////Club ends
@@ -130,6 +195,16 @@ class AdminController extends Controller
         return $this->json($results);
     }
 
+    public function getMatchesByRounds(Request $request)
+    {
+        $results = Round::where('league_id', $request->l_id)->with('matches.clubs')->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
    	public function getMatch(Request $request)
     {
         $results = Match::where('id', $request->id)->get();
@@ -150,9 +225,9 @@ class AdminController extends Controller
         $club1= Club::where('id',$request->c1_name)->first();
         $club2= Club::where('id',$request->c2_name)->first();
 
-        $m2 = Match::where('id',$match->id)->with('clubs')->get();
+     //   $m2 = Match::where('id',$match->id)->with('clubs')->get();
      //   return $m2;
-        return $match->clubs()->get();
+    //    return $match->clubs()->get();
         $match->clubs()->attach($club1);
     	$match->save();
 

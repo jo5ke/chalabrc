@@ -16,9 +16,11 @@ class CreatePlayersTable extends Migration
         Schema::create('players', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('club_id')->unsigned();  
-            $table->string('name',25);          
+            $table->string('first_name',25);          
+            $table->string('last_name',25);          
             $table->string('position',5);          
-            $table->integer('will_play')->unsigned()->default(0);          
+            $table->integer('number')->nullable()->unsigned();       
+            $table->integer('wont_play')->unsigned()->default(0);          
             $table->timestamps();
         });
     }

@@ -6,19 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class Club extends Model
 {
+    protected $fillable = [
+        'name','league_id'
+    ];
+
     // public function matches()
     // {
     //     return $this->belongsTo('App\Match');
     // }
 
-    public function player()
+    public function players()
     {
         return $this->hasMany('App\Player');
     }
 
     public function matches()
     {
-        return $this->belongsToMany('App\Match' , 'match_club')->withPivot('club1_name','club2_name')->withTimestamps();
+        return $this->belongsToMany('App\Match' , 'matches_clubs', 'club_id','match_id')->withPivot('club1_name','club2_name')->withTimestamps();
     }
 
     public function league()

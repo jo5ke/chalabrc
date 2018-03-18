@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Round extends Model
 {
+    protected $fillable = [
+        'season_id','league_id','round_no'
+    ];
     public function season()
     {
         return $this->belongsTo('App\Season');
