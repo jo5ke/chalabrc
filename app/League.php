@@ -17,7 +17,7 @@ class League extends Model
 
     public function users()
     {
-        return $this->belongsToMany('App\User','user_league')->withTimestamps();
+        return $this->belongsToMany('App\User','user_league')->withPivot('money','points')->withTimestamps();
     }
 
     public function clubs()

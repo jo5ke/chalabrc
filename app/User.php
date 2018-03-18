@@ -34,7 +34,7 @@ class User extends Authenticatable
 
     public function leagues()
     {
-        return $this->belongsToMany('App\League','user_league')->withTimestamps();
+        return $this->belongsToMany('App\League','user_league')->withPivot('money','points')->withTimestamps();
     }
 
     public function transfers()

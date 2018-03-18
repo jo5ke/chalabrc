@@ -167,8 +167,8 @@ class SquadController extends Controller
     // dodati array igraca na terenu i array zamena
     public function updateSquad(Request $request)
     {
-        $starting_ids = $request->DODATI_start;
-        $subs_ids = $request->DODATI_subs;
+        $starting_ids = $request->selected_team;
+        $subs_ids = $request->substitutions;
         $full_squad = array_merge($starting_ids,$subs_ids);
 
         $squad = auth()->user()->squad;
@@ -183,6 +183,11 @@ class SquadController extends Controller
     public function buyPlayer(Request $reqeust)
     {
         //to be added
+      //  $user = auth()->user()->first();
+        $user = User::where('id',1)->first();
+        $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
+        return $user;
+
     }
 
     public function sellPlayer(Request $reqeust)
