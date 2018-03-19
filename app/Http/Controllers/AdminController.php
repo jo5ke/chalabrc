@@ -185,7 +185,7 @@ class AdminController extends Controller
 
     //Match CRUD
 
-  	public function getMatches()
+  	public function getMatches(Request $request)
     {
         $results = Match::where('round_id',$request->r_id)->where('league_id',$request->l_id)->get();
         if ($results === null) {
@@ -197,7 +197,9 @@ class AdminController extends Controller
 
     public function getMatchesByRounds(Request $request)
     {
-        $results = Round::where('league_id', $request->l_id)->with('matches.clubs')->get();
+      //  $results = League::where('id', $request->l_id)->with('rounds.matches')->get();
+      $results = Round::where('league_id',$request->l_id)->with('matches')->get();
+      
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -218,17 +220,23 @@ class AdminController extends Controller
    	public function postMatch(Request $request)
     {
     	$match = new Match();
-    	// $match->club1_name = $request->c1_name;
-    	// $match->club2_name = $request->c2_name;
-        $match->round_id = $request->r_id;
+    	$match->club1_name = $request->c1_name;
+        $match->club2_name = $request->c2_name;
+        $round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
+        $match->round_id = $round->id;
         $match->league_id = $request->l_id;
-        $club1= Club::where('id',$request->c1_name)->first();
-        $club2= Club::where('id',$request->c2_name)->first();
+
+        // $round = Round::where('id',$request->r_id);
+        // $round->round_no = 
+
+
+        // $club1= Club::where('id',$request->c1_name)->first();
+        // $club2= Club::where('id',$request->c2_name)->first();
 
      //   $m2 = Match::where('id',$match->id)->with('clubs')->get();
      //   return $m2;
     //    return $match->clubs()->get();
-        $match->clubs()->attach($club1);
+        // $match->clubs()->attach($club1);
     	$match->save();
 
         $results = Match::where('id', $match->id)->get();
@@ -378,7 +386,10 @@ class AdminController extends Controller
 
     public function postUser(Request $request)
     {
-    	$user = new User();
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = $request->password;
     	$user->save();
 
         $results = Season::where('id', $user->id)->get();

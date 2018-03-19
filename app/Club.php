@@ -10,20 +10,20 @@ class Club extends Model
         'name','league_id'
     ];
 
-    // public function matches()
-    // {
-    //     return $this->belongsTo('App\Match');
-    // }
+    public function matches()
+    {
+        return $this->belongsTo('App\Match');
+    }
 
     public function players()
     {
         return $this->hasMany('App\Player');
     }
 
-    public function matches()
-    {
-        return $this->belongsToMany('App\Match' , 'matches_clubs', 'club_id','match_id')->withPivot('club1_name','club2_name')->withTimestamps();
-    }
+    // public function matches()
+    // {
+    //     return $this->belongsToMany('App\Match' , 'matches_clubs', 'club_id','match_id')->withPivot('club1_name','club2_name')->withTimestamps();
+    // }
 
     public function league()
     {

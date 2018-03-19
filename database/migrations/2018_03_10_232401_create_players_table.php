@@ -19,6 +19,7 @@ class CreatePlayersTable extends Migration
             $table->string('first_name',25);          
             $table->string('last_name',25);          
             $table->string('position',5);          
+            $table->integer('price')->nullable()->unsigned();          
             $table->integer('number')->nullable()->unsigned();       
             $table->integer('wont_play')->unsigned()->default(0);          
             $table->timestamps();

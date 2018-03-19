@@ -15,6 +15,10 @@ class League extends Model
         return $this->hasMany('App\Season');
     }
 
+    public function rounds() {
+        return $this->hasMany('App\Round');
+    }
+
     public function users()
     {
         return $this->belongsToMany('App\User','user_league')->withPivot('money','points')->withTimestamps();

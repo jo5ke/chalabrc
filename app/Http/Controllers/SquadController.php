@@ -185,9 +185,8 @@ class SquadController extends Controller
         //to be added
       //  $user = auth()->user()->first();
         $user = User::where('id',1)->first();
+      //  return $user;
         $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
-        return $user;
-
     }
 
     public function sellPlayer(Request $reqeust)
