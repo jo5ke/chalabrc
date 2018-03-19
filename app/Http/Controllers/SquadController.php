@@ -105,8 +105,6 @@ class SquadController extends Controller
     public function getMyTeamPage(Request $request)
     {
         $user = JWTAuth::authenticate();
-
-       // $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
         $meta = $user->leagues->where('id',$request->l_id)->first();
         $meta = $meta->pivot;
 
@@ -119,9 +117,8 @@ class SquadController extends Controller
         }
 
         for($i=0;$i<count($subs);$i++){
-            $subs[$i]=Player::where('id',$subs[$i]);
+            $subs[$i]=Player::where('id',$subs[$i])->first();
         }
-
 
      //   $play = Squad::where('user_id',$user->id)->where('id',$team->id)->with('players')->first();
         $play = $team->players;
@@ -185,27 +182,38 @@ class SquadController extends Controller
         $club = Club::where('league_id',$request->l_id)->get();
         if ($results === null) {
             $response = 'There was a problem fetching players.';
-            return $this->json($response, 404);
+            return $this->json($response, 404);       
         }
         return $this->json($club);
     }
 
     public function postSquad(Request $request)
     {
+        $user = JWTAuth::authenticate();
+        $sq =  $user->squads->first();
+        $user->leagues()->attach($user,['money' => 100000,'squad_id' => $sq->id,'league_id'=>$request->l_id]);
+
+       
+
+
         $starting_ids = json_encode($request->selected_team);
         $subs_ids = json_encode($request->substitutions);
       //  $full_squad = array_merge($starting_ids,$subs_ids);
 
         $user = JWTAuth::authenticate();
      //   $user = User::where('uuid',$uuid)->first();
-        $squad = $user->squads->where('league_id',$request->l_id)->first();
+        $squad = new Squad;
+       // $squad = $user->squads->where('league_id',$request->l_id)->first();
         
         $squad->formation = "4-4-2";
         $squad->selected_team = $starting_ids;
         $squad->substitutions = $subs_ids;
+        $squad->user_id = $user->id;
+        $squad->league_id = $request->l_id;
         $squad->save();
         
-
+        $meta = $user->leagues->where('id',$request->l_id)->first();
+        $meta = $meta->pivot;
         // $squad = $user->squads->first();
         // $players = $squad->players;
         // for($i=0;$i<count($full_squad);$i++){
