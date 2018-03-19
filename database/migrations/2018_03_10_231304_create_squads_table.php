@@ -18,6 +18,8 @@ class CreateSquadsTable extends Migration
             $table->integer('user_id')->unsigned();
             $table->integer('league_id')->unsigned();
             $table->string('formation')->nullable();
+            $table->text('selected_team')->nullable();
+            $table->text('substitutions')->nullable();
             $table->timestamps();
         });
     }

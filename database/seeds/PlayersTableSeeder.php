@@ -26,7 +26,8 @@ class PlayersTableSeeder extends Seeder
                     'price' => $faker->numberBetween($min = 3000, $max = 10000),
                     'wont_play' => 0,
                     'created_at'    =>  date("Y-m-d H:i:s", time()),
-                    'updated_at'    =>  date("Y-m-d H:i:s", time())
+                    'updated_at'    =>  date("Y-m-d H:i:s", time()),
+                    'league_id' => 1,
                 ]
             ]);
         }

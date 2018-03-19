@@ -24,4 +24,9 @@ class Player extends Model
     {
         return $this->belongsToMany('App\Round','player_round')->withTimestamps();
     }
+
+    public function league()
+    {
+        return $this->belongsTo('App\League');
+    }
 }

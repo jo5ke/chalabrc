@@ -12,14 +12,21 @@ class LeagueTableSeeder extends Seeder
      */
     public function run()
     {
-        for ($i = 0; $i < 10; $i++) {
-            $faker = Faker::create();
-            DB::table('leagues')->insert([
-                [
-                    'name' => $faker->company,
-                    'number_of_rounds' => 30
-                ]
-            ]);
-        }
+        // for ($i = 0; $i < 10; $i++) {
+        //     $faker = Faker::create();
+        //     DB::table('leagues')->insert([
+        //         [
+        //             'name' => $faker->company,
+        //             'number_of_rounds' => 30
+        //         ]
+        //     ]);
+        // }
+
+        DB::table('leagues')->insert([
+            [
+                'name' => $faker->company,
+                'number_of_rounds' => 30
+            ]
+        ]);
     }
 }

@@ -7,6 +7,8 @@ use App\Club as Club;
 use App\User as User;
 use App\Squad as Squad;
 use App\Player as Player;
+use App\League as League;
+use JWTAuth;
 
 
 class SquadController extends Controller
@@ -102,13 +104,25 @@ class SquadController extends Controller
     // big function for sending all the data about current player's team
     public function getMyTeamPage(Request $request)
     {
-      //  $user = auth()->user()->first();
-        $user = User::where('id',1)->first();
+        $user = JWTAuth::authenticate();
+
        // $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
         $meta = $user->leagues->where('id',$request->l_id)->first();
         $meta = $meta->pivot;
 
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+        $starting = json_decode($team->selected_team);
+        $subs = json_decode($team->substitutions);
+
+        for($i=0;$i<count($starting);$i++){
+            $starting[$i]=Player::where('id',$starting[$i])->first();
+        }
+
+        for($i=0;$i<count($subs);$i++){
+            $subs[$i]=Player::where('id',$subs[$i]);
+        }
+
+
      //   $play = Squad::where('user_id',$user->id)->where('id',$team->id)->with('players')->first();
         $play = $team->players;
     //    $players = Player::where('squad_id', $team->id)->where('user_id', $user->id)->get();
@@ -116,7 +130,10 @@ class SquadController extends Controller
             "user" => $user,
             "meta" => $meta,
             "team" => $team,
-            "players" => $play
+            "players" => [
+                "starting" => $starting,
+                "subs" => $subs
+            ]
         ];
         if ($results === null) {
             $response = 'There was a problem fetching players.';
@@ -127,7 +144,7 @@ class SquadController extends Controller
 
     // getting all the info about the player(for lists and popups)
     // "p_id" get route for getting the player info;
-    public function getPlayer(Request $requests)
+    public function getPlayer(Request $request)
     {
         $user = auth()->user()->first();
         $players = Player::all();
@@ -140,11 +157,11 @@ class SquadController extends Controller
     }
 
     //getting All Players from all Clubs
-    public function getPlayers()
+    public function getPlayers(Request $request)
     {
-        $players = Player::with('club')->where('league')->where('id',$request->l_id)->get();
-        $players = Player::all();
-        if ($results === null) {
+        $players = League::where('id',$request->l_id)->with('players')->get();
+     //   $players = Player::all();
+        if ($players === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -173,6 +190,38 @@ class SquadController extends Controller
         return $this->json($club);
     }
 
+    public function postSquad(Request $request)
+    {
+        $starting_ids = json_encode($request->selected_team);
+        $subs_ids = json_encode($request->substitutions);
+      //  $full_squad = array_merge($starting_ids,$subs_ids);
+
+        $user = JWTAuth::authenticate();
+     //   $user = User::where('uuid',$uuid)->first();
+        $squad = $user->squads->where('league_id',$request->l_id)->first();
+        
+        $squad->formation = "4-4-2";
+        $squad->selected_team = $starting_ids;
+        $squad->substitutions = $subs_ids;
+        $squad->save();
+        
+
+        // $squad = $user->squads->first();
+        // $players = $squad->players;
+        // for($i=0;$i<count($full_squad);$i++){
+        //     $player = Player::where('id',$full_squad[$i])->first();
+        //     $squad->updatePlayers($user->id)->attach($player,['user_id' => $user->id]);    
+        // }
+        // $players = $squad->players;
+
+        if ($squad === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($squad);
+    }
+
+
     // dodati array igraca na terenu i array zamena
     public function updateSquad(Request $request)
     {
@@ -180,13 +229,22 @@ class SquadController extends Controller
         $subs_ids = $request->substitutions;
         $full_squad = array_merge($starting_ids,$subs_ids);
 
-        $squad = auth()->user()->squad;
-        $squad->players()->attach($full_squad);
-        if ($results === null) {
+        $user = JWTAuth::authenticate();
+     //   $user = User::where('uuid',$uuid)->first();
+        $squad = $user->squads->first();
+        $players = $squad->players;
+
+        for($i=0;$i<count($full_squad);$i++){
+            $player = Player::where('id',$full_squad[$i])->first();
+            $squad->updatePlayers($user->id)->updateExistingPivot($player,['user_id' => $user->id]);    
+        }
+        $players = $squad->players;
+
+        if ($players === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
-        return $this->json($club);
+        return $this->json($players);
     }
 
     public function buyPlayer(Request $request)

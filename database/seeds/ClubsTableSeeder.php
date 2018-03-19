@@ -16,7 +16,8 @@ class ClubsTableSeeder extends Seeder
             $faker = Faker::create();
             DB::table('clubs')->insert([
                 [
-                    'league_id' => $faker->numberBetween($min = 1, $max = 10),
+                   // 'league_id' => $faker->numberBetween($min = 1, $max = 10),
+                    'league_id' => 1,
                     'name' => $faker->city
                 ]
             ]);

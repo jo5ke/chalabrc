@@ -37,15 +37,16 @@ Route::get('players/getPlayers', 'PlayerController@getPlayers');
 
 //My Team page controller
 
-Route::post('myTeam/getMyTeamPage', 'SquadController@getMyTeamPage');
-Route::post('myTeam/updateSquad', 'SquadController@updateSquad');
-Route::post('myTeam/buyPlayer', 'SquadController@buyPlayer');
-Route::post('myTeam/sellPlayer', 'SquadController@sellPlayer');
+Route::post('myTeam/getMyTeamPage', 'SquadController@getMyTeamPage')->middleware('jwt.auth');
+Route::put('myTeam/updateSquad', 'SquadController@updateSquad')->middleware('jwt.auth');
+Route::post('myTeam/postSquad', 'SquadController@postSquad')->middleware('jwt.auth');
+Route::post('myTeam/buyPlayer', 'SquadController@buyPlayer')->middleware('jwt.auth');
+Route::delete('myTeam/sellPlayer', 'SquadController@sellPlayer')->middleware('jwt.auth');
 // duplicated routes(admin)
-Route::get('myTeam/getClubs', 'AdminController@getClubs');
+Route::post('myTeam/getClubs', 'AdminController@getClubs');
 Route::post('myTeam/getClub', 'AdminController@getClub');
 Route::post('myTeam/getPlayer', 'SquadController@getPlayer');
-Route::get('myTeam/getPlayers', 'SquadController@getPlayers');
+Route::post('myTeam/getPlayers', 'SquadController@getPlayers');
 Route::post('myTeam/getSquad', 'SquadController@getSquad');
 
 

@@ -39,4 +39,9 @@ class League extends Model
         return $this->hasMany('App\Transfer');
     }
 
+    public function players()
+    {
+        return $this->hasMany('App\Player');
+    }
+
 }

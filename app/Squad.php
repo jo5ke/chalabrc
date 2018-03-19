@@ -17,6 +17,11 @@ class Squad extends Model
         return $this->belongsToMany('App\Player','squad_player')->withTimestamps();
     }
 
+    public function updatePlayers($user_id)
+    {
+        return $this->belongsToMany('App\Player','squad_player')->wherePivot('user_id',$user_id )->withTimestamps();
+    }
+
     public function transfers()
     {
         return $this->hasMany('App\Transfer');
