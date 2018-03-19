@@ -193,14 +193,37 @@ class SquadController extends Controller
     {
         $user = User::where('id',1)->first();
         $meta = $user->leagues->where('id',$request->l_id)->first();
-     //   $meta = $user->leagues->first();
-        $meta = $meta->pivot->money;
-        return $meta;
+
+        $player = Player::where('id',$request->p_id)->first();
+        //$meta->pivot->money -= 100;
+        $meta->pivot->money -= $player->price;
+        $meta->pivot->save();
+
+        $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+        $team->players()->attach($player,['user_id' => $user->id]);
+
+
+
+        $meta2 = $meta->pivot;
+        return $user->with('squads.players')->get();
     }
 
-    public function sellPlayer(Request $reqeust)
+    public function sellPlayer(Request $request)
     {
-        //to be added
+        $user = User::where('id',1)->first();
+        $meta = $user->leagues->where('id',$request->l_id)->first();
+
+        $player = Player::where('id',$request->p_id)->first();
+        //$meta->pivot->money -= 100;
+        $meta->pivot->money += $player->price;
+        $meta->pivot->save();
+
+        $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+        $team->players()->detach($player,['user_id' => $user->id]);
+
+
+        $meta2 = $meta->pivot;
+        return $user->with('squads.players')->get();
     }
 
 
