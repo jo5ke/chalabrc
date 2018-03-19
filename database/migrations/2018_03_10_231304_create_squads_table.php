@@ -16,6 +16,8 @@ class CreateSquadsTable extends Migration
         Schema::create('squads', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('user_id')->unsigned();
+            $table->integer('league_id')->unsigned();
+            $table->string('formation')->nullable();
             $table->timestamps();
         });
     }

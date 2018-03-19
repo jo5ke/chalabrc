@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Club as Club;
 use App\User as User;
+use App\Squad as Squad;
+use App\Player as Player;
 
 
 class SquadController extends Controller
@@ -100,14 +102,21 @@ class SquadController extends Controller
     // big function for sending all the data about current player's team
     public function getMyTeamPage(Request $request)
     {
-        $user = auth()->user()->first();
-        $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
+      //  $user = auth()->user()->first();
+        $user = User::where('id',1)->first();
+       // $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
+        $meta = $user->leagues->where('id',$request->l_id)->first();
+        $meta = $meta->pivot;
+
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
-        $players = Player::where('squad_id', $team->id)->where('user_id', $user->id)->get();
+     //   $play = Squad::where('user_id',$user->id)->where('id',$team->id)->with('players')->first();
+        $play = $team->players;
+    //    $players = Player::where('squad_id', $team->id)->where('user_id', $user->id)->get();
         $results = [ 
             "user" => $user,
+            "meta" => $meta,
             "team" => $team,
-            "players" => $players
+            "players" => $play
         ];
         if ($results === null) {
             $response = 'There was a problem fetching players.';
@@ -180,13 +189,13 @@ class SquadController extends Controller
         return $this->json($club);
     }
 
-    public function buyPlayer(Request $reqeust)
+    public function buyPlayer(Request $request)
     {
-        //to be added
-      //  $user = auth()->user()->first();
         $user = User::where('id',1)->first();
-      //  return $user;
-        $meta = $user->with('league')->where('user_id', $user->id)->where('league_id',$request->l_id)->get();
+        $meta = $user->leagues->where('id',$request->l_id)->first();
+     //   $meta = $user->leagues->first();
+        $meta = $meta->pivot->money;
+        return $meta;
     }
 
     public function sellPlayer(Request $reqeust)

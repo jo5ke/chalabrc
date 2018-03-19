@@ -11,6 +11,7 @@ use App\Round as Round;
 use App\Player as Player;
 use App\Season as Season;
 use App\User as User;
+use Faker\Factory;
 
 
 class AdminController extends Controller
@@ -390,6 +391,7 @@ class AdminController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = $request->password;
+        $user->uuid = Factory::create()->uuid;
     	$user->save();
 
         $results = Season::where('id', $user->id)->get();
@@ -402,7 +404,7 @@ class AdminController extends Controller
 
     public function removeUser(Request $request)
     {
-        $user = User::where('id',$request->id)->first();
+        $user = User::where('uuid',$request->uuid)->first();
         
         if ($user === null) {
             $response = 'There was a problem fetching your data.';

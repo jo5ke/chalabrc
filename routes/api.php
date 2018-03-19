@@ -37,7 +37,7 @@ Route::get('players/getPlayers', 'PlayerController@getPlayers');
 
 //My Team page controller
 
-Route::get('myTeam/getMyTeamPage', 'SquadController@getMyTeamPage');
+Route::post('myTeam/getMyTeamPage', 'SquadController@getMyTeamPage');
 Route::post('myTeam/updateSquad', 'SquadController@updateSquad');
 Route::post('myTeam/buyPlayer', 'SquadController@buyPlayer');
 Route::post('myTeam/sellPlayer', 'SquadController@sellPlayer');

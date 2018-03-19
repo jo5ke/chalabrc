@@ -14,10 +14,10 @@ class LeagueTableSeeder extends Seeder
     {
         for ($i = 0; $i < 10; $i++) {
             $faker = Faker::create();
-            DB::table('clubs')->insert([
+            DB::table('leagues')->insert([
                 [
-                    'league_id' => $faker->numberBetween($min = 1, $max = 10),
-                    'name' => $faker->company
+                    'name' => $faker->company,
+                    'number_of_rounds' => 30
                 ]
             ]);
         }

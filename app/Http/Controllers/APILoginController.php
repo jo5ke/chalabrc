@@ -22,8 +22,10 @@ class APILoginController extends Controller
             // return response()->json($validator->errors());
         }
         $credentials = $request->only('email', 'password');
+        $user = User::where('email', $request->email)->first();
+        $token = JWTAuth::fromUser($user);
         try {
-            if (! $token = JWTAuth::attempt($credentials)) {
+            if (! $token ) {
                 return $this->json(['error' => 'invalid_credentials'], 401);
            //     return response()->json(['error' => 'invalid_credentials'], 401);
             }
@@ -31,7 +33,8 @@ class APILoginController extends Controller
             return $this->json(['error' => 'could_not_create_token'], 500);
             // return response()->json(['error' => 'could_not_create_token'], 500);
         }
-        $user = User::where('email', $request->email)->first();
+        
+
         $response = [
             'user' => $user,
             'token' => $token
