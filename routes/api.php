@@ -31,6 +31,7 @@ Route::get('news', 'HomeController@getNews')->name('getNews');
 Route::get('getLatesNews', 'HomeController@getLatestNews')->name('getLatestNews');
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
+Route::post('payment', 'PaymentController@payment');
 
 //Player page Controller
 Route::get('players/getPlayers', 'PlayerController@getPlayers');
