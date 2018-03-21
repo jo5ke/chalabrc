@@ -41,6 +41,14 @@ $app->singleton(
     App\Exceptions\Handler::class
 );
 
+$app->singleton( 
+    Illuminate\Contracts\Filesystem\Factory::class, 
+    function ($app) 
+    { return new Illuminate\Filesystem\FilesystemManager($app); } 
+);
+
+// $app->configure('filesystems');
+
 /*
 |--------------------------------------------------------------------------
 | Return The Application

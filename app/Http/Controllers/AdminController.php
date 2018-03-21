@@ -281,8 +281,20 @@ class AdminController extends Controller
         //return $round;
         $match->round_id = $round->id;
         $match->league_id = $request->l_id;
-       
 
+        $club1 = Club::where('name',$match->club1_name)->first();
+        $club2 = Club::where('name',$match->club2_name)->first();
+
+        $players1 = $club1->players;
+        foreach($players1 as $player){
+            $round->players()->attach($player);            
+        }
+
+        $players2 = $club2->players;
+        foreach($players2 as $player){
+            $round->players()->attach($player);            
+        }
+       
         // $round = Round::where('id',$request->r_id);
         // $round->round_no = 
 
@@ -621,10 +633,24 @@ class AdminController extends Controller
 
         // $ret = $club2->with('players.rounds')->where('name',$match->club1_name)->orWhere('name', $match->club2_name)->get();
         // return $ret;
+       
+        $round = Round::where('round_no',$request->r_id)->first();
+        
+        $players = $round->players;
+
+        // return $club1->players;
+        
+        $i = 0;
+        foreach($players as $player){
+            $stats[$i] = $player->pivot;
+            $i++;
+        }
+
         
         $results = [
             "club1" => $club1->players,
             "club2" => $club2->players,
+            "stats" => $stats
         ];
 
         if ($results === null) {

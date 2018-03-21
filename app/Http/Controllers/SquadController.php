@@ -254,7 +254,9 @@ class SquadController extends Controller
         $squad->substitutions = $subs_ids;
         $squad->user_id = $user->id;
         $squad->league_id = $request->l_id;
+        $squad->captain_id = $request->captain;
         $squad->save();
+        
 
         if ($squad === null) {
             $response = 'There was a problem fetching players.';

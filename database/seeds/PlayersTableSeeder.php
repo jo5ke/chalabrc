@@ -18,7 +18,7 @@ class PlayersTableSeeder extends Seeder
             $faker = Faker::create();
             DB::table('players')->insert([
                 [
-                    'club_id' => rand(1, 50),
+                    'club_id' => rand(1, 32),
                     'first_name' => $faker->firstNameMale,
                     'last_name' => $faker->lastName,
                     'position' => $positions[rand(0, 3)],

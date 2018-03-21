@@ -33,6 +33,9 @@ Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
 Route::post('payment', 'PaymentController@payment');
 
+Route::get('getJersey/{name}', 'HomeController@getJersey');
+
+
 //Player page Controller
 Route::get('players/getPlayers', 'PlayerController@getPlayers');
 

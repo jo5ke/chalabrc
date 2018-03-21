@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Article as Article;
 use App\User as User;
 use App\League as League;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\File;
 
 
 class HomeController extends Controller
@@ -29,7 +32,7 @@ class HomeController extends Controller
     public function getNews()
     {
         $results = Article::all();
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -39,7 +42,7 @@ class HomeController extends Controller
     public function getLatestNews()
     {
         $results = Article::orderBy('created_at', 'desc')->latest();
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -49,7 +52,7 @@ class HomeController extends Controller
     public function getTopFivePlayers()
     {
         $results = User::orderBy('points', 'desc')->take(5)->get();
-        if ($results->isEmpty()) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -60,7 +63,23 @@ class HomeController extends Controller
     public function topFivePlayersDivision(Request $request)
     {
         $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
-        if ($results->isEmpty()) {
+        if ($results === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getJersey(Request $request)
+    {
+        // $file = Storage::disk('public')->get($request->name);
+        // return new Response($file, 200);
+
+        $response = Response::make(Storage::disk('public')->get($request->name));
+        $response->header('Content-Type', 'image/png');
+        return $response;
+
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }

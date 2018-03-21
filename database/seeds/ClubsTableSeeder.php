@@ -24,7 +24,7 @@ class ClubsTableSeeder extends Seeder
             "Fet",
             "Flisa",
             "Follebu",
-            "Funnefoss Vormsund'",
+            "Funnefoss_Vormsund",
             "Furnes",
             "Gran",
             "Hauerseter",
@@ -59,9 +59,3 @@ class ClubsTableSeeder extends Seeder
         }
     }
 }
-DB::table('leagues')->insert([
-    [
-        'name' => $faker->company,
-        'number_of_rounds' => 30
-    ]
-]);
