@@ -31,7 +31,7 @@ class AdminController extends Controller
 
    	public function getClub(Request $request)
     {
-        $results = Club::where('id', $request->id)->with('players')->get();
+        $results = Club::where('id', $request->id)->with('players')->first();
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -57,14 +57,31 @@ class AdminController extends Controller
     public function removeClub(Request $request)
     {
         $club = Club::where('id',$request->id)->first();
+        $match = Match::where('id', $request->m_id)->first();
         
         if ($club === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
         $club->delete();
+        $match->delete();
         return $this->json($club);
     }
+
+    public function updateClub(Request $request)
+    {
+        $club = Club::where('id',$request->id)->first();
+        $club->name = $request->name;
+        $club->league_id = $request->l_id;
+        $club->save();
+
+        if ($club === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($club);
+    }
+    
 
     /////////////////////////////////Club ends
 
@@ -107,6 +124,8 @@ class AdminController extends Controller
         $player->last_name = $request->last_name;
         $player->position = $request->position;
         $player->number = $request->number;
+        $player->price = $request->price;
+        $player->league_id = $request->l_id;
         $club = Club::where('name',$request->club_name)->first();
         $player->club_id = $club->id;
         $player->save();
@@ -128,6 +147,26 @@ class AdminController extends Controller
             return $this->json($response, 404);
         }
         $player->delete();
+        return $this->json($player);
+    }
+
+    public function updatePlayer(Request $request)
+    {
+        $player = Player::where('id',$request->id)->first();
+        $player->first_name = $request->first_name;
+        $player->last_name = $request->last_name;
+        $player->position = $request->position;
+        $player->number = $request->number;
+        $player->price = $request->price;
+        $player->league_id = $request->l_id;
+        $club=Club::where('name',$request->club_name)->first();
+        $player->club_id = $club->id;
+        $player->save();
+
+        if ($player === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
         return $this->json($player);
     }
 
@@ -182,6 +221,20 @@ class AdminController extends Controller
         return $this->json($league);
     }
 
+    public function updateLeague(Request $request)
+    {
+        $league = League::where('id',$request->id)->first();
+        $league->name = $request->name;
+        $league->number_of_rounds = $request->number_of_rounds;
+        $league->save();
+
+        if ($league === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($league);
+    }
+
     /////////////////////////////////League ends
 
     //Match CRUD
@@ -200,6 +253,7 @@ class AdminController extends Controller
     {
       //  $results = League::where('id', $request->l_id)->with('rounds.matches')->get();
       $results = Round::where('league_id',$request->l_id)->with('matches')->get();
+     
       
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
@@ -210,7 +264,7 @@ class AdminController extends Controller
 
    	public function getMatch(Request $request)
     {
-        $results = Match::where('id', $request->id)->get();
+        $results = Match::where('id', $request->id)->first();
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -223,9 +277,11 @@ class AdminController extends Controller
     	$match = new Match();
     	$match->club1_name = $request->c1_name;
         $match->club2_name = $request->c2_name;
-        $round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
+        $round = Round::where('league_id',$request->l_id)->where('round_no',$request->r_no)->first();
+        //return $round;
         $match->round_id = $round->id;
         $match->league_id = $request->l_id;
+       
 
         // $round = Round::where('id',$request->r_id);
         // $round->round_no = 
@@ -240,12 +296,12 @@ class AdminController extends Controller
         // $match->clubs()->attach($club1);
     	$match->save();
 
-        $results = Match::where('id', $match->id)->get();
-        if ($results === null) {
+
+        if ($match === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
-        return $this->json($results);
+        return $this->json($match);
     }
 
     public function removeMatch(Request $request)
@@ -258,6 +314,33 @@ class AdminController extends Controller
         }
         $match->delete();
         return $this->json($match);
+    }
+
+    public function updateMatch(Request $request)
+    {
+        $round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
+        // return $round->id;
+        $match = Match::where('id',$request->id)->first();
+
+        $match->delete();
+
+        $newMatch = new Match;
+    	$newMatch->club1_name = $request->c1_name;
+        $newMatch->club2_name = $request->c2_name;
+        
+       
+        $newMatch->round_id = $round->id;
+        $newMatch->league_id = $request->l_id;
+        
+        $newMatch->save();
+        return $newMatch;
+        
+
+        if ($newMatch === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($newMatch);
     }
 
     /////////////////////////////////Match ends
@@ -311,6 +394,20 @@ class AdminController extends Controller
         return $this->json($round);
     }
 
+    public function updateRound(Request $request)
+    {
+        $round->round_no = $request->round_no;
+        $round->league_id = $request->l_id;
+    	$round->save();
+
+        $round = Round::where('id', $round->id)->get();
+        if ($round === null) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($round);
+    }
+
     /////////////////////////////////Round ends
 
     //Season CRUD
@@ -358,6 +455,20 @@ class AdminController extends Controller
             return $this->json($response, 404);
         }
         $season->delete();
+        return $this->json($season);
+    }
+
+    public function updateSeason(Request $request)
+    {
+        $season = Season::where('id',$request->id)->first();
+        $season->name = $request->name;
+    	$season->save();
+
+        $season = Season::where('id', $season->id)->get();
+        if ($season === null) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
         return $this->json($season);
     }
 
@@ -414,6 +525,22 @@ class AdminController extends Controller
         return $this->json($user);
     }
 
+    public function updateUser(Request $request)
+    {
+        $user = User::where('uuid',$request->id)->first();
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+    	$user->save();
+
+        $user = Season::where('id', $user->id)->get();
+        if ($user === null) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($user);
+    }
+
     /////////////////////////////////User ends
 
     //News CRUD
@@ -446,12 +573,11 @@ class AdminController extends Controller
         $article->league_id = $request->l_id;
         $article->save();
 
-        $results = Article::where('id', $article->id)->get();
-        if ($results === null) {
+        if ($article === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
-        return $this->json($results);
+        return $this->json($article);
     }
   
     public function removeArticle(Request $request)
@@ -465,8 +591,80 @@ class AdminController extends Controller
         $article->delete();
         return $this->json($article);
     }
+
+    public function updateArticle(Request $request)
+    {
+        $article = Article::where('id',$request->id)->first();
+        $article->title = $request->title;
+        $article->body = $request->body;
+        $article->league_id = $request->l_id;
+        $article->save();
+
+        if ($article === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($article);
+    }
   
     /////////////////////////////////News ends
+
+    //Post match stats
+
+    public function getClubsByMatch(Request $request)
+    {
+        $match = Match::where('id', $request->m_id)->first();
+        $club1 = Club::where('league_id',$request->l_id)->where('name', $match->club1_name)->first();
+        $club2 = Club::where('league_id',$request->l_id)->where('name', $match->club2_name)->first();
+     //  $ret1 = $club1->with('players.rounds')->where('round_id',$request->r_id)->get();
+     //  $ret2 = $club2->with('players.rounds')->where('round_id',$request->r_id)->get();
+
+        // $ret = $club2->with('players.rounds')->where('name',$match->club1_name)->orWhere('name', $match->club2_name)->get();
+        // return $ret;
+        
+        $results = [
+            "club1" => $club1->players,
+            "club2" => $club2->players,
+        ];
+
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getPlayersStats(Request $request)
+    {  
+        $round = Round::where('round_no',$request->r_no)->first();
+        
+        $players = $round->players;
+        
+        $i = 0;
+        foreach($players as $player){
+            $results[$i] = $player->pivot;
+            $i++;
+        }
+
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function postPlayersStats(Request $request)
+    {
+        $round = Round::where('round_no',$request->r_no)->first();
+        
+
+
+        return $round->players->where('id',21)->first()->pivot;
+
+    }
+
+
+    /////////////////////////////////Post match stats ends
 
 
 

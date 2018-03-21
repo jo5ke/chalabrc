@@ -33,13 +33,6 @@ class CreatePlayersRoundsTable extends Migration
             $table->integer('red')->unsigned()->nullable();
             $table->integer('own_goal')->unsigned()->nullable();
             $table->integer('captain')->unsigned()->nullable();
-
-
-
-            
-            
-
-                        
             $table->timestamps();
         });
     }

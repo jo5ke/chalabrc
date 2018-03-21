@@ -17,11 +17,11 @@ class LeagueTableSeeder extends Seeder
         //     DB::table('leagues')->insert([
         //         [
         //             'name' => $faker->company,
-        //             'number_of_rounds' => 30
+        //             'number_of_rounds' => 30 
         //         ]
         //     ]);
         // }
-
+        $faker = Faker::create();
         DB::table('leagues')->insert([
             [
                 'name' => $faker->company,

@@ -12,15 +12,56 @@ class ClubsTableSeeder extends Seeder
      */
     public function run()
     {
-        for ($i = 0; $i < 50; $i++) {
+        $romerike = [
+            "Aurskog",
+            "Blaker",
+            "Domkirkeodden",
+            "Eidskog",
+            "EidsvoldIF",
+            "EidsvoldTurn",
+            "Engerdal",
+            "Faaberg11",
+            "Fet",
+            "Flisa",
+            "Follebu",
+            "Funnefoss Vormsund'",
+            "Furnes",
+            "Gran",
+            "Hauerseter",
+            "Kløfta",
+            "Kolbu",
+            "Lillehammer",
+            "Moelven",
+            "Nordreland",
+            "Rælingen",
+            "RaumnesÅrnes",
+            "Redalen",
+            "Ridabu",
+            "Sander",
+            "Skedsmo",
+            "Sondreland",
+            "Sørumsand",
+            "Storhamar",
+            "Strømmen2",
+            "Toten",
+            "Trysil",
+            "UllKisa"
+        ];
+        for ($i = 0; $i < count($romerike); $i++) {
             $faker = Faker::create();
             DB::table('clubs')->insert([
                 [
                    // 'league_id' => $faker->numberBetween($min = 1, $max = 10),
                     'league_id' => 1,
-                    'name' => $faker->city
+                    'name' => $romerike[$i]
                 ]
             ]);
         }
     }
 }
+DB::table('leagues')->insert([
+    [
+        'name' => $faker->company,
+        'number_of_rounds' => 30
+    ]
+]);

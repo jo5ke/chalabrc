@@ -22,7 +22,9 @@ class Player extends Model
 
     public function rounds()
     {
-        return $this->belongsToMany('App\Round','player_round')->withTimestamps();
+        return $this->belongsToMany('App\Round','round_player')
+        ->withPivot('start','sub','assist','miss','k_score','d_score','m_score','a_score','kd_clean','m_clean','k_save','kd_3strike','yellow','red','own_goal','captain')
+        ->withTimestamps();
     }
 
     public function league()

@@ -25,6 +25,8 @@ class Round extends Model
 
     public function players()
     {
-        return $this->belongsToMany('App\Players','player_round')->withTimestamps();
+        return $this->belongsToMany('App\Player','round_player')
+        ->withPivot('start','sub','assist','miss','k_score','d_score','m_score','a_score','kd_clean','m_clean','k_save','kd_3strike','yellow','red','own_goal','captain')
+        ->withTimestamps();
     }
 }

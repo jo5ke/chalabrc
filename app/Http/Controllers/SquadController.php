@@ -107,17 +107,22 @@ class SquadController extends Controller
         $user = JWTAuth::authenticate();
         $meta = $user->leagues->where('id',$request->l_id)->first();
         $meta = $meta->pivot;
-
+        
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
         $starting = json_decode($team->selected_team);
         $subs = json_decode($team->substitutions);
 
+        $team_val = 0;
+        
+
         for($i=0;$i<count($starting);$i++){
-            $starting[$i]=Player::where('id',$starting[$i])->first();
+            $starting[$i]=Player::where('id',$starting[$i])->with('club')->first();
+            $team_val += $starting[$i]->price;
         }
 
         for($i=0;$i<count($subs);$i++){
-            $subs[$i]=Player::where('id',$subs[$i])->first();
+            $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
+            $team_val += $starting[$i]->price;
         }
 
      //   $play = Squad::where('user_id',$user->id)->where('id',$team->id)->with('players')->first();
@@ -127,6 +132,7 @@ class SquadController extends Controller
             "user" => $user,
             "meta" => $meta,
             "team" => $team,
+            "squad_value" => $team_val,
             "players" => [
                 "starting" => $starting,
                 "subs" => $subs
@@ -189,12 +195,6 @@ class SquadController extends Controller
 
     public function postSquad(Request $request)
     {
-        $user = JWTAuth::authenticate();
-        $sq =  $user->squads->first();
-        $user->leagues()->attach($user,['money' => 100000,'squad_id' => $sq->id,'league_id'=>$request->l_id]);
-
-       
-
 
         $starting_ids = json_encode($request->selected_team);
         $subs_ids = json_encode($request->substitutions);
@@ -211,9 +211,15 @@ class SquadController extends Controller
         $squad->user_id = $user->id;
         $squad->league_id = $request->l_id;
         $squad->save();
+
+        $money = $request->money;
         
-        $meta = $user->leagues->where('id',$request->l_id)->first();
-        $meta = $meta->pivot;
+
+        $sq =  $user->squads->first();
+        $user->leagues()->attach($user,['money' => $money ,'points' => 0, 'squad_id' => $sq->id,'league_id'=>$request->l_id]);
+        
+        // $meta = $user->leagues->where('id',$request->l_id)->first();
+        // $meta = $meta->pivot;
         // $squad = $user->squads->first();
         // $players = $squad->players;
         // for($i=0;$i<count($full_squad);$i++){
@@ -233,26 +239,28 @@ class SquadController extends Controller
     // dodati array igraca na terenu i array zamena
     public function updateSquad(Request $request)
     {
-        $starting_ids = $request->selected_team;
-        $subs_ids = $request->substitutions;
-        $full_squad = array_merge($starting_ids,$subs_ids);
+        $starting_ids = json_encode($request->selected_team);
+        $subs_ids = json_encode($request->substitutions);
+        //$full_squad = array_merge($starting_ids,$subs_ids);
 
         $user = JWTAuth::authenticate();
+  
      //   $user = User::where('uuid',$uuid)->first();
-        $squad = $user->squads->first();
-        $players = $squad->players;
+        $squad = $user->squads->where('league_id',$request->l_id)->first();
+    //    $players = $squad->players;
 
-        for($i=0;$i<count($full_squad);$i++){
-            $player = Player::where('id',$full_squad[$i])->first();
-            $squad->updatePlayers($user->id)->updateExistingPivot($player,['user_id' => $user->id]);    
-        }
-        $players = $squad->players;
+        $squad->formation = $request->formation;
+        $squad->selected_team = $starting_ids;
+        $squad->substitutions = $subs_ids;
+        $squad->user_id = $user->id;
+        $squad->league_id = $request->l_id;
+        $squad->save();
 
-        if ($players === null) {
+        if ($squad === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
-        return $this->json($players);
+        return $this->json($squad);
     }
 
     public function buyPlayer(Request $request)
