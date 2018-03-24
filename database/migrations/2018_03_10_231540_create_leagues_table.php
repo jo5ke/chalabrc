@@ -17,6 +17,7 @@ class CreateLeaguesTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->integer('number_of_rounds')->unsigned();
+            $table->integer('current_round')->unsigned();
             $table->timestamps();
         });
     }

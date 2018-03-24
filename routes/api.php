@@ -32,6 +32,8 @@ Route::get('getLatesNews', 'HomeController@getLatestNews')->name('getLatestNews'
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
 Route::post('payment', 'PaymentController@payment');
+Route::post('users', 'HomeController@getUsers');
+Route::post('getCurrentRound', 'HomeController@getCurrentRound');
 
 Route::get('getJersey/{name}', 'HomeController@getJersey');
 
@@ -44,7 +46,7 @@ Route::get('players/getPlayers', 'PlayerController@getPlayers');
 Route::post('myTeam/getMyTeamPage', 'SquadController@getMyTeamPage')->middleware('jwt.auth');
 Route::put('myTeam/updateSquad', 'SquadController@updateSquad')->middleware('jwt.auth');
 Route::post('myTeam/postSquad', 'SquadController@postSquad')->middleware('jwt.auth');
-Route::post('myTeam/buyPlayer', 'SquadController@buyPlayer')->middleware('jwt.auth');
+Route::post('myTeam/buyPlayer', 'SquadController@buyPlayer');
 Route::delete('myTeam/sellPlayer', 'SquadController@sellPlayer')->middleware('jwt.auth');
 // duplicated routes(admin)
 Route::post('myTeam/getClubs', 'AdminController@getClubs');
@@ -52,6 +54,7 @@ Route::post('myTeam/getClub', 'AdminController@getClub');
 Route::post('myTeam/getPlayer', 'SquadController@getPlayer');
 Route::post('myTeam/getPlayers', 'SquadController@getPlayers');
 Route::post('myTeam/getSquad', 'SquadController@getSquad');
+Route::post('myTeam/checkTransfer', 'SquadController@checkTransfer');
 
 
 
@@ -112,5 +115,5 @@ Route::put('admin/updateArticle', 'AdminController@updateArticle');
 //post match statistic
 Route::post('admin/getClubsByMatch', 'AdminController@getClubsByMatch');
 Route::post('admin/getPlayersStats', 'AdminController@getPlayersStats');
-Route::post('admin/postPlayersStats', 'AdminController@postPlayersStats');
+Route::post('admin/postPlayerStats', 'AdminController@postPlayerStats');
 

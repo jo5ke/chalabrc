@@ -22,6 +22,11 @@ class Match extends Model
         return $this->hasMany('App\Club');
     }
 
+    public function playerstats()
+    {
+        return $this->hasMany('App\PlayerStats');
+    }
+
     // public function clubs()
     // {
     //     return $this->belongsToMany('App\Club' , 'matches_clubs','match_id','club_id')->withPivot('club1_name','club2_name')->withTimestamps();

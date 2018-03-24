@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Club as Club;
 use App\Match as Match;
 use App\Article as Article;
@@ -11,6 +12,7 @@ use App\Round as Round;
 use App\Player as Player;
 use App\Season as Season;
 use App\User as User;
+use App\PlayerStats as PlayerStats;
 use Faker\Factory;
 
 
@@ -287,27 +289,21 @@ class AdminController extends Controller
 
         $players1 = $club1->players;
         foreach($players1 as $player){
-            $round->players()->attach($player);            
+            $round->players()->attach($player);     
+          //  $stats = new PlayerStats;
+                   
         }
 
         $players2 = $club2->players;
         foreach($players2 as $player){
-            $round->players()->attach($player);            
+              $round->players()->attach($player);     
+            // $stats = new PlayerStats;
+            // $stats->first_name = $player->first_name;       
+            // $stats->last_name = $player->last_name;  
+            // $stats->save();     
         }
        
-        // $round = Round::where('id',$request->r_id);
-        // $round->round_no = 
-
-
-        // $club1= Club::where('id',$request->c1_name)->first();
-        // $club2= Club::where('id',$request->c2_name)->first();
-
-     //   $m2 = Match::where('id',$match->id)->with('clubs')->get();
-     //   return $m2;
-    //    return $match->clubs()->get();
-        // $match->clubs()->attach($club1);
     	$match->save();
-
 
         if ($match === null) {
             $response = 'There was a problem fetching your data.';
@@ -628,16 +624,14 @@ class AdminController extends Controller
         $match = Match::where('id', $request->m_id)->first();
         $club1 = Club::where('league_id',$request->l_id)->where('name', $match->club1_name)->first();
         $club2 = Club::where('league_id',$request->l_id)->where('name', $match->club2_name)->first();
-     //  $ret1 = $club1->with('players.rounds')->where('round_id',$request->r_id)->get();
-     //  $ret2 = $club2->with('players.rounds')->where('round_id',$request->r_id)->get();
 
-        // $ret = $club2->with('players.rounds')->where('name',$match->club1_name)->orWhere('name', $match->club2_name)->get();
-        // return $ret;
-       
         $round = Round::where('round_no',$request->r_id)->first();
         
         $players = $round->players;
 
+        $club1 = $club1->players()->with('rounds')->get();
+        $club2 = $club2->players()->with('rounds')->get();
+        
         // return $club1->players;
         
         $i = 0;
@@ -648,9 +642,8 @@ class AdminController extends Controller
 
         
         $results = [
-            "club1" => $club1->players,
-            "club2" => $club2->players,
-            "stats" => $stats
+            "club1" => $club1,
+            "club2" => $club2
         ];
 
         if ($results === null) {
@@ -662,15 +655,62 @@ class AdminController extends Controller
 
     public function getPlayersStats(Request $request)
     {  
-        $round = Round::where('round_no',$request->r_no)->first();
+        // $round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
         
-        $players = $round->players;
+        // return $round->matches->where('round_id',$request->r_no);
+        // $players = $round->players;
         
-        $i = 0;
-        foreach($players as $player){
-            $results[$i] = $player->pivot;
-            $i++;
-        }
+        // $i = 0;
+        // foreach($players as $player){
+        //     $results[$i] = $player->pivot;
+        //     $i++;
+        // }
+
+        ////////////////////////////////
+
+        $match = Match::where('id', $request->m_id)->first();
+        $club1 = Club::where('league_id',$request->l_id)->where('name', $match->club1_name)->first();
+        $club2 = Club::where('league_id',$request->l_id)->where('name', $match->club2_name)->first();
+
+
+        $c1 = DB::table('players')
+                    ->join('round_player','players.id','=','round_player.player_id')
+                    ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                            'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub')
+                    ->where([
+                                ['round_player.round_id','=',$request->r_id],
+                                ['players.club_id', '=', $club1->id],
+                            ])
+                    ->get();
+
+        $c2 = DB::table('players')
+                    ->join('round_player','players.id','=','round_player.player_id')
+                    ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                            'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub')
+                    ->where([
+                                ['round_player.round_id','=',$request->r_id],
+                                ['players.club_id', '=', $club2->id],
+                            ])
+                    ->get();
+
+        $results = [
+            "club1" => $c1,
+            "club2" => $c2,
+        ];
+                    
+        // $c1 = DB::table('players')
+        //             ->join('round_player', function($join){
+        //                 $join->on('round_player','players.id','=','round_player.player_id')
+        //                         ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+        //                         'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+        //                         'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub')
+        //                         ->where('players.club_id', '=', $club1->id);
+        //             })
+        //             ->get();
+
+
 
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
@@ -679,14 +719,30 @@ class AdminController extends Controller
         return $this->json($results);
     }
 
-    public function postPlayersStats(Request $request)
+    public function postPlayerStats(Request $request)
     {
-        $round = Round::where('round_no',$request->r_no)->first();
-        
+        $round = Round::where('round_no',$request->input('data.round_id'))->where('league_id',$request->l_id)->first();
 
+        $player = $round->players->where('pivot.player_id',65)->where('pivot.round_id',$round->round_no)->first()->pivot;
+        $player->start = $request->input('data.start');
+        $player->sub = $request->input('data.sub');
+        $player->assist = $request->input('data.assist');
+        $player->miss = $request->input('data.miss');
+        $player->score = $request->input('data.score');
+        $player->clean = $request->input('data.clean');
+        $player->k_save = $request->input('data.k_save');
+        $player->kd_3strike = $request->input('data.kd_3strike');
+        $player->yellow = $request->input('data.yellow');
+        $player->red = $request->input('data.red');
+        $player->own_goal = $request->input('data.own_goal');
+        $player->captain = $request->input('data.captain');
+        $player->save();
 
-        return $round->players->where('id',21)->first()->pivot;
-
+        if ($player === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($player);
     }
 
 

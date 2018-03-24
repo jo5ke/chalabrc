@@ -19,7 +19,11 @@ class CreateTransfersTable extends Migration
             $table->integer('league_id')->unsigned();
             $table->integer('squad_id')->unsigned();
             $table->integer('season_id')->unsigned();
-            $table->integer('price')->unsigned();
+            $table->integer('round_no')->unsigned();
+            $table->text('buy')->nullable();
+            $table->text('sell')->nullable();
+            $table->integer('ammount_buy')->unsigned();
+            $table->integer('ammount_sell')->unsigned();
             $table->timestamps();
         });
     }

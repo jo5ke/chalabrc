@@ -8,6 +8,7 @@ use App\User as User;
 use App\Squad as Squad;
 use App\Player as Player;
 use App\League as League;
+use App\Transfer as Transfer;
 use JWTAuth;
 
 
@@ -254,7 +255,7 @@ class SquadController extends Controller
         $squad->substitutions = $subs_ids;
         $squad->user_id = $user->id;
         $squad->league_id = $request->l_id;
-        $squad->captain_id = $request->captain;
+        $squad->captain_id = $request->captain[0];
         $squad->save();
         
 
@@ -267,23 +268,96 @@ class SquadController extends Controller
 
     public function buyPlayer(Request $request)
     {
-        $user = User::where('id',1)->first();
-        $meta = $user->leagues->where('id',$request->l_id)->first();
+        // $buy = json_encode($request->buy);
+        // $sell = json_encode($request->sell);
+        $buy = $request->buy;
+        $sell = $request->sell;
 
-        $player = Player::where('id',$request->p_id)->first();
-        //$meta->pivot->money -= 100;
-        $meta->pivot->money -= $player->price;
-        $meta->pivot->save();
+        $user = JWTAuth::authenticate();
+       // $user = User::where('id',1)->first();
+        $meta = $user->oneLeague($request->l_id)->first();
+        return $meta;
 
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
-        $team->players()->attach($player,['user_id' => $user->id]);
+        $selected_team = $team->selected_team;
+        $substitutions = $team->substitutions;
 
+        $transfer = new Transfer;
+        $transfer->user_id = $user->id;
+        $transfer->squad_id = $team->id;
+        $tranfer->league_id = $request->l_id;
+        $transfer->buy = $request->buy;
+        $transfer->sell = $request->sell;
 
+        if(count($buy) >= 2){
+            $b1 = Player::where('id',$buy[0])->first();
+            $b2 = Player::where('id',$buy[1])->first();  
+            $s1 = Player::where('id',$sell[0])->first();
+            $s2 = Player::where('id',$sell[1])->first();   
+            $meta->pivot->transfers = 2;
+            $meta->pivot->money -= $b1->price;         
+            $meta->pivot->money -= $b2->price;  
+            $transfer->ammount_buy = $b1->price + $b2->price;   
+            $meta->pivot->money -= $s1->price;         
+            $meta->pivot->money -= $s2->price; 
+            $transfer->ammount_sell = $s1->price + $s2->price;    
+            $meta->pivot->save();
+            // if(count($selected_team)==11){     
+            //     array_push($selected_team, $buy[0], $buy[1]); 
+            // }elseif(count($selected_team)==12){
+            //     array_push($selected_team, $buy[0]);   
+            //     array_push($substitutions, $buy[0]);   
+            // }else{
+            //     array_push($substitutions, $buy[0], $buy[1]); 
+            // }  
+            if(in_array($buy[0],$selected_team)){
+                $selected_team = array_diff($selected_team, $buy[0]);
+            }else{
+                $substitutions = array_diff($substitutions, $buy[0]);
+            }
+            if(in_array($buy[1],$selected_team)){
+                $selected_team = array_diff($selected_team, $buy[1]);
+            }else{
+                $substitutions = array_diff($substitutions, $buy[1]);
+            }
+        }elseif(count($buy)==1){
+            $b1 = Player::where('id',$buy[0])->first();
+            $s1 = Player::where('id',$sell[0])->first();
+            $meta->pivot->transfers = 1;
+            $meta->pivot->money -= $b1->price;    
+            $transfer->ammount_buy = $b1->price;       
+            $meta->pivot->money -= $s1->price;   
+            $transfer->ammount_sell = $s1->price;      
+            $meta->pivot->save();     
+            // if(count($selected_team)==12){     
+            //     array_push($selected_team, $buy[0]); 
+            // }else{ 
+            //     array_push($substitutions, $buy[0]);   
+            // }
+            if(in_array($buy[0],$selected_team)){
+                $selected_team = array_diff($selected_team, $buy[0]);
+            }else{
+                $substitutions = array_diff($substitutions, $buy[0]);
+            }
+        }
+        $transfer->save();
+        // $meta->pivot->money = $request->money;
+        // $meta->pivot->save();  
+        $team->selected_team = $selected_team;
+        $team->substitutions = $substitutions;
+        $team->save();
 
-        $meta2 = $meta->pivot;
-        return $user->with('squads.players')->get();
+        // $transfer = Transfer::where('user_id',$user->id)->where('squad_id',$team->id)->where('league_id',$request->l_id)->get();
+        // $no_of_transfers = $transfer->count();
+
+        if ($team === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($team);
     }
 
+    //old not-used function
     public function sellPlayer(Request $request)
     {
         $user = User::where('id',1)->first();
@@ -300,6 +374,20 @@ class SquadController extends Controller
 
         $meta2 = $meta->pivot;
         return $user->with('squads.players')->get();
+    }
+
+    public function checkTransfer(Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        // $user = User::where('id',1)->first();
+        $meta = $user->oneLeague($request->l_id)->first();
+        $transfer = $meta->pivot->transfers;
+
+        if ($transfer === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($transfer);
     }
 
 

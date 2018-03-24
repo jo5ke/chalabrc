@@ -44,4 +44,9 @@ class League extends Model
         return $this->hasMany('App\Player');
     }
 
+    public function oneLeague($id)
+    {
+        return $this->belongsToMany('App\User','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers')->withTimestamps();
+    }
+
 }
