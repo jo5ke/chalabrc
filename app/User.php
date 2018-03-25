@@ -46,6 +46,11 @@ class User extends Authenticatable
     {
         return $this->belongsToMany('App\League','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers')->withTimestamps()->get();
     }
+    
+    public function roles()
+    {
+        return $this->belongsToMany('App\Role')->withPivot('secret');
+    }
 
 
 }

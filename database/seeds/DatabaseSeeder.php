@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call('LeagueTableSeeder');
         $this->call('ClubsTableSeeder');
-        $this->call('PlayersTableSeeder');        
+        $this->call('PlayersTableSeeder');   
+        $this->call('RolesTableSeeder');     
     }
 }

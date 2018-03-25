@@ -31,6 +31,7 @@ class APIRegisterController extends Controller
      //   $user = User::first();
         $user = User::where('email', $request->email)->first();
         $user->uuid = Factory::create()->uuid;
+        $user->roles()->attach($user,['role_id'=>1]);
         $user->save();
         $token = JWTAuth::fromUser($user);
         

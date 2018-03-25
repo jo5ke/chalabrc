@@ -7,6 +7,7 @@ use Validator;
 use JWTFactory;
 use JWTAuth;
 use App\User;
+use App\Role;
 use Illuminate\Support\Facades\Auth;
 
 class APILoginController extends Controller
@@ -34,11 +35,25 @@ class APILoginController extends Controller
             // return response()->json(['error' => 'could_not_create_token'], 500);
         }
         
+        $role_id = $user->roles()->first();
+        $role = Role::where('id',$role_id->pivot->role_id)->first();
+        $secret = $role_id->pivot->secret;
 
-        $response = [
-            'user' => $user,
-            'token' => $token
-        ];
+        if($secret === null){
+            $response = [
+                'user' => $user,
+                'token' => $token,
+                'role' => $role->name
+                ];
+        }else{
+            $response = [
+                'user' => $user,
+                'token' => $token,
+                'role' => $role->name,
+                'secret' => $secret
+                ];
+        }
+
         return $this->json($response);
      //   return response()->json($response);
     }
