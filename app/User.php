@@ -44,12 +44,17 @@ class User extends Authenticatable
 
     public function oneLeague($id)
     {
-        return $this->belongsToMany('App\League','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers')->withTimestamps()->get();
+        return $this->belongsToMany('App\League','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers','privates')->withTimestamps()->get();
     }
     
     public function roles()
     {
         return $this->belongsToMany('App\Role')->withPivot('secret');
+    }
+
+    public function privateleagues()
+    {
+        return $this->hasMany('App\PrivateLeagues','owner_id','id');
     }
 
 

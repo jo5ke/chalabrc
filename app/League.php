@@ -46,7 +46,12 @@ class League extends Model
 
     public function oneLeague($id)
     {
-        return $this->belongsToMany('App\User','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers')->withTimestamps();
+        return $this->belongsToMany('App\User','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers','privates')->withTimestamps();
+    }
+
+    public function privateleagues()
+    {
+        return $this->hasMany('App\PrivateLeague');
     }
 
 }

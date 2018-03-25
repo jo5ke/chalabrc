@@ -21,6 +21,7 @@ class CreateUsersLeaguesTable extends Migration
             $table->integer('money')->unsigned()->nullable();
             $table->integer('points')->default(0)->unsigned()->nullable();            
             $table->integer('transfers')->default(2)->unsigned()->nullable();            
+            $table->integer('privates')->default(0)->unsigned()->nullable();            
             $table->timestamps();
         });
     }

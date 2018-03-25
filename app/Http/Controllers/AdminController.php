@@ -677,7 +677,7 @@ class AdminController extends Controller
                     ->join('round_player','players.id','=','round_player.player_id')
                     ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                             'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub')
+                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                     ->where([
                                 ['round_player.round_id','=',$request->r_id],
                                 ['players.club_id', '=', $club1->id],
@@ -688,7 +688,7 @@ class AdminController extends Controller
                     ->join('round_player','players.id','=','round_player.player_id')
                     ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                             'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub')
+                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                     ->where([
                                 ['round_player.round_id','=',$request->r_id],
                                 ['players.club_id', '=', $club2->id],

@@ -38,10 +38,10 @@ Route::post('getCurrentRound', 'HomeController@getCurrentRound');
 Route::get('getJersey/{name}', 'HomeController@getJersey');
 
 
-//Player page Controller
+//Player page routes
 Route::get('players/getPlayers', 'PlayerController@getPlayers');
 
-//My Team page controller
+//My Team page routes
 
 Route::post('myTeam/getMyTeamPage', 'SquadController@getMyTeamPage')->middleware('jwt.auth');
 Route::put('myTeam/updateSquad', 'SquadController@updateSquad')->middleware('jwt.auth');
@@ -49,14 +49,16 @@ Route::post('myTeam/postSquad', 'SquadController@postSquad')->middleware('jwt.au
 Route::post('myTeam/buyPlayer', 'SquadController@buyPlayer');
 Route::delete('myTeam/sellPlayer', 'SquadController@sellPlayer')->middleware('jwt.auth');
 // duplicated routes(admin)
-Route::post('myTeam/getClubs', 'AdminController@getClubs')->middleware('check.admin');
-Route::post('myTeam/getClub', 'AdminController@getClub')->middleware('jwt.auth');;
+Route::post('myTeam/getClubs', 'AdminController@getClubs');
+Route::post('myTeam/getClub', 'AdminController@getClub');
 Route::post('myTeam/getPlayer', 'SquadController@getPlayer');
 Route::post('myTeam/getPlayers', 'SquadController@getPlayers');
 Route::post('myTeam/getSquad', 'SquadController@getSquad');
 Route::post('myTeam/checkTransfer', 'SquadController@checkTransfer');
 
-
+//Private League routes
+Route::post('privateLeague/createLeague', 'PrivateLeagueController@createLeague')->middleware('jwt.auth');;
+Route::post('privateLeague/getPrivateLeagues', 'PrivateLeagueController@getPrivateLeagues');
 
 
 
