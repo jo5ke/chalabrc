@@ -266,7 +266,7 @@ class SquadController extends Controller
         return $this->json($squad);
     }
 
-    public function buyPlayer(Request $request)
+    public function makeTransfer(Request $request)
     {
         // $buy = json_encode($request->buy);
         // $sell = json_encode($request->sell);
@@ -274,32 +274,34 @@ class SquadController extends Controller
         $sell = $request->sell;
 
         $user = JWTAuth::authenticate();
-       // $user = User::where('id',1)->first();
+        // $user = User::where('id',1)->first();
         $meta = $user->oneLeague($request->l_id)->first();
-        return $meta;
+        
 
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
-        $selected_team = $team->selected_team;
-        $substitutions = $team->substitutions;
+        $selected_team = json_decode($team->selected_team);
+        $substitutions = json_decode($team->substitutions);
+  
+
 
         $transfer = new Transfer;
         $transfer->user_id = $user->id;
         $transfer->squad_id = $team->id;
-        $tranfer->league_id = $request->l_id;
-        $transfer->buy = $request->buy;
-        $transfer->sell = $request->sell;
+        $transfer->league_id = $request->l_id;
+        $transfer->buy = json_encode($request->buy);
+        $transfer->sell = json_encode($request->sell);
 
         if(count($buy) >= 2){
             $b1 = Player::where('id',$buy[0])->first();
             $b2 = Player::where('id',$buy[1])->first();  
             $s1 = Player::where('id',$sell[0])->first();
             $s2 = Player::where('id',$sell[1])->first();   
-            $meta->pivot->transfers = 2;
+            $meta->pivot->transfers -= 2;
             $meta->pivot->money -= $b1->price;         
             $meta->pivot->money -= $b2->price;  
             $transfer->ammount_buy = $b1->price + $b2->price;   
-            $meta->pivot->money -= $s1->price;         
-            $meta->pivot->money -= $s2->price; 
+            $meta->pivot->money += $s1->price;         
+            $meta->pivot->money += $s2->price; 
             $transfer->ammount_sell = $s1->price + $s2->price;    
             $meta->pivot->save();
             // if(count($selected_team)==11){     
@@ -310,23 +312,35 @@ class SquadController extends Controller
             // }else{
             //     array_push($substitutions, $buy[0], $buy[1]); 
             // }  
-            if(in_array($buy[0],$selected_team)){
-                $selected_team = array_diff($selected_team, $buy[0]);
+            if(in_array($sell[0],$selected_team)){
+                $selac = [$sell[0]];
+                $selected_team = array_diff($selected_team, $selac);
+                $selected_team = array_values(json_decode(json_encode($selected_team), true));
+                array_push($selected_team,$buy[0]);
             }else{
-                $substitutions = array_diff($substitutions, $buy[0]);
+                $selac = [$sell[0]];
+                $substitutions = array_diff($substitutions, $selac);
+                $substitutions = array_values(json_decode(json_encode($substitutions), true));
+                array_push($substitutions,$buy[0]);                
             }
-            if(in_array($buy[1],$selected_team)){
-                $selected_team = array_diff($selected_team, $buy[1]);
+            if(in_array($sell[1],$selected_team)){
+                $selac = [$sell[1]];
+                $selected_team = array_diff($selected_team, $selac);
+                $selected_team = array_values(json_decode(json_encode($selected_team), true));  
+                array_push($selected_team,$buy[1]);                              
             }else{
-                $substitutions = array_diff($substitutions, $buy[1]);
+                $selac = [$sell[1]];
+                $substitutions = array_diff($substitutions, $selac);
+                $substitutions = array_values(json_decode(json_encode($substitutions), true));    
+                array_push($substitutions,$buy[1]);                                           
             }
         }elseif(count($buy)==1){
             $b1 = Player::where('id',$buy[0])->first();
             $s1 = Player::where('id',$sell[0])->first();
-            $meta->pivot->transfers = 1;
+            $meta->pivot->transfers--;
             $meta->pivot->money -= $b1->price;    
             $transfer->ammount_buy = $b1->price;       
-            $meta->pivot->money -= $s1->price;   
+            $meta->pivot->money += $s1->price;   
             $transfer->ammount_sell = $s1->price;      
             $meta->pivot->save();     
             // if(count($selected_team)==12){     
@@ -334,17 +348,22 @@ class SquadController extends Controller
             // }else{ 
             //     array_push($substitutions, $buy[0]);   
             // }
-            if(in_array($buy[0],$selected_team)){
-                $selected_team = array_diff($selected_team, $buy[0]);
+            $selac = [$sell[0]];
+            if(in_array($sell[0],$selected_team)){
+                $selected_team = array_diff($selected_team, $selac);
+                $selected_team = array_values(json_decode(json_encode($selected_team), true));    
+                array_push($selected_team,$buy[0]);                            
             }else{
-                $substitutions = array_diff($substitutions, $buy[0]);
+                $substitutions = array_diff($substitutions, $selac);
+                $substitutions = array_values(json_decode(json_encode($substitutions), true));  
+                array_push($substitutions,$buy[0]);                                                              
             }
         }
         $transfer->save();
         // $meta->pivot->money = $request->money;
         // $meta->pivot->save();  
-        $team->selected_team = $selected_team;
-        $team->substitutions = $substitutions;
+        $team->selected_team = json_encode($selected_team);
+        $team->substitutions = json_encode($substitutions);
         $team->save();
 
         // $transfer = Transfer::where('user_id',$user->id)->where('squad_id',$team->id)->where('league_id',$request->l_id)->get();

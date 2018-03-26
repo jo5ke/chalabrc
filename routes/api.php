@@ -34,8 +34,11 @@ Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
 Route::post('payment', 'PaymentController@payment');
 Route::post('users', 'HomeController@getUsers');
 Route::post('getCurrentRound', 'HomeController@getCurrentRound');
+Route::post('getUserSquad', 'HomeController@getUserSquad');
 
 Route::get('getJersey/{name}', 'HomeController@getJersey');
+Route::post('saveImage', 'HomeController@saveImage');
+Route::get('viewFile/{name}', 'HomeController@viewFile');
 
 
 //Player page routes
@@ -46,7 +49,7 @@ Route::get('players/getPlayers', 'PlayerController@getPlayers');
 Route::post('myTeam/getMyTeamPage', 'SquadController@getMyTeamPage')->middleware('jwt.auth');
 Route::put('myTeam/updateSquad', 'SquadController@updateSquad')->middleware('jwt.auth');
 Route::post('myTeam/postSquad', 'SquadController@postSquad')->middleware('jwt.auth');
-Route::post('myTeam/buyPlayer', 'SquadController@buyPlayer');
+Route::post('myTeam/makeTransfer', 'SquadController@makeTransfer')->middleware('jwt.auth');
 Route::delete('myTeam/sellPlayer', 'SquadController@sellPlayer')->middleware('jwt.auth');
 // duplicated routes(admin)
 Route::post('myTeam/getClubs', 'AdminController@getClubs');
@@ -54,10 +57,10 @@ Route::post('myTeam/getClub', 'AdminController@getClub');
 Route::post('myTeam/getPlayer', 'SquadController@getPlayer');
 Route::post('myTeam/getPlayers', 'SquadController@getPlayers');
 Route::post('myTeam/getSquad', 'SquadController@getSquad');
-Route::post('myTeam/checkTransfer', 'SquadController@checkTransfer');
+Route::post('myTeam/checkTransfer', 'SquadController@checkTransfer')->middleware('jwt.auth');
 
 //Private League routes
-Route::post('privateLeague/createLeague', 'PrivateLeagueController@createLeague')->middleware('jwt.auth');;
+Route::post('privateLeague/createLeague', 'PrivateLeagueController@createLeague')->middleware('jwt.auth');
 Route::post('privateLeague/getPrivateLeagues', 'PrivateLeagueController@getPrivateLeagues');
 
 
@@ -118,4 +121,5 @@ Route::put('admin/updateArticle', 'AdminController@updateArticle');
 Route::post('admin/getClubsByMatch', 'AdminController@getClubsByMatch');
 Route::post('admin/getPlayersStats', 'AdminController@getPlayersStats');
 Route::post('admin/postPlayerStats', 'AdminController@postPlayerStats');
+Route::post('admin/playerTotalPoints', 'AdminController@playerTotalPoints');
 

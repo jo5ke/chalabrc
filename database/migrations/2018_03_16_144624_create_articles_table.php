@@ -17,6 +17,7 @@ class CreateArticlesTable extends Migration
             $table->increments('id');
             $table->string('body',5000);
             $table->string('title');
+            $table->string('image_path');
             $table->integer('league_id')->unsigned();
             $table->timestamps();
         });

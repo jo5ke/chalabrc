@@ -14,6 +14,9 @@ use App\Season as Season;
 use App\User as User;
 use App\PlayerStats as PlayerStats;
 use Faker\Factory;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Image;
 
 
 class AdminController extends Controller
@@ -43,6 +46,16 @@ class AdminController extends Controller
 
     public function postClub(Request $request)
     {
+        $png_url = $request->name . ".png";
+        // $path = public_path() . "/images/clubs/" . $png_url;
+        // $img = Image::make(file_get_contents($request->image))->save($path);
+
+        //get the base-64 from data
+        $base64_str = substr($request->image, strpos($request->image, ",")+1);
+        //decode base64 string
+        $image = base64_decode($base64_str);
+        Storage::disk('clubs')->put($png_url,$image);
+
         $club = new Club;
         $club->name = $request->name;
         $club->league_id = $request->l_id;
@@ -575,10 +588,21 @@ class AdminController extends Controller
   
     public function postArticle(Request $request)
     {
+        $png_url = "news-".time().".png";
+        // $path = public_path() . "/images/news/" . $png_url;
+        // $img = Image::make(file_get_contents($request->image))->save($path);
+
+        //get the base-64 from data
+        $base64_str = substr($request->image, strpos($request->image, ",")+1);
+        //decode base64 string
+        $image = base64_decode($base64_str);
+        Storage::disk('news')->put($png_url,$image);
+
         $article = new Article();
         $article->title = $request->title;
         $article->body = $request->body;
         $article->league_id = $request->l_id;
+        $article->image_path = $png_url;
         $article->save();
 
         if ($article === null) {
@@ -722,20 +746,25 @@ class AdminController extends Controller
     public function postPlayerStats(Request $request)
     {
         $round = Round::where('round_no',$request->input('data.round_id'))->where('league_id',$request->l_id)->first();
-
-        $player = $round->players->where('pivot.player_id',65)->where('pivot.round_id',$round->round_no)->first()->pivot;
-        $player->start = $request->input('data.start');
-        $player->sub = $request->input('data.sub');
-        $player->assist = $request->input('data.assist');
-        $player->miss = $request->input('data.miss');
-        $player->score = $request->input('data.score');
-        $player->clean = $request->input('data.clean');
-        $player->k_save = $request->input('data.k_save');
-        $player->kd_3strike = $request->input('data.kd_3strike');
-        $player->yellow = $request->input('data.yellow');
-        $player->red = $request->input('data.red');
-        $player->own_goal = $request->input('data.own_goal');
-        $player->captain = $request->input('data.captain');
+        $player = $round->players->where('pivot.player_id',$request->input('data.player_id'))->where('pivot.round_id',$round->round_no)->first()->pivot;
+        $position = Player::where('id',$request->input('data.player_id'))->first()->position;
+        $stats = [
+            "start"     =>  $player->start = $request->input('data.start'),
+            "sub"       =>  $player->sub = $request->input('data.sub'),
+            "assist"    =>  $player->assist = $request->input('data.assist'),
+            "miss"      =>  $player->miss = $request->input('data.miss'),
+            "score"     =>  $player->score = $request->input('data.score'),
+            "clean"     =>  $player->clean = $request->input('data.clean'),
+            "k_save"    =>  $player->k_save = $request->input('data.k_save'),
+            "kd_3strike"=>  $player->kd_3strike = $request->input('data.kd_3strike'),
+            "yellow"    =>  $player->yellow = $request->input('data.yellow'),
+            "red"       =>  $player->red = $request->input('data.red'),
+            "own_goal"  =>  $player->own_goal = $request->input('data.own_goal'),
+            "captain"   =>  $player->captain = $request->input('data.captain'),
+            "position"  =>  $position
+        ];
+        $player->save();
+        $player->total = $this->playerTotalPoints($stats);
         $player->save();
 
         if ($player === null) {
@@ -745,6 +774,85 @@ class AdminController extends Controller
         return $this->json($player);
     }
 
+    public function playerTotalPoints($stats)
+    {
+        //$player = Player::where('id',$id)->first(); 
+ 
+        $total = 0;
+        
+        switch($stats["position"]):
+            case 'ATK':
+                $total += $stats["start"]*2;
+                $total += $stats["sub"]*1;
+                $total += $stats["score"]*3;
+                $total += $stats["assist"]*3;
+                // ?
+                // $total += $stats["clean"]*0;
+                // $total += $stats["k_save"]*0;
+                // $total += $stats["kd_3strike"]*0;
+                //
+                $total += $stats["miss"]*(-2);
+                $total += $stats["yellow"]*(-1);
+                $total += $stats["red"]*(-3);
+                $total += $stats["own_goal"]*(-2);
+                $total += $stats["captain"]*2;
+
+                break;
+            case "MID":
+                $total += $stats["start"]*2;
+                $total += $stats["sub"]*1;
+                $total += $stats["score"]*4;
+                $total += $stats["assist"]*3;
+                // ?
+                $total += $stats["clean"]*2;
+                // $total += $stats["k_save"]*0;
+                // $total += $stats["kd_3strike"]*0;
+                //
+                $total += $stats["miss"]*(-2);
+                $total += $stats["yellow"]*(-1);
+                $total += $stats["red"]*(-3);
+                $total += $stats["own_goal"]*(-2);
+                $total += $stats["captain"]*2;
+               
+                break;    
+            case 'DEF':
+                $total += $stats["start"]*2;
+                $total += $stats["sub"]*1;
+                $total += $stats["score"]*6;
+                $total += $stats["assist"]*3;
+                // ?
+                $total += $stats["clean"]*5;
+                // $total += $stats["k_save"]*0;
+                $total += $stats["kd_3strike"]*(-1);
+                //
+                $total += $stats["miss"]*(-2);
+                $total += $stats["yellow"]*(-1);
+                $total += $stats["red"]*(-3);
+                $total += $stats["own_goal"]*(-2);
+                $total += $stats["captain"]*2;
+               
+                break;                            
+            case "GK":
+                $total += $stats["start"]*2;
+                $total += $stats["sub"]*1;
+                $total += $stats["score"]*8;
+                $total += $stats["assist"]*3;
+                // ?
+                $total += $stats["clean"]*5;
+                $total += $stats["k_save"]*5;
+                $total += $stats["kd_3strike"]*(-1);
+                //
+                $total += $stats["miss"]*(-2);
+                $total += $stats["yellow"]*(-1);
+                $total += $stats["red"]*(-3);
+                $total += $stats["own_goal"]*(-2);
+                $total += $stats["captain"]*2;
+               
+                break;
+        endswitch;
+        return $total;
+
+    }
 
     /////////////////////////////////Post match stats ends
 

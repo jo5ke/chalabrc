@@ -9,6 +9,7 @@ use JWTAuth;
 use App\User;
 use App\Role;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class APILoginController extends Controller
 {
@@ -37,19 +38,34 @@ class APILoginController extends Controller
         
         $role_id = $user->roles()->first();
         $role = Role::where('id',$role_id->pivot->role_id)->first();
-        $secret = $role_id->pivot->secret;
+       //  $user = $user->with('leagues')->where('email',$user->email)->get();
 
-        if($secret === null){
-            $response = [
-                'user' => $user,
-                'token' => $token,
-                'role' => $role->name
-                ];
-        }else{
+         $leagues = DB::table('users')
+                        ->join('user_league','users.id','=','user_league.user_id')
+                        ->select('user_league.league_id')
+                        ->where('user_league.user_id',$user->id)
+                        ->get();
+
+        $i=0;
+        foreach($leagues as $league){
+            $league_ids[$i] = intval($league->league_id);
+            $i++;
+        }
+
+        if($role->name === "user" ){
             $response = [
                 'user' => $user,
                 'token' => $token,
                 'role' => $role->name,
+                'leagues' => $league_ids        
+                ];
+        }else{
+            $secret = $role_id->pivot->secret;            
+            $response = [
+                'user' => $user,
+                'token' => $token,
+                'role' => $role->name,
+                'leagues' => $league_ids,
                 'secret' => $secret
                 ];
         }
