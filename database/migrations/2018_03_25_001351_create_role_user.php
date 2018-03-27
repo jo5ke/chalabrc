@@ -17,6 +17,7 @@ class CreateRoleUser extends Migration
             $table->increments('id');
             $table->integer('user_id')->onDelete('cascade');
             $table->integer('role_id')->onDelete('cascade');
+            $table->string('secret')->nullable();
             $table->timestamps();
         });
     }

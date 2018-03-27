@@ -214,7 +214,14 @@ class AdminController extends Controller
     	$league = new League();
     	$league->name = $request->name;
     	$league->number_of_rounds = $request->number_of_rounds;
-    	$league->save();
+        $league->save();
+        
+        for($i=0;$i<$league->number_of_rounds;$i++){
+            $round = new Round;
+            $round->league_id = $league->id;
+            $round->round_no = $i+1;
+            $round->save();
+        }
 
         $results = League::where('id', $league->id)->get();
         if ($results === null) {
@@ -630,7 +637,12 @@ class AdminController extends Controller
         $article->title = $request->title;
         $article->body = $request->body;
         $article->league_id = $request->l_id;
+        $oldpath = $article->image;
         $article->save();
+
+        if($article->image_path !== null && $article->image_path)
+        
+        
 
         if ($article === null) {
             $response = 'There was a problem fetching your data.';

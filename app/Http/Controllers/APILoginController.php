@@ -10,6 +10,8 @@ use App\User;
 use App\Role;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
 
 class APILoginController extends Controller
 {
@@ -23,9 +25,12 @@ class APILoginController extends Controller
             return $this->json($validator->errors());            
             // return response()->json($validator->errors());
         }
+        $token=null;
         $credentials = $request->only('email', 'password');
         $user = User::where('email', $request->email)->first();
+        if(Hash::check($request->password,$user->password)){    
         $token = JWTAuth::fromUser($user);
+        }
         try {
             if (! $token ) {
                 return $this->json(['error' => 'invalid_credentials'], 401);

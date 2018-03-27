@@ -118,12 +118,12 @@ class SquadController extends Controller
 
         for($i=0;$i<count($starting);$i++){
             $starting[$i]=Player::where('id',$starting[$i])->with('club')->first();
-            $team_val += $starting[$i]->price;
+            // $team_val += $starting[$i]->price;
         }
 
         for($i=0;$i<count($subs);$i++){
             $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
-            $team_val += $starting[$i]->price;
+            // $team_val += $starting[$i]->price;
         }
 
      //   $play = Squad::where('user_id',$user->id)->where('id',$team->id)->with('players')->first();
@@ -199,25 +199,23 @@ class SquadController extends Controller
 
         $starting_ids = json_encode($request->selected_team);
         $subs_ids = json_encode($request->substitutions);
-      //  $full_squad = array_merge($starting_ids,$subs_ids);
+        // $full_squad = array_merge($starting_ids,$subs_ids);
 
         $user = JWTAuth::authenticate();
-     //   $user = User::where('uuid',$uuid)->first();
-        $squad = new Squad;
-       // $squad = $user->squads->where('league_id',$request->l_id)->first();
+        $squad = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
         
         $squad->formation = "4-4-2";
         $squad->selected_team = $starting_ids;
         $squad->substitutions = $subs_ids;
-        $squad->user_id = $user->id;
         $squad->league_id = $request->l_id;
         $squad->save();
 
         $money = $request->money;
-        
+        $league = League::where('id',$request->l_id)->first();
 
-        $sq =  $user->squads->first();
-        $user->leagues()->attach($user,['money' => $money ,'points' => 0, 'squad_id' => $sq->id,'league_id'=>$request->l_id]);
+        // $sq =  $user->squads->first();
+        // $user->leagues()->updateExistingPivot($user->id,['money' => $money]);
+        $user->leagues()->updateExistingPivot($request->l_id,['money' =>  $request->money]);
         
         // $meta = $user->leagues->where('id',$request->l_id)->first();
         // $meta = $meta->pivot;

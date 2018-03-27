@@ -29,4 +29,9 @@ class Round extends Model
         ->withPivot('start','sub','assist','miss','score','clean','k_save','kd_3strike','yellow','red','own_goal','captain','total')
         ->withTimestamps();
     }
+
+    public function rounds()
+    {
+        return $this->belongsToMany('App\Round','squad_round')->withPivot('points')->withTimestamps();
+    }
 }

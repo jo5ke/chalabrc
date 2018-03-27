@@ -15,10 +15,10 @@ class PlayersTableSeeder extends Seeder
         $positions = ['GK', 'DEF', 'MID', 'ATK'];
 
         for ($i = 0; $i < 750; $i++) {
-            $faker = Faker::create();
+            $faker = Faker::create('no_NO');
             DB::table('players')->insert([
                 [
-                    'club_id' => rand(1, 32),
+                    'club_id' => rand(1, 15),
                     'first_name' => $faker->firstNameMale,
                     'last_name' => $faker->lastName,
                     'position' => $positions[rand(0, 3)],

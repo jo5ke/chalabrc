@@ -21,7 +21,8 @@ class CreateMatchesTable extends Migration
             $table->string('club1_name')->nullable();         
             $table->string('club2_name')->nullable();         
             $table->integer('club1_score')->nullable()->unsigned();         
-            $table->integer('club2_score')->nullable()->unsigned();         
+            $table->integer('club2_score')->nullable()->unsigned();     
+            $table->timestamp('time')->nullable();    
             $table->timestamps();
         });
     }

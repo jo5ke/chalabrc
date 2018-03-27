@@ -29,4 +29,9 @@ class Squad extends Model
     {
         return $this->hasMany('App\Transfer');
     }
+
+    public function rounds()
+    {
+        return $this->belongsToMany('App\Round','squad_round')->withPoints('points')->withTimestamps();
+    }
 }

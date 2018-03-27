@@ -18,7 +18,7 @@ class CreateRoundsTable extends Migration
             $table->integer('season_id')->unsigned()->nullable();
             $table->integer('league_id')->unsigned();
             $table->foreign('league_id')->references('id')->on('leagues')->onUpdate('cascade')->onDelete('cascade');
-            $table->integer('round_no')->unsigned();            
+            $table->integer('round_no')->unsigned();                    
             $table->timestamps();
         });
     }

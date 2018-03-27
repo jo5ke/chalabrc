@@ -27,18 +27,25 @@ Route::middleware('jwt.auth')->get('/users', function(Request $request) {
 });
 
 //Home page controller
-Route::get('news', 'HomeController@getNews')->name('getNews');
-Route::get('getLatesNews', 'HomeController@getLatestNews')->name('getLatestNews');
+Route::get('news', 'HomeController@getAllNews');
+Route::post('getLatestNews', 'HomeController@getLatestNews');
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::post('topFivePlayersDivision', 'HomeController@topFivePlayersDivision');
 Route::post('payment', 'PaymentController@payment');
 Route::post('users', 'HomeController@getUsers');
 Route::post('getCurrentRound', 'HomeController@getCurrentRound');
 Route::post('getUserSquad', 'HomeController@getUserSquad');
+Route::get('getAllLeagues', 'HomeController@getAllLeagues');
+Route::post('getNews', 'HomeController@getNewsByLeague');
 
 Route::get('getJersey/{name}', 'HomeController@getJersey');
 Route::post('saveImage', 'HomeController@saveImage');
 Route::get('viewFile/{name}', 'HomeController@viewFile');
+Route::get('getImage/{name}', 'HomeController@getImage');
+Route::post('getDreamTeam', 'HomeController@getDreamTeam');
+Route::get('getJerseyId/{$id}', 'HomeController@getJerseyId');
+Route::get('getArticle/{slug}', 'HomeController@getArticle');
+
 
 
 //Player page routes

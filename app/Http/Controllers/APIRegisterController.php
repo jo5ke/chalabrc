@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\User;
+use App\User as User;
+use App\Squad as Squad;
 use JWTFactory;
 use JWTAuth;
 use Validator;
@@ -16,7 +17,7 @@ class APIRegisterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email|max:255|unique:users',
-            'name' => 'required',
+            'username' => 'required',
             'password'=> 'required'
         ]);
         if ($validator->fails()) {
@@ -24,7 +25,9 @@ class APIRegisterController extends Controller
             // return response()->json($validator->errors());
         }
         User::create([
-            'name' => $request->get('name'),
+            'first_name' => $request->get('first_name'),
+            'last_name' => $request->get('last_name'),
+            'username' => $request->get('username'),
             'email' => $request->get('email'),
             'password' => bcrypt($request->get('password')),
         ]);
@@ -32,7 +35,12 @@ class APIRegisterController extends Controller
         $user = User::where('email', $request->email)->first();
         $user->uuid = Factory::create()->uuid;
         $user->roles()->attach($user,['role_id'=>1]);
-        $user->save();
+        $user->save(); 
+        $squad = new Squad;
+        $squad->user_id = $user->id;
+        $squad->league_id = $request->league;
+        $squad->save();
+        $user->leagues()->attach($user,['money' => 100000 ,'points' => 0,'league_id'=>$request->league ,'squad_id'=> $squad->id]);
         $token = JWTAuth::fromUser($user);
         
      //  return Response::json(compact('token'));
@@ -40,3 +48,5 @@ class APIRegisterController extends Controller
          return $this->json($user);
     }
 }
+
+// jZLNLcdbCe?)z>5DJ,4ZGt9tbR5P:x
