@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\File;
 use App\Squad as Squad;
 use App\Player as Player;
 use Image;
-
+use JWTAuth;
 
 class HomeController extends Controller
 {
@@ -32,12 +32,30 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public $term = "";
 
     public function getAllLeagues()
     {
         $results = League::all();
         if ($results === null) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching leagues.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getMyLeagues()
+    {
+        $user = JWTAuth::authenticate();
+        $i=0;
+       // return $user->leagues()->get();
+        foreach( $user->leagues()->get() as $league){
+            $results[$i] = $league;
+            $i++;
+        }
+     //   $results = League::where();
+        if ($results === null) {
+            $response = 'There was a problem fetching leagues.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -47,7 +65,7 @@ class HomeController extends Controller
     {
         $results = Article::all();
         if ($results === null) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching news.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -55,9 +73,9 @@ class HomeController extends Controller
 
     public function getNewsByLeague(Request $request)
     {
-        $results = Article::where('league_id', $request->l_id)->get();
+        $results = Article::where('league_id', $request->l_id)->paginate(5);
         if ($results === null) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching news.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -68,7 +86,7 @@ class HomeController extends Controller
         $results = Article::where('league_id',$request->l_id)->orderBy('created_at', 'desc')->first();
  
         if ($results === null) {
-            $response = 'There was a problem fetching players.';
+            $response = 'There was a problem fetching news.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -95,7 +113,54 @@ class HomeController extends Controller
     // "id" = id lige (1 i 2)
     public function topFivePlayersDivision(Request $request)
     {
-        $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
+        $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->select('users.first_name','users.last_name','users.uuid','users.username',
+                            'user_league.points','user_league.squad_id')
+                    ->where('user_league.league_id','=',$request->l_id)
+                    ->orderBy('user_league.points', 'desc')
+                    ->take(5)
+                    ->get();
+
+     //   $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function topFivePlayersDivision1()
+    {
+        $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->select('users.first_name','users.last_name','users.uuid','users.username',
+                            'user_league.points','user_league.squad_id')
+                    ->where('user_league.league_id','=',1)
+                    ->orderBy('user_league.points', 'desc')
+                    ->take(5)
+                    ->get();
+
+     //   $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function topFivePlayersDivision2(Request $request)
+    {
+        $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->select('users.first_name','users.last_name','users.uuid','users.username',
+                            'user_league.points','user_league.squad_id')
+                    ->where('user_league.league_id','=',2)
+                    ->orderBy('user_league.points', 'desc')
+                    ->take(5)
+                    ->get();
+
+     //   $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
         if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
@@ -125,15 +190,43 @@ class HomeController extends Controller
         // $results = User::with(['oneLeague' => $request->l_id])->get();
         // $users = User::all();
         // $results = $users->oneLeague($request->l_id)->get();
-     
-        $results = DB::table('users')
-                ->join('user_league','users.id','=','user_league.user_id')
-                ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
-                        'user_league.money','user_league.points','user_league.squad_id')
-                ->where('user_league.league_id','=',$request->l_id)
-                ->orderBy('user_league.points','desc')
-                ->take(10)
-                ->get();
+        $this->term = $request->term ? $request->term : "";
+        $per_page = $request->per_page ? $request->per_page : null;
+
+        if($this->term==""){
+            $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
+                            'user_league.money','user_league.points','user_league.squad_id')
+                    ->where('user_league.league_id','=',$request->l_id)
+                    ->orderBy('user_league.points','desc');
+                    // ->take(10)
+                    // ->get();
+        }else{
+            $this->term = $this->term . "%";
+            $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
+                            'user_league.money','user_league.points','user_league.squad_id')
+                    // ->where([
+                    //             ['user_league.league_id','=',$request->l_id],
+                    //             ['users.first_name','LIKE',$term]
+                    //          ])
+                    ->where('user_league.league_id','=',$request->l_id)
+                    ->where(function ($query) {
+                                $query->where('users.first_name','LIKE',$this->term)
+                                ->orWhere('users.last_name','LIKE',$this->term);
+                    })
+                        
+                    ->orderBy('user_league.points','desc');
+                    // ->take(10)
+                    // ->get();
+        }
+        if($per_page===null){
+            $results = $results->take(10)->get();
+        }else{
+            $results = $results->paginate($per_page);
+        }
 
         if ($results === null) {
             $response = 'There was a problem fetching players.';
@@ -259,11 +352,12 @@ class HomeController extends Controller
     public function getDreamTeam(Request $request)
     {
         $league = League::where('id',$request->l_id)->first();
-        
+      
         $gk = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id',
-                        'round_player.total')
+                        'round_player.total','clubs.name')
                 ->where([
                             ['round_player.round_id','=',$league->current_round],
                             ['players.position','=','GK'],
@@ -274,8 +368,9 @@ class HomeController extends Controller
 
         $def = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id',
-                        'round_player.total')
+                        'round_player.total','clubs.name')
                 ->where([
                             ['round_player.round_id','=',$league->current_round],
                             ['players.position','=','DEF'],
@@ -286,8 +381,9 @@ class HomeController extends Controller
                 
         $mid = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id',
-                        'round_player.total')
+                        'round_player.total','clubs.name')
                 ->where([
                             ['round_player.round_id','=',$league->current_round],
                             ['players.position','=','MID'],
@@ -298,8 +394,9 @@ class HomeController extends Controller
 
         $atk = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id',
-                        'round_player.total')
+                        'round_player.total','clubs.name')
                 ->where([
                             ['round_player.round_id','=',$league->current_round],
                             ['players.position','=','ATK'],
@@ -324,7 +421,49 @@ class HomeController extends Controller
 
     public function getArticle($slug)
     {
-        
+        $article = Article::where('slug',$slug)->first();
+        if ($article === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($article);
+    }
+
+    public function getUserSettings()
+    {
+        $user = JWTAuth::authenticate();
+        $results = [
+            "first_name" => $user->first_name,
+            "last_name"  => $user->last_name,
+            "city"       => $user->city,
+            "country"    => $user->country,
+            "birthdate"  => $user->birthdate   
+        ];
+
+        if ($results === null) {
+            $response = 'There was a problem updating your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function updateUserSettings(Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $user->birthdate = $request->birthdate;
+        $user->country = $request->country;
+        $user->city = $request->city;
+        $user->first_name = ucwords($request->first_name);
+        $user->last_name = ucwords($request->last_name);
+        // $full_name = $request->full_name;
+        // $full_name = explode(" ",$full_name);
+        $user->save();
+
+        if ($user === null) {
+            $response = 'There was a problem updating your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($user);
     }
     
 }

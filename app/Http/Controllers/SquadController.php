@@ -294,7 +294,7 @@ class SquadController extends Controller
             $b2 = Player::where('id',$buy[1])->first();  
             $s1 = Player::where('id',$sell[0])->first();
             $s2 = Player::where('id',$sell[1])->first();   
-            $meta->pivot->transfers -= 2;
+            $meta->pivot->transfers = 0;
             $meta->pivot->money -= $b1->price;         
             $meta->pivot->money -= $b2->price;  
             $transfer->ammount_buy = $b1->price + $b2->price;   

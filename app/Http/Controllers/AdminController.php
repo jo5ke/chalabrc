@@ -299,10 +299,12 @@ class AdminController extends Controller
     	$match = new Match();
     	$match->club1_name = $request->c1_name;
         $match->club2_name = $request->c2_name;
+        $match->time = $request->time;
         $round = Round::where('league_id',$request->l_id)->where('round_no',$request->r_no)->first();
         //return $round;
         $match->round_id = $round->id;
         $match->league_id = $request->l_id;
+
 
         $club1 = Club::where('name',$match->club1_name)->first();
         $club2 = Club::where('name',$match->club2_name)->first();
@@ -355,15 +357,14 @@ class AdminController extends Controller
         $newMatch = new Match;
     	$newMatch->club1_name = $request->c1_name;
         $newMatch->club2_name = $request->c2_name;
+        $newMatch->time = $request->time;        
         
        
         $newMatch->round_id = $round->id;
         $newMatch->league_id = $request->l_id;
         
         $newMatch->save();
-        return $newMatch;
         
-
         if ($newMatch === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -610,6 +611,7 @@ class AdminController extends Controller
         $article->body = $request->body;
         $article->league_id = $request->l_id;
         $article->image_path = $png_url;
+        $article->slug = strtolower(str_replace(' ','-',$article->title));
         $article->save();
 
         if ($article === null) {
