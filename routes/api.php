@@ -133,7 +133,7 @@ Route::post('admin/postSeason', 'AdminController@postSeason');
 Route::post('admin/removeSeason', 'AdminController@removeSeason');
 Route::put('admin/updateSeason', 'AdminController@updateSeason');
 //user
-Route::get('admin/getUsers', 'AdminController@getUsers');
+Route::post('admin/getUsers', 'AdminController@getUsers');
 Route::post('admin/getUser', 'AdminController@getUser');
 Route::post('admin/postUser', 'AdminController@postUser');
 Route::post('admin/removeUser', 'AdminController@removeUser');

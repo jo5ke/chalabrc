@@ -13,6 +13,7 @@ use App\Player as Player;
 use App\Season as Season;
 use App\User as User;
 use App\PlayerStats as PlayerStats;
+use App\Squad as Squad;
 use Faker\Factory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
@@ -524,9 +525,15 @@ class AdminController extends Controller
 
     //User CRUD
 
-   	public function getUsers()
+   	public function getUsers(Request $request)
     {
-        $results = User::all();
+        // $results = User::all();
+        $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->select('users.*')
+                    ->where('user_league.league_id','=',$request->l_id)
+                    ->get();
+            
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -546,12 +553,20 @@ class AdminController extends Controller
 
     public function postUser(Request $request)
     {
-        $user = new User();
-        $user->name = $request->name;
+        $user = new User;
+        $user->username = $request->name;
         $user->email = $request->email;
         $user->password = $request->password;
         $user->uuid = Factory::create()->uuid;
-    	$user->save();
+        $user->save();
+        $squad = new Squad;
+        $squad->user_id = $user->id;
+        $squad->league_id = $request->l_id;
+        $squad->save();
+        $league = League::where('id',$request->l_id)->first();
+        // $user->leagues()->attach($request->l_id,$user);
+        $league->users()->attach($user,['money' => 100000 ,'points' => 0,'league_id'=>$request->l_id ,'squad_id'=> $squad->id]);
+        $user->roles()->attach($user,['role_id'=>1]);
 
         $results = Season::where('id', $user->id)->get();
         if ($results === null) {

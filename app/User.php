@@ -34,7 +34,7 @@ class User extends Authenticatable
 
     public function leagues()
     {
-        return $this->belongsToMany('App\League','user_league')->withPivot('money','points','transfers')->withTimestamps();
+        return $this->belongsToMany('App\League','user_league')->withPivot('money','points','transfers','privates','joined_privates')->withTimestamps();
     }
 
     public function transfers()
@@ -44,7 +44,7 @@ class User extends Authenticatable
 
     public function oneLeague($id)
     {
-        return $this->belongsToMany('App\League','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers','privates')->withTimestamps()->get();
+        return $this->belongsToMany('App\League','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers','privates','joined_privates')->withTimestamps()->get();
     }
     
     public function roles()

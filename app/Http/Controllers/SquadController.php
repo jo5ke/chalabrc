@@ -127,8 +127,11 @@ class SquadController extends Controller
             // $team_val += $starting[$i]->price;
         }
 
+        $league = League::where('id',$request->l_id)->first();
+        $deadline = Round::where('league_id',$league->id)->where('round_no',$league->current_round)->first()->deadline;
+
      //   $play = Squad::where('user_id',$user->id)->where('id',$team->id)->with('players')->first();
-        $play = $team->players;
+        // $play = $team->players;
     //    $players = Player::where('squad_id', $team->id)->where('user_id', $user->id)->get();
         $results = [ 
             "user" => $user,
@@ -138,7 +141,8 @@ class SquadController extends Controller
             "players" => [
                 "starting" => $starting,
                 "subs" => $subs
-            ]
+            ],
+            "deadline" => $deadline,
         ];
         if ($results === null) {
             $response = 'There was a problem fetching players.';

@@ -18,7 +18,7 @@ class CreatePrivateLeaguesTable extends Migration
             $table->string('name')->unique();
             $table->integer('owner_id')->usnigned()->nullable();
             $table->integer('league_id')->unsigned();
-            $table->timestamp('started')->nullable();
+            $table->integer('start_round')->usnigned()->nullable();
             $table->text('emails')->nullable();
             $table->text('invites')->nullable();
             $table->string('code')->nullable()->unique();

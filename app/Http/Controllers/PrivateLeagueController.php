@@ -38,7 +38,7 @@ class PrivateLeagueController extends Controller
         return $this->json($pl);
     }
 
-    public function getPrivateLeagues()
+    public function getPrivateLeagues(Request $request)
     {
         $user = JWTAuth::authenticate();
         $pl_o = PrivateLeague::where('owner_id',$user->id)->get();
@@ -46,12 +46,14 @@ class PrivateLeagueController extends Controller
         $meta = $user->oneLeague($request->l_id)->first();
         $joined = $meta->pivot->joined_privates;
         
-        $jids = json_decode($joined);
-        $i = 0;
         $pl_j = array();
-        foreach($jids as $jid){
-            $pl_j[$i] = PrivateLeague::where('id',$jid)->first();
-            $i++;
+        if($joined){
+            $jids = json_decode($joined);
+            $i = 0;
+            foreach($jids as $jid){
+                $pl_j[$i] = PrivateLeague::where('id',$jid)->first();
+                $i++;
+            }
         }
 
         $results = [
@@ -63,7 +65,7 @@ class PrivateLeagueController extends Controller
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
-        return $this->json($pl);
+        return $this->json($results);
     }
 
     public function leaveLeague(Request $request)
