@@ -467,9 +467,13 @@ class HomeController extends Controller
     {
         $user = JWTAuth::authenticate();
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
-
         $starting = json_decode($team->selected_team);
         $subs = json_decode($team->substitutions);
+
+        $prev = League::where('id',$request->l_id)->first()->current_round;
+        if($prev >=1){
+            $prev = $prev-1;
+        }
 
         $st = DB::table('players')
                  ->join('round_player','players.id','=','round_player.player_id')
