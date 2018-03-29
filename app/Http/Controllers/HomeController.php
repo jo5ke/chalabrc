@@ -196,7 +196,8 @@ class HomeController extends Controller
                     ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
                             'user_league.money','user_league.points','user_league.squad_id')
                     ->where('user_league.league_id','=',$request->l_id)
-                    ->orderBy('user_league.points','desc');
+                    ->orderBy('user_league.points','desc')
+                    ->orderBy('users.username','asc');
                     // ->take(10)
                     // ->get();
         }else{
@@ -215,12 +216,13 @@ class HomeController extends Controller
                                 ->orWhere('users.last_name','LIKE',$this->term);
                     })
                         
-                    ->orderBy('user_league.points','desc');
+                    ->orderBy('user_league.points','desc')
+                    ->orderBy('users.username','asc');
                     // ->take(10)
                     // ->get();
         }
         if($per_page===null){
-            $results = $results->take(10)->get();
+            $results = $results->take(11)->get();
         }else{
             $results = $results->paginate($per_page);
         }
@@ -507,5 +509,66 @@ class HomeController extends Controller
         }
         return $this->json($results);
     }
+
+    public function getUserRank(Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $meta = $user->oneLeague($request->l_id)->first()->pivot;
+        $results = DB::table('users')
+                ->join('user_league','users.id','=','user_league.user_id')
+                ->select('users.first_name','users.last_name','users.uuid','users.username',
+                        'user_league.points','user_league.squad_id')
+                ->where('user_league.league_id','=',$request->l_id)
+                ->orderBy('user_league.points', 'desc')
+                ->orderBy('users.username','asc')
+                ->get();
+
+        //this gets first position of points
+        $i=0;
+        foreach($results as $result)
+        {
+            $points[$i] = $result->points;
+            $i++;
+        }
+        $key = array_search($meta->points,$points);
+        return ++$key;
+
+
+        //this gets back exact position in table
+        $i=0;
+        while(($results[$i]->uuid != $user->uuid))
+        {
+            $i++;
+            $kralj = "ostaje kralj";
+        }
+    
+        return $i;
+
+        if ($results === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getRankingTable($l_id)
+    {
+        $results = DB::table('users')
+                ->join('user_league','users.id','=','user_league.user_id')
+                ->select('users.first_name','users.last_name','users.uuid','users.username',
+                        'user_league.points','user_league.squad_id')
+                ->where('user_league.league_id','=',$l_id)
+                ->orderBy('user_league.points', 'desc')
+                ->get();
+
+        if ($results === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+
+    
     
 }

@@ -213,6 +213,7 @@ class SquadController extends Controller
         $squad->selected_team = $starting_ids;
         $squad->substitutions = $subs_ids;
         $squad->league_id = $request->l_id;
+        $squad->has_squad = true;
         $squad->save();
 
         $money = $request->money;
@@ -400,9 +401,17 @@ class SquadController extends Controller
 
     public function checkTransfer(Request $request)
     {
+        $league = League::where('id',$request->l_id)->first();
         $user = JWTAuth::authenticate();
+
         // $user = User::where('id',1)->first();
         $meta = $user->oneLeague($request->l_id)->first();
+        
+        if($league->current_round == 1 ){
+            $meta->pivot->transfers = 2;
+            $meta->pivot->save();
+        }
+        
         $transfer = $meta->pivot->transfers;
 
         if ($transfer === null) {
@@ -423,6 +432,19 @@ class SquadController extends Controller
             return $this->json($response, 404);
         }
         return $this->json($round);
+    }
+
+    public function hasSquad(Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+        $flag = $team->has_squad;
+
+        if ($flag === null) {
+            $response = 'There was a problem fetching a has squad flag.';
+            return $this->json($response, 404);
+        }
+        return $this->json($flag);
     }
 
 }

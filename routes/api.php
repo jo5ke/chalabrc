@@ -45,6 +45,8 @@ Route::get('getAllLeagues', 'HomeController@getAllLeagues');
 Route::get('getMyLeagues', 'HomeController@getMyLeagues')->middleware('jwt.auth');
 Route::post('getNews', 'HomeController@getNewsByLeague');
 Route::post('getAllPoints', 'HomeController@getAllPoints')->middleware('jwt.auth');
+Route::post('getUserRank', 'HomeController@getUserRank')->middleware('jwt.auth');
+Route::get('getRankingTable/{l_id}', 'HomeController@getRankingTable');
 
 Route::get('getJersey/{name}', 'HomeController@getJersey');
 Route::post('saveImage', 'HomeController@saveImage');
@@ -74,6 +76,7 @@ Route::post('myTeam/getPlayers', 'SquadController@getPlayers');
 Route::post('myTeam/getSquad', 'SquadController@getSquad');
 Route::post('myTeam/getNextRound', 'SquadController@getNextRound');
 Route::post('myTeam/checkTransfer', 'SquadController@checkTransfer')->middleware('jwt.auth');
+Route::post('myTeam/hasSquad', 'SquadController@hasSquad')->middleware('jwt.auth');
 
 //Private League routes
 Route::post('privateLeague/createLeague', 'PrivateLeagueController@createLeague')->middleware('jwt.auth');

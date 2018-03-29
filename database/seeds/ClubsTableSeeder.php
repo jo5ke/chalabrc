@@ -15,19 +15,18 @@ class ClubsTableSeeder extends Seeder
         $romerike = [
             "Aurskog-Høland",
             "Blaker",
-            "Domkirkeodden",
             "EidsvoldIF",
-            "EidsvoldTurn",
+            "EidsvoldTurn",//
             "Fet",
-            "Funnefoss_Vormsund",
+            "FunnefossVormsund",
             "Hauerseter",
             "Kløfta",
             "Rælingen",
             "RaumnesÅrnes",
-            "Skedsmo",
-            "Sørumsand",
-            "Strømmen2",
-            "UllKisa"
+            "Skedsmo2",//
+            "Sørumsand",//
+            "Strømmen2",//
+            "UllensakerKisa2",//
         ];
         for ($i = 0; $i < count($romerike); $i++) {
             $faker = Faker::create();

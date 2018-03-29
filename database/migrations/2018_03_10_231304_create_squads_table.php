@@ -18,6 +18,7 @@ class CreateSquadsTable extends Migration
             $table->integer('user_id')->unsigned();
             $table->integer('league_id')->unsigned();
             $table->integer('captain_id')->unsigned()->nullable();
+            $table->boolean('has_squad')->default(false);
             $table->string('formation')->nullable();
             $table->string('name')->nullable();
             $table->text('selected_team')->nullable();

@@ -245,8 +245,30 @@ class AdminController extends Controller
     }
 
     public function updateLeague(Request $request)
-    {
+    {   
+        $new_r = $request->number_of_rounds;
+        
         $league = League::where('id',$request->id)->first();
+        $old_r = $league->number_of_rounds;
+        if($old_r < $new_r)
+        {
+            $r = $new_r - $old_r;
+            for($i=$old_r; $i<$new_r; $i++)
+            {
+                $round = new Round;
+                $round->league_id = $league->id;
+                $round->round_no = $i+1;
+                $round->save();
+            }
+        }elseif($old_r > $new_r){
+
+            for($i=$old_r;$i>$new_r;$i--)
+            {
+                $round = Round::where('round_no',$i)->where('league_id',$league->id)->first();
+                $round->delete();
+            }
+        }
+
         $league->name = $request->name;
         $league->number_of_rounds = $request->number_of_rounds;
         $league->save();
@@ -405,10 +427,17 @@ class AdminController extends Controller
 
     public function postRound(Request $request)
     {
-        $round = new Round();
-        $round->round_no = $request->round_no;
-        $round->league_id = $request->l_id;
-    	$round->save();
+        $max = League::where('id',$request->l_id)->first()->number_of_rounds;
+        if($request->round_no <= $max)
+        {
+            $round = new Round();
+            $round->round_no = $request->round_no;
+            $round->league_id = $request->l_id;
+            $round->save();
+        }else{
+            $response = 'Maximum number of rounds.';
+            return $this->json($response, 404);
+        }
 
         $results = Round::where('id', $round->id)->get();
         if ($results === null) {
@@ -418,17 +447,17 @@ class AdminController extends Controller
         return $this->json($results);
     }
 
-    public function removeRound(Request $request)
-    {
-        $round = Round::where('id',$request->id)->first();
+    // public function removeRound(Request $request)
+    // {
+    //     $round = Round::where('id',$request->id)->first();
         
-        if ($round === null) {
-            $response = 'There was a problem fetching your data.';
-            return $this->json($response, 404);
-        }
-        $round->delete();
-        return $this->json($round);
-    }
+    //     if ($round === null) {
+    //         $response = 'There was a problem fetching your data.';
+    //         return $this->json($response, 404);
+    //     }
+    //     $round->delete();
+    //     return $this->json($round);
+    // }
 
     public function updateRound(Request $request)
     {
