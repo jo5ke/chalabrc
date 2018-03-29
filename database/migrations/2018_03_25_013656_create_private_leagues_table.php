@@ -15,12 +15,13 @@ class CreatePrivateLeaguesTable extends Migration
     {
         Schema::create('private_leagues', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name');
+            $table->string('name')->unique();
             $table->integer('owner_id')->usnigned()->nullable();
             $table->integer('league_id')->unsigned();
             $table->timestamp('started')->nullable();
             $table->text('emails')->nullable();
-            $table->string('code')->nullable();
+            $table->text('invites')->nullable();
+            $table->string('code')->nullable()->unique();
             $table->timestamps();
         });
     }

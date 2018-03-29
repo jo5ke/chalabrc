@@ -9,6 +9,7 @@ use App\Squad as Squad;
 use App\Player as Player;
 use App\League as League;
 use App\Transfer as Transfer;
+use App\Round as Round;
 use JWTAuth;
 
 
@@ -407,8 +408,17 @@ class SquadController extends Controller
         return $this->json($transfer);
     }
 
+    public function getNextRound(Request $request)
+    {
+        $league = League::where('id', $request->l_id)->first();
+        $next = $league->current_round+1;
+        $round = Round::where('round_no',$next)->where('league_id',$request->l_id)->with('matches')->first();
 
-
-    
+        if ($round === null) {
+            $response = 'There was a problem fetching a round.';
+            return $this->json($response, 404);
+        }
+        return $this->json($round);
+    }
 
 }

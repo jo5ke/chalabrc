@@ -30,8 +30,9 @@ Route::middleware('jwt.auth')->get('/users', function(Request $request) {
 Route::get('news', 'HomeController@getAllNews');
 Route::post('getLatestNews', 'HomeController@getLatestNews');
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
-Route::put('updateUserSettings', 'HomeController@updateUserSettings')->middleware('jwt.auth');
-Route::get('getUserSettings', 'HomeController@getUserSettings')->middleware('jwt.auth');
+Route::put('updateUserSettings', 'UserController@updateUserSettings')->middleware('jwt.auth');
+Route::get('getUserSettings', 'UserController@getUserSettings')->middleware('jwt.auth');
+Route::put('changePassword', 'UserController@changePassword')->middleware('jwt.auth');
 //refactor ??
 Route::get('topFivePlayersDivision1', 'HomeController@topFivePlayersDivision1');
 Route::get('topFivePlayersDivision2', 'HomeController@topFivePlayersDivision2');
@@ -43,6 +44,7 @@ Route::post('getUserSquad', 'HomeController@getUserSquad');
 Route::get('getAllLeagues', 'HomeController@getAllLeagues');
 Route::get('getMyLeagues', 'HomeController@getMyLeagues')->middleware('jwt.auth');
 Route::post('getNews', 'HomeController@getNewsByLeague');
+Route::post('getAllPoints', 'HomeController@getAllPoints')->middleware('jwt.auth');
 
 Route::get('getJersey/{name}', 'HomeController@getJersey');
 Route::post('saveImage', 'HomeController@saveImage');
@@ -70,13 +72,21 @@ Route::post('myTeam/getClub', 'AdminController@getClub');
 Route::post('myTeam/getPlayer', 'SquadController@getPlayer');
 Route::post('myTeam/getPlayers', 'SquadController@getPlayers');
 Route::post('myTeam/getSquad', 'SquadController@getSquad');
+Route::post('myTeam/getNextRound', 'SquadController@getNextRound');
 Route::post('myTeam/checkTransfer', 'SquadController@checkTransfer')->middleware('jwt.auth');
 
 //Private League routes
 Route::post('privateLeague/createLeague', 'PrivateLeagueController@createLeague')->middleware('jwt.auth');
-Route::get('privateLeague/getPrivateLeagues', 'PrivateLeagueController@getPrivateLeagues')->middleware('jwt.auth');
+Route::post('privateLeague/getPrivateLeagues', 'PrivateLeagueController@getPrivateLeagues')->middleware('jwt.auth');
 Route::post('privateLeague/leaveLeague', 'PrivateLeagueController@leaveLeague')->middleware('jwt.auth');
 Route::delete('privateLeague/deleteLeague', 'PrivateLeagueController@deleteLeague')->middleware('jwt.auth');
+Route::get('privateLeague/joinLeague/{code}', 'PrivateLeagueController@joinLeague')->middleware('jwt.auth');
+Route::post('privateLeague/createLeague', 'PrivateLeagueController@createLeague')->middleware('jwt.auth');
+Route::post('privateLeague/sendInvite', 'PrivateLeagueController@sendInvite')->middleware('jwt.auth');
+Route::put('privateLeague/banUser', 'PrivateLeagueController@banUser')->middleware('jwt.auth');
+Route::get('privateLeague/showTable/{name}', 'PrivateLeagueController@showTable')->middleware('jwt.auth');
+
+
 
 
 
@@ -115,6 +125,7 @@ Route::post('admin/getRound', 'AdminController@getRound');
 Route::post('admin/postRound', 'AdminController@postRound');
 Route::post('admin/removeRound', 'AdminController@removeRound');
 Route::put('admin/updateRound', 'AdminController@updateRound');
+Route::put('admin/setDeadline', 'AdminController@setDeadline');
 //season
 Route::get('admin/getSeasons', 'AdminController@getSeasons');
 Route::post('admin/getSeason', 'AdminController@getSeason');

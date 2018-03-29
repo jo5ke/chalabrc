@@ -348,28 +348,34 @@ class AdminController extends Controller
 
     public function updateMatch(Request $request)
     {
-        $round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
+        $new_round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
         // return $round->id;
         $match = Match::where('id',$request->id)->first();
+        $current_round = $match->round;
 
-        $match->delete();
+        if($current_round->round_no != $request->r_no)
+        {
+            $match->delete();
 
-        $newMatch = new Match;
-    	$newMatch->club1_name = $request->c1_name;
-        $newMatch->club2_name = $request->c2_name;
-        $newMatch->time = $request->time;        
+            $newMatch = new Match;
+            $newMatch->club1_name = $request->c1_name;
+            $newMatch->club2_name = $request->c2_name;
+            $newMatch->time = $request->time;   
+            $newMatch->round_id = $new_round->id;
+            $newMatch->league_id = $request->l_id;
+            $newMatch->save();
+            return $this->json($newMatch);
+        }     
+        $match->club1_name = $request->c1_name;
+        $match->club2_name = $request->c2_name;
+        $match->time = $request->time;
+        $match->save();
         
-       
-        $newMatch->round_id = $round->id;
-        $newMatch->league_id = $request->l_id;
-        
-        $newMatch->save();
-        
-        if ($newMatch === null) {
+        if ($match === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
-        return $this->json($newMatch);
+        return $this->json($match);
     }
 
     /////////////////////////////////Match ends
@@ -432,6 +438,19 @@ class AdminController extends Controller
         $round = Round::where('id', $round->id)->get();
         if ($round === null) {
             $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($round);
+    }
+
+    public function setDeadline(Request $request)
+    {
+        $round = Round::where('round_no', $request->r_no)->where('league_id', $request->l_id)->first();
+        $round->deadline = $request->time;
+        $round->save();
+
+        if ($round === null) {
+            $response = 'There was a problem updating your data.';
             return $this->json($response, 404);
         }
         return $this->json($round);

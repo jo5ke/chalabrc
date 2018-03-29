@@ -73,7 +73,7 @@ class HomeController extends Controller
 
     public function getNewsByLeague(Request $request)
     {
-        $results = Article::where('league_id', $request->l_id)->paginate(5);
+        $results = Article::where('league_id', $request->l_id)->paginate(3);
         if ($results === null) {
             $response = 'There was a problem fetching news.';
             return $this->json($response, 404);
@@ -172,16 +172,13 @@ class HomeController extends Controller
     {
         // $file = Storage::disk('public')->get($request->name);
         // return new Response($file, 200);
-
-        $response = Response::make(Storage::disk('public')->get($request->name));
+        if(Storage::disk('public')->exists($request->name)){
+            $response = Response::make(Storage::disk('public')->get($request->name));
+        }else{
+            $response = Response::make(Storage::disk('public')->get('dzoniDefault.png'));
+        }
         $response->header('Content-Type', 'image/png');
         return $response;
-
-        if ($results === null) {
-            $response = 'There was a problem fetching players.';
-            return $this->json($response, 404);
-        }
-        return $this->json($results);
     }
 
     // with i argument???
@@ -429,41 +426,82 @@ class HomeController extends Controller
         return $this->json($article);
     }
 
-    public function getUserSettings()
+    // public function getUserSettings()
+    // {
+    //     $user = JWTAuth::authenticate();
+    //     $results = [
+    //         "first_name" => $user->first_name,
+    //         "last_name"  => $user->last_name,
+    //         "city"       => $user->city,
+    //         "country"    => $user->country,
+    //         "birthdate"  => $user->birthdate   
+    //     ];
+
+    //     if ($results === null) {
+    //         $response = 'There was a problem updating your data.';
+    //         return $this->json($response, 404);
+    //     }
+    //     return $this->json($results);
+    // }
+
+    // public function updateUserSettings(Request $request)
+    // {
+    //     $user = JWTAuth::authenticate();
+    //     $user->birthdate = $request->birthdate;
+    //     $user->country = $request->country;
+    //     $user->city = $request->city;
+    //     $user->first_name = ucwords($request->first_name);
+    //     $user->last_name = ucwords($request->last_name);
+    //     // $full_name = $request->full_name;
+    //     // $full_name = explode(" ",$full_name);
+    //     $user->save();
+
+    //     if ($user === null) {
+    //         $response = 'There was a problem updating your data.';
+    //         return $this->json($response, 404);
+    //     }
+    //     return $this->json($user);
+    // }
+
+    public function getAllPoints(Request $request)
     {
         $user = JWTAuth::authenticate();
+        $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+
+        $starting = json_decode($team->selected_team);
+        $subs = json_decode($team->substitutions);
+
+        $st = DB::table('players')
+                 ->join('round_player','players.id','=','round_player.player_id')
+                 ->join('clubs','players.club_id','=','clubs.id')
+                 ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                        'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                        'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                ->where('round_player.round_id','=',$prev)
+                ->whereIn('players.id',$starting)
+                ->get();
+
+        $su = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
+                ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                       'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                       'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+               ->where('round_player.round_id','=',$prev)
+               ->whereIn('players.id',$subs)
+               ->get();
+
         $results = [
-            "first_name" => $user->first_name,
-            "last_name"  => $user->last_name,
-            "city"       => $user->city,
-            "country"    => $user->country,
-            "birthdate"  => $user->birthdate   
+            "selected_team" => $st,
+            "substitutions" => $su
         ];
+
 
         if ($results === null) {
             $response = 'There was a problem updating your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);
-    }
-
-    public function updateUserSettings(Request $request)
-    {
-        $user = JWTAuth::authenticate();
-        $user->birthdate = $request->birthdate;
-        $user->country = $request->country;
-        $user->city = $request->city;
-        $user->first_name = ucwords($request->first_name);
-        $user->last_name = ucwords($request->last_name);
-        // $full_name = $request->full_name;
-        // $full_name = explode(" ",$full_name);
-        $user->save();
-
-        if ($user === null) {
-            $response = 'There was a problem updating your data.';
-            return $this->json($response, 404);
-        }
-        return $this->json($user);
     }
     
 }
