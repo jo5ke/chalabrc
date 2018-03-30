@@ -73,7 +73,7 @@ class HomeController extends Controller
 
     public function getNewsByLeague(Request $request)
     {
-        $results = Article::where('league_id', $request->l_id)->paginate(3);
+        $results = Article::where('league_id', $request->l_id)->orderBy('created_at','desc')->paginate(3);
         if ($results === null) {
             $response = 'There was a problem fetching news.';
             return $this->json($response, 404);

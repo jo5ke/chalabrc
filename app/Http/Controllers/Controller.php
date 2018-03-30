@@ -29,7 +29,7 @@ class Controller extends BaseController
     {
         $png_url = $name . "-" . time() . ".png";
       //  $png_url = $name . "-" . time().".png";
-      //  $path = public_path() . "/images" . "/" . $png_url;
+      //  $path = public_path() . "/images" . " $png_url;
         $img = Image::make(file_get_contents($request->image))->save($path) ;
         Storage::disk($driver)->put($png_url,$img);
     }
