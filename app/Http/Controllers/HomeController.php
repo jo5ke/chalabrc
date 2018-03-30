@@ -486,7 +486,7 @@ class HomeController extends Controller
         $subs = json_decode($team->substitutions);
 
         $prev = League::where('id',$request->l_id)->first()->current_round;
-        if($prev >=1){
+        if($prev >1){
             $prev = $prev-1;
         }
 
