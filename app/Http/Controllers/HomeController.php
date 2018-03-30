@@ -230,8 +230,8 @@ class HomeController extends Controller
         }
 
         $last_round = DB::table('squad_round')
-                ->join('squad','squad_round.squad_id','=','squad.id')
-                ->select('squad_round.points','')
+                ->join('squads','squad_round.squad_id','=','squads.id')
+                ->select('squad_round.points')
                 ->where('round_id','=',$prev_round)
                 ->get();
 
