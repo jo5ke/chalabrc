@@ -187,6 +187,8 @@ class HomeController extends Controller
         // $results = User::with(['oneLeague' => $request->l_id])->get();
         // $users = User::all();
         // $results = $users->oneLeague($request->l_id)->get();
+        $league = League::where('id',$request->l_id)->first();
+        $prev_round = $league->current_round-1;
         $this->term = $request->term ? $request->term : "";
         $per_page = $request->per_page ? $request->per_page : null;
 
@@ -226,6 +228,17 @@ class HomeController extends Controller
         }else{
             $results = $results->paginate($per_page);
         }
+
+        $last_round = DB::table('squad_round')
+                ->join('squad','squad_round.squad_id','=','squad.id')
+                ->select('squad_round.points','')
+                ->where('round_id','=',$prev_round)
+                ->get();
+
+        $res = [
+            "users" => $results,
+            "last_round" => $last_round
+        ];
 
         if ($results === null) {
             $response = 'There was a problem fetching players.';

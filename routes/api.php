@@ -82,12 +82,13 @@ Route::post('myTeam/hasSquad', 'SquadController@hasSquad')->middleware('jwt.auth
 Route::post('privateLeague/createLeague', 'PrivateLeagueController@createLeague')->middleware('jwt.auth');
 Route::post('privateLeague/getPrivateLeagues', 'PrivateLeagueController@getPrivateLeagues')->middleware('jwt.auth');
 Route::post('privateLeague/leaveLeague', 'PrivateLeagueController@leaveLeague')->middleware('jwt.auth');
-Route::delete('privateLeague/deleteLeague', 'PrivateLeagueController@deleteLeague')->middleware('jwt.auth');
-Route::get('privateLeague/joinLeague/{code}', 'PrivateLeagueController@joinLeague')->middleware('jwt.auth');
+Route::post('privateLeague/deleteLeague', 'PrivateLeagueController@deleteLeague')->middleware('jwt.auth');
+Route::post('privateLeague/joinLeague', 'PrivateLeagueController@joinLeague')->middleware('jwt.auth');
 Route::post('privateLeague/createLeague', 'PrivateLeagueController@createLeague')->middleware('jwt.auth');
 Route::post('privateLeague/sendInvite', 'PrivateLeagueController@sendInvite')->middleware('jwt.auth');
-Route::put('privateLeague/banUser', 'PrivateLeagueController@banUser')->middleware('jwt.auth');
-Route::get('privateLeague/showTable/{name}', 'PrivateLeagueController@showTable')->middleware('jwt.auth');
+Route::post('privateLeague/banUser', 'PrivateLeagueController@banUser')->middleware('jwt.auth');
+Route::post('privateLeague/showTable', 'PrivateLeagueController@showTable')->middleware('jwt.auth');
+Route::post('privateLeague/getTable', 'PrivateLeagueController@getTable')->middleware('jwt.auth');
 
 
 

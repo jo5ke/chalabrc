@@ -424,7 +424,7 @@ class SquadController extends Controller
     public function getNextRound(Request $request)
     {
         $league = League::where('id', $request->l_id)->first();
-        $next = $league->current_round+1;
+        $next = $league->current_round;
         $round = Round::where('round_no',$next)->where('league_id',$request->l_id)->with('matches')->first();
 
         if ($round === null) {
