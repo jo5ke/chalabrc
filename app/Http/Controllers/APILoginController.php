@@ -11,6 +11,8 @@ use App\Role;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Mail as Mail;
+use App\Mail\RegistrationMail;
 
 
 class APILoginController extends Controller
@@ -74,6 +76,8 @@ class APILoginController extends Controller
                 'secret' => $secret
                 ];
         }
+
+        // Mail::to($user->email)->send(new RegistrationMail($user,"Welcome to breddefantasy.com,  $user->first_name $user->last_name. Please verify your account!","emails.registration"));
 
         return $this->json($response);
      //   return response()->json($response);

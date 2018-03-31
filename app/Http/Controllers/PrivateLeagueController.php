@@ -11,6 +11,7 @@ use App\Season as Season;
 use App\User as User;
 use App\PrivateLeague;
 use Faker\Factory as Faker;
+use Illuminate\Support\Facades\DB;
 use JWTAuth;
 
 class PrivateLeagueController extends Controller
@@ -41,10 +42,12 @@ class PrivateLeagueController extends Controller
         return $this->json($pl);
     }
 
+    
     public function getPrivateLeagues(Request $request)
     {
         $user = JWTAuth::authenticate();
         $pl_o = PrivateLeague::where('owner_id',$user->id)->get();
+        
 
         $meta = $user->oneLeague($request->l_id)->first();
         $joined = $meta->pivot->joined_privates;
@@ -150,9 +153,11 @@ class PrivateLeagueController extends Controller
         $emails = json_decode($pl->emails);
         if($emails===null){
             $emails = array();
+            $search=null;
+        }else{
+            $search = array_search($user->email,$emails);
         }
 
-        $search = array_search($user->email,$emails);
 
         if($search!==null){
             $response = 'You have already joined the league.';
@@ -182,24 +187,32 @@ class PrivateLeagueController extends Controller
 
     public function sendInvite(Request $request)
     {
-        $user = JWTAuth::authenticate();
-        $pl = PrivateLeague::where('owner_id',$user->id)->first();
+        // $user = JWTAuth::authenticate();
+        // $pl = PrivateLeague::where('owner_id',$user->id)->first();
+        $pl = PrivateLeague::where('id',$request->id)->first();
         $code = $pl->code;
-        $emails = json_decode($pl->emails);
+        // $emails = json_decode($pl->emails);
 
         $invites = json_decode($pl->invites);
-        array_push($invites,$request->email);
+        if($invites===null){
+            $invites = array();
+        }
+        $new_invs = json_decode($request->email);
+        foreach($new_invs as $new_inv){
+            array_push($invites,$new_inv);
+            // Mail::to
+        }
         $invites = json_encode($invites);
         $pl->invites = $invites;
         $pl->save();
         
 
 
-        if ($emails === null) {
+        if ($invites === null) {
             $response = 'There are still players in your league.';
             return $this->json($response, 404);
         }
-        // Mail::to
+        return $this->json($invites);
         
     }
 
@@ -213,7 +226,7 @@ class PrivateLeagueController extends Controller
                 ->join('squads','users.id','=','squads.user_id')
                 ->join('squad_round','squads.id','=','squad_round.squad_id')
                 ->select('users.first_name','users.last_name','users.username','users.email',
-                        'squad_round.round_no','squad_round.points', DB::raw('SUM(squad_round.points) as total_points'))
+                        'squad_round.round_no','squad_round.points', 'squad_round.points')
                 ->whereIn('users.email',$emails)
                 ->groupBy('squad_round.round_no')
                 ->having('squad_round.round_no','>=',$start)

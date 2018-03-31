@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use App\User as User;
+use App\PrivateLeague as PrivateLeague;
 
 class RegistrationMail extends Mailable
 {
@@ -14,17 +15,21 @@ class RegistrationMail extends Mailable
 
     protected $subject;
     protected $view;
-    protected $user;
+    protected $sender;
+    protected $receiver;
+    protected $pl;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct(User $user,$subject,$view)
+    public function __construct(User $sender,User $receiver,PrivateLeague $pl,$subject,$view)
     {
         //
-        $this->user = $user;
+        $this->sender = $sender;
+        $this->receiver = $receiver;
+        $this->pl = $pl;
         $this->subject = $subject;
         $this->view = $view;
     }

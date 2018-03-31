@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use JWTAuth;
 
 class UserController extends Controller
@@ -67,6 +68,6 @@ class UserController extends Controller
             return $this->json($response, 404);
         }
 
-        return $this->$json($user);  
+        return $this->json($user);  
     }
 }
