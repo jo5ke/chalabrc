@@ -4,7 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use JWTAuth;
+use Faker\Factory as Faker;
+use Mail as Mail;
+use App\Mail\RegistrationMail;
+use App\Mail\SendTip;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -37,7 +43,10 @@ class UserController extends Controller
         $user = JWTAuth::authenticate();
         $user->birthdate = $request->birthdate;
         $user->country = $request->country;
+        $user->phone = $request->phone;
+        $user->address = $request->address;
         $user->city = $request->city;
+        $user->zip = $request->zip;
         $user->first_name = ucwords($request->first_name);
         $user->last_name = ucwords($request->last_name);
         // $full_name = $request->full_name;
@@ -69,5 +78,59 @@ class UserController extends Controller
         }
 
         return $this->json($user);  
+    }
+
+    public function sendResetPassword(Request $request)
+    {
+        $user = User::where('email',$request->email)->first();
+        $league = League::where('id',$request->l_id)->first();
+        $faker = Faker::create();
+        $token = $faker->sha1();
+
+        DB::table('password_resets')->insert([
+            ['email' => $request->email , 'token' => $token, 'created_at' => \Carbon::now() ]
+        ]);
+
+        if ($user === null) {
+            $response = 'User with that email does not exist.';
+            return $this->json($response, 404);
+        }
+        Mail::to($user->email)->send(new SendTip($user,"Password reset request on breddefantasy.com!",$token ,"emails.registration"));
+        return $this->json($user);
+    }
+
+    public function getNewPassword($token)
+    {
+        $email = DB::table('users')
+                    ->join('password_resets','users.email','=','password_resets.email')
+                    ->select('users.email')
+                    ->where('password_resets.token','=',$token)
+                    ->get();
+
+        $user = User::where('email',$email)->first();
+        if ($user === null) {
+            $response = 'Invalid request.';
+            return $this->json($response, 404);
+        }
+        return $this->json($user);
+    }
+
+    public function confirmPassword(Request $request)
+    {
+        $user = User::where('email',$request->email)->first();
+
+        $email = DB::table('password_resets')
+                    ->where('password_resets.email','=',$request->email)
+                    ->delete();
+
+        if($request->new_password==$request->new_password_confirm)
+            {
+                $user->password = Hash::make($request->new_password);
+                $user->save();
+            }else{
+                $response = "Password doesn't match";
+                return $this->json($response, 404);
+            }
+        return $this->json($user);
     }
 }

@@ -14,6 +14,9 @@ use App\Squad as Squad;
 use App\Player as Player;
 use Image;
 use JWTAuth;
+use Mail as Mail;
+use App\Mail\RegistrationMail;
+use App\Mail\SendTip;
 
 class HomeController extends Controller
 {
@@ -576,6 +579,48 @@ class HomeController extends Controller
 
         if ($results === null) {
             $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function sendTip(Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $subject = $request->subject;
+        $body = $request->body;
+        $league = League::where('id',$request->l_id)->first()->name;
+
+        Mail::to($user->email)->send(new RegistrationMail($user,"You have successfully submitted a tip!","emails.tip_confirm"));        
+        Mail::to("breddefantasy@gmail.com")->send(new SendTip($user,"$user->first_name $user->last_name has submitted a tip!",$request->body,"emails.tip_send",$league));
+
+
+        if ($results === null) {
+            $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function checkUser(Request $request)
+    {
+        $response_email = null;
+        $response_username = null;
+
+        $results = User::where('email',$request->email)->first();
+        if ($results != null) {
+            $response_email = 'There is a user with that email.';
+        }
+        $results = User::where('username',$request->username)->first();
+        if ($results != null) {
+            $response_username = 'There is a user with that username.';
+        }
+        $results = [
+            "email" => $response_email,
+            "username" => $response_username
+        ];
+        if ($results === null) {
+            $response = 'ok';
             return $this->json($response, 404);
         }
         return $this->json($results);

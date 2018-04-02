@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Stripe;
 
 use Illuminate\Http\Request;
 
@@ -8,7 +9,7 @@ class PaymentController extends Controller
 {
     public function payment(Request $request)
     {
-        \Stripe\Stripe::setApiKey('sk_test_sQWHOV4aMUS3Y3kO321JlF1i');
+        \Stripe\Stripe::setApiKey('sk_test_WnJcOeq6NrJ5ZA7u8JahXLLO');
         // Get the token from the JS script
         $token = $request->stripeToken;
         // user info
@@ -25,10 +26,11 @@ class PaymentController extends Controller
 
         $charge = \Stripe\Charge::create(array(
             "amount" => $amount*100,
-            "currency" => "RSD",
+            "currency" => "NOK",
             "source" => $token, // obtained with Stripe.js
             'metadata' => array("name" => $name, "last_name" => $lastName)
         ));
 
         return $charge;
+    }
 }

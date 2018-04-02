@@ -157,18 +157,32 @@ class PrivateLeagueController extends Controller
         }else{
             $search = array_search($user->email,$emails);
         }
-
-
-        if($search!==null){
-            $response = 'You have already joined the league.';
-            return $this->json($response, 404);
+            if($search!==null){
+                $response = 'You have already joined the league.';
+                return $this->json($response, 404);
+            }
+        
+        $invites = json_decode($pl->invites);
+        if($invites===null){
+            $invites = array();
+            $search=null;
+        }else{
+            $search = array_search($user->email,$invites);
+            unset($invites[$search]);
         }
+            if($search!==null){
+                $response = 'You have already joined the league.';
+                return $this->json($response, 404);
+            }
+
         if($request->code == $pl->code){
             array_push($emails,$user->email);
         }
         
         $emails = json_encode($emails);
+        $invites = json_encode($invites);
         $pl->emails = $emails;
+        $pl->invites = $invites;
         $pl->save();
 
         $meta = $user->oneLeague($pl->league_id)->first();
@@ -197,9 +211,14 @@ class PrivateLeagueController extends Controller
         if($invites===null){
             $invites = array();
         }
-        $new_invs = json_decode($request->email);
+        $invalid = array();
+        $new_invs = $request->email;
         foreach($new_invs as $new_inv){
-            array_push($invites,$new_inv);
+            if($key=array_search($new_inv,$invites)!==null){
+                array_push($invalid,$new_inv);
+            }else{
+                array_push($invites,$new_inv);
+            }
             // Mail::to
         }
         $invites = json_encode($invites);
@@ -208,11 +227,11 @@ class PrivateLeagueController extends Controller
         
 
 
-        if ($invites === null) {
+        if ($pl === null) {
             $response = 'There are still players in your league.';
             return $this->json($response, 404);
         }
-        return $this->json($invites);
+        return $this->json($pl);
         
     }
 

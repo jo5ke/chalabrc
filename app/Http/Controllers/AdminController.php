@@ -142,6 +142,7 @@ class AdminController extends Controller
         $player->number = $request->number;
         $player->price = $request->price;
         $player->league_id = $request->l_id;
+        $player->wont_play = $request->wont_play;
         $club = Club::where('name',$request->club_name)->first();
         $player->club_id = $club->id;
         $player->save();
@@ -175,6 +176,7 @@ class AdminController extends Controller
         $player->number = $request->number;
         $player->price = $request->price;
         $player->league_id = $request->l_id;
+        $player->wont_play = $request->wont_play;        
         $club=Club::where('name',$request->club_name)->first();
         $player->club_id = $club->id;
         $player->save();
@@ -360,6 +362,21 @@ class AdminController extends Controller
     public function removeMatch(Request $request)
     {
         $match = Match::where('id',$request->id)->first();
+
+        $club1 = Club::where('name',$match->club1_name)->first();
+        $club2 = Club::where('name',$match->club2_name)->first();
+        $round = Round::where('league_id',$request->l_id)->where('round_no',$request->r_no)->first();
+        
+
+        $players1 = $club1->players;
+        foreach($players1 as $player){
+            $round->players()->detach($player);     
+        }
+
+        $players2 = $club2->players;
+        foreach($players2 as $player){
+            $round->players()->detach($player);   
+        }
         
         if ($match === null) {
             $response = 'There was a problem fetching your data.';

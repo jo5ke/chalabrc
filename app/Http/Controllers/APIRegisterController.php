@@ -28,7 +28,12 @@ class APIRegisterController extends Controller
             'first_name' => $request->get('first_name'),
             'last_name' => $request->get('last_name'),
             'username' => $request->get('username'),
+            'country' => $request->get('country'),
             'email' => $request->get('email'),
+            'city' => $request->get('city'),
+            'address' => $request->get('address'),
+            'zip' => $request->get('zip'),
+            'phone' => $request->get('phone'),
             'password' => bcrypt($request->get('password')),
         ]);
      //   $user = User::first();

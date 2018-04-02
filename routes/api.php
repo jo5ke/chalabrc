@@ -33,6 +33,9 @@ Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::put('updateUserSettings', 'UserController@updateUserSettings')->middleware('jwt.auth');
 Route::get('getUserSettings', 'UserController@getUserSettings')->middleware('jwt.auth');
 Route::put('changePassword', 'UserController@changePassword')->middleware('jwt.auth');
+Route::post('sendResetPassword', 'UserController@sendResetPassword');
+Route::post('confirmPassword', 'UserController@confirmPassword');
+Route::get('getNewPassword/{token}', 'UserController@getNewPassword');
 //refactor ??
 Route::get('topFivePlayersDivision1', 'HomeController@topFivePlayersDivision1');
 Route::get('topFivePlayersDivision2', 'HomeController@topFivePlayersDivision2');
@@ -55,6 +58,8 @@ Route::get('getImage/{name}', 'HomeController@getImage');
 Route::post('getDreamTeam', 'HomeController@getDreamTeam');
 Route::get('getJerseyId/{$id}', 'HomeController@getJerseyId');
 Route::get('getArticle/{slug}', 'HomeController@getArticle');
+Route::post('sendTip', 'HomeController@sendTip');
+Route::post('checkUser', 'HomeController@checkUser');
 
 
 
