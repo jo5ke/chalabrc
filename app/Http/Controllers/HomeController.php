@@ -232,16 +232,27 @@ class HomeController extends Controller
             $results = $results->paginate($per_page);
         }
 
-        $last_round = DB::table('squad_round')
-                ->join('squads','squad_round.squad_id','=','squads.id')
-                ->select('squad_round.points')
-                ->where('round_id','=',$prev_round)
-                ->get();
+        // $previous = DB::table('squad_round')
+        //     ->select('points')
+        //     ->where([
+        //         ['round_no','=',$prev_round]
+        //     ])
+        //     ->get();
 
-        $res = [
-            "users" => $results,
-            "last_round" => $last_round
-        ];
+        // $avg = DB::table('squad_round')
+        //     ->where([
+        //         ['league_id','=',$request->l_id],
+        //     ])
+        //     ->groupBy('squad_id')
+        //     ->avg('points');
+
+
+
+        // $res = [
+        //     "users" => $results,
+        //     "previous" => $previous,
+        //     "avg"   => $avg
+        // ];
 
         if ($results === null) {
             $response = 'There was a problem fetching players.';
@@ -513,9 +524,20 @@ class HomeController extends Controller
                ->whereIn('players.id',$subs)
                ->get();
 
+
+        $total = 0;
+        foreach($st as $s){
+            $total += $s->total;
+        }
+
+        foreach($su as $s){
+            $total += $s->total;
+        }
+
         $results = [
             "selected_team" => $st,
-            "substitutions" => $su
+            "substitutions" => $su,
+            "total"         => $total
         ];
 
 
@@ -530,6 +552,10 @@ class HomeController extends Controller
     {
         $user = JWTAuth::authenticate();
         $meta = $user->oneLeague($request->l_id)->first()->pivot;
+        $prev_round = League::where('id',$request->l_id)->first()->current_round;
+        $prev_round--;
+        $squad = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+        
         $results = DB::table('users')
                 ->join('user_league','users.id','=','user_league.user_id')
                 ->select('users.first_name','users.last_name','users.uuid','users.username',
@@ -547,18 +573,35 @@ class HomeController extends Controller
             $i++;
         }
         $key = array_search($meta->points,$points);
-        return ++$key;
+        $key++;
 
+        $no_of_users = DB::table('user_league')
+                        ->where('league_id','=',$request->l_id)
+                        ->count();
+
+        $previous = DB::table('squad_round')
+                        ->select('points')
+                        ->where([
+                            ['round_no','=',$prev_round],
+                            ['squad_id','=',$squad->id]
+                        ])
+                        ->get();
+
+        $results = [
+            "position" => $key,
+            "total_players" => $no_of_users,
+            "last_round"    => $previous
+        ];
 
         //this gets back exact position in table
-        $i=0;
-        while(($results[$i]->uuid != $user->uuid))
-        {
-            $i++;
-            $kralj = "ostaje kralj";
-        }
+        // $i=0;
+        // while(($results[$i]->uuid != $user->uuid))
+        // {
+        //     $i++;
+        //     $kralj = "ostaje kralj";
+        // }
     
-        return $i;
+        // return $i;
 
         if ($results === null) {
             $response = 'There was a problem fetching players.';
@@ -621,6 +664,121 @@ class HomeController extends Controller
         ];
         if ($results === null) {
             $response = 'ok';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getUserStats(Request $request)
+    {
+        $user = User::where('uuid',$request->uuid)->first();
+        $squad = Squad::where('league_id',$request->l_id)->where('user_id',$request->id)->first();
+        $prev_round = League::where('id',$request->l_id)->first()->current_round;
+        $prev_round--;
+        $stats = DB::table('users')
+                ->join('user_league','users.id','=','user_league.user_id')
+                ->select('user_league.points','users.created_at')
+                ->where('users.id','=',$user->id)
+                ->get();
+        
+        $previous = DB::table('squad_round')
+                ->select('points')
+                ->where([
+                    ['round_no','=',$prev_round],
+                    ['squad_id','=',$squad->id]
+                ])
+                ->get();
+
+        $avg = DB::table('squad_round')
+                ->where([
+                    ['league_id','=',$request->l_id],
+                    ['squad_id','=',$squad->id]
+                ])
+                ->avg('points');
+        
+        $results = [
+            "current" => $stats,
+            "previous" => $previous,
+            "avg" => $avg
+        ];
+
+        if ($results === null) {
+            $response = 'User does not exist';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+
+    }
+
+    public function getUsersStats(Request $request)
+    {
+        $prev_round = League::where('id',$request->l_id)->first()->current_round;
+        $prev_round--;
+        $stats = DB::table('users')
+                ->join('user_league','users.id','=','user_league.user_id')
+                ->select('user_league.points','users.created_at')
+                ->get();
+        
+        $previous = DB::table('squad_round')
+                ->select('points')
+                ->where([
+                    ['round_no','=',$prev_round]
+                ])
+                ->get();
+
+        $avg = DB::table('squad_round')
+                ->where([
+                    ['league_id','=',$request->l_id],
+                ])
+                ->groupBy('squad_id')
+                ->avg('points');
+        
+        $results = [
+            "current" => $stats,
+            "previous" => $previous,
+            "avg" => $avg
+        ];
+
+        if ($results === null) {
+            $response = 'User does not exist';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+
+    }
+
+    public function getPlayerInfo(Request $request)
+    {
+        $player = Player::where('id',$request->id)->first();
+        $league = League::where('id',$player->league_id)->first()->current_round;
+        $total = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select(DB::raw('SUM(players.price) as price'))
+                ->where('players.id','=',$request->id)
+                ->groupBy('players.id')
+                ->get();
+        
+        $current = DB::table('round_player')
+                ->select('total')
+                ->where([
+                    ['player_id','=',$request->id],
+                    ['round_id','=',$current_round]
+                    ])
+                ->get();
+        
+        $avg = DB::table('round_player')
+                ->where('player_id','=',$request->id)
+                ->avg('total');
+
+        $results = [
+            "player" => $player,
+            "total"  => $total,
+            "current"=> $current,
+            "avg"    => $avg
+        ];
+
+        if ($results === null) {
+            $response = 'User does not exist';
             return $this->json($response, 404);
         }
         return $this->json($results);

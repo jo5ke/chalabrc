@@ -29,6 +29,9 @@ class PrivateLeagueController extends Controller
         // $pl->start_round = $request->start;
         $pl->start_round = $league->current_round;
         $pl->code = $faker->md5();
+        $emails = array();
+        array_push($emails,$user->email);
+        $pl->emails = json_encode($emails);
         $pl->save();
         
         $meta = $user->oneLeague($request->l_id)->first();
@@ -55,6 +58,7 @@ class PrivateLeagueController extends Controller
         $pl_j = array();
         if($joined!==null){
             $jids = json_decode($joined);
+            $jids = array_values(json_decode(json_encode($jids), true));
             $i = 0;
             foreach($jids as $jid){
                 $pl_j[$i] = PrivateLeague::where('id',$jid)->first();
@@ -80,6 +84,7 @@ class PrivateLeagueController extends Controller
         $pl = PrivateLeague::where('id',$request->id)->first();
       //  return $pl;
         $emails = json_decode($pl->emails);
+        $emails = array_values(json_decode(json_encode($emails), true));
         
         //     $emails = array_values(json_decode(json_encode($emails), true));
         //  //   $mail = array_values($emails);
@@ -106,6 +111,11 @@ class PrivateLeagueController extends Controller
         $meta = $user->oneLeague($pl->league_id)->first();
         $joined = $meta->pivot->joined_privates;
         $joined = json_decode($joined);
+        if(!empty($joined)){
+               $joined = array_values(json_decode(json_encode($joined), true));    
+        }
+
+        
         $key2 = array_search($pl->id,$joined);
         if ($key2 === null) {
             $response = 'There is no such a players in this league.';
@@ -116,6 +126,7 @@ class PrivateLeagueController extends Controller
         if($joined!==null){
             $meta->pivot->joined_privates = json_encode($joined);
         }
+        $meta->pivot->privates--;
         $meta->pivot->save();
 
 
@@ -138,7 +149,8 @@ class PrivateLeagueController extends Controller
             $response = 'There was a problem fetching league.';
             return $this->json($response, 404);
         }
-        if ($pl->emails != null) {
+        $emails = json_decode($pl->emails);
+        if (count($emails)>1) {
             $response = 'There are still players in your league.';
             return $this->json($response, 404);
         }
@@ -151,26 +163,30 @@ class PrivateLeagueController extends Controller
         $user = JWTAuth::authenticate();        
         $pl = PrivateLeague::where('code',$request->code)->first();
         $emails = json_decode($pl->emails);
-        if($emails===null){
+        $emails = array_values(json_decode(json_encode($emails), true));
+
+        if(empty($emails)){
             $emails = array();
             $search=null;
         }else{
             $search = array_search($user->email,$emails);
         }
-            if($search!==null){
+
+            if($search==true){
                 $response = 'You have already joined the league.';
                 return $this->json($response, 404);
             }
         
-        $invites = json_decode($pl->invites);
-        if($invites===null){
+         $invites = json_decode($pl->invites);
+        // $invites = array_values(json_decode(json_encode($invites), true));
+        if(empty($invites)){
             $invites = array();
             $search=null;
         }else{
             $search = array_search($user->email,$invites);
             unset($invites[$search]);
         }
-            if($search!==null){
+            if($search==true){
                 $response = 'You have already joined the league.';
                 return $this->json($response, 404);
             }
@@ -186,10 +202,20 @@ class PrivateLeagueController extends Controller
         $pl->save();
 
         $meta = $user->oneLeague($pl->league_id)->first();
+
         $joined = $meta->pivot->joined_privates;
         $joined = json_decode($joined);
+        
+        if($joined===null){
+            $joined = array();
+        }else{
+            $joined = array_values(json_decode(json_encode($joined), true));
+        }
+
         array_push($joined,$pl->id);
+
         $meta->pivot->joined_privates = json_encode($joined);
+        $meta->pivot->privates++;
         $meta->pivot->save();
 
         if ($pl === null) {
@@ -208,6 +234,8 @@ class PrivateLeagueController extends Controller
         // $emails = json_decode($pl->emails);
 
         $invites = json_decode($pl->invites);
+       // $invites = array_values(json_decode(json_encode($invites), true));
+        
         if($invites===null){
             $invites = array();
         }
@@ -240,6 +268,8 @@ class PrivateLeagueController extends Controller
         $pl = PrivateLeague::where('id',$request->id)->first();
         $start = $pl->start_round;
         $emails = json_decode($pl->emails);
+        $emails = array_values(json_decode(json_encode($emails), true));
+        
 
         $score = DB::table('users')
                 ->join('squads','users.id','=','squads.user_id')
@@ -260,10 +290,29 @@ class PrivateLeagueController extends Controller
 
     public function banUser(Request $request)
     {
-        $user = JWTAuth::authenticate();
+        // $user = JWTAuth::authenticate();
+        $user = User::where('email',$request->email)->first();
+        if($user->email===$request->email){
+            $response = "Can't ban admin!";
+            return $this->json($response,404);
+        }
         $pl = PrivateLeague::where('id',$request->id)->first();
         $emails = json_decode($pl->emails);
+        $emails = array_values(json_decode(json_encode($emails), true));
+        
 
+        $meta = $user->oneLeague($pl->league_id)->first();
+        
+        $joined = json_decode($meta->pivot->joined_privates);
+        $joined = array_values(json_decode(json_encode($joined), true));
+
+        $key_mail = array_search($request->email,$joined);
+        unset($joined[$key_mail]);
+        $joined = json_encode($joined);
+        $meta->pivot->joined_privates = $joined;
+        $meta->pivot->save();
+
+        
         $key = array_search($request->email, $emails);
         if ($key === null) {
             $response = 'There is no such a players in your league.';
@@ -280,6 +329,7 @@ class PrivateLeagueController extends Controller
     {
         $pl = PrivateLeague::where('name',$request->name)->first();
         $emails = json_decode($pl->emails);
+        $emails = array_values(json_decode(json_encode($emails), true));        
         if($emails===null){
             $response = "There is no other players in this league.";
             return $this->json($response, 404);

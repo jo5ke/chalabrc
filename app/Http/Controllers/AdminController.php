@@ -17,6 +17,7 @@ use App\Squad as Squad;
 use Faker\Factory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 use Image;
 
 
@@ -145,6 +146,7 @@ class AdminController extends Controller
         $player->wont_play = $request->wont_play;
         $club = Club::where('name',$request->club_name)->first();
         $player->club_id = $club->id;
+        $player->reason = $request->reason;
         $player->save();
 
         $results = Player::where('id', $player->id)->get();
@@ -179,6 +181,7 @@ class AdminController extends Controller
         $player->wont_play = $request->wont_play;        
         $club=Club::where('name',$request->club_name)->first();
         $player->club_id = $club->id;
+        $player->reason = $request->reason;        
         $player->save();
 
         if ($player === null) {
@@ -388,24 +391,24 @@ class AdminController extends Controller
 
     public function updateMatch(Request $request)
     {
-        $new_round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
+        // $new_round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
         // return $round->id;
         $match = Match::where('id',$request->id)->first();
         $current_round = $match->round;
 
-        if($current_round->round_no != $request->r_no)
-        {
-            $match->delete();
+        // if($current_round->round_no != $request->r_no)
+        // {
+        //     $match->delete();
 
-            $newMatch = new Match;
-            $newMatch->club1_name = $request->c1_name;
-            $newMatch->club2_name = $request->c2_name;
-            $newMatch->time = $request->time;   
-            $newMatch->round_id = $new_round->id;
-            $newMatch->league_id = $request->l_id;
-            $newMatch->save();
-            return $this->json($newMatch);
-        }     
+        //     $newMatch = new Match;
+        //     $newMatch->club1_name = $request->c1_name;
+        //     $newMatch->club2_name = $request->c2_name;
+        //     $newMatch->time = $request->time;   
+        //     $newMatch->round_id = $new_round->id;
+        //     $newMatch->league_id = $request->l_id;
+        //     $newMatch->save();
+        //     return $this->json($newMatch);
+        // }     
         $match->club1_name = $request->c1_name;
         $match->club2_name = $request->c2_name;
         $match->time = $request->time;
@@ -602,7 +605,7 @@ class AdminController extends Controller
         $user = new User;
         $user->username = $request->name;
         $user->email = $request->email;
-        $user->password = $request->password;
+        $user->password = Hash::make($request->new_password);
         $user->uuid = Factory::create()->uuid;
         $user->save();
         $squad = new Squad;
@@ -797,7 +800,8 @@ class AdminController extends Controller
                             'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                             'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                     ->where([
-                                ['round_player.round_id','=',$request->r_id],
+                                // ['round_player.round_id','=',$request->r_id],
+                                ['round_player.round_id','=',$match->round_id],
                                 ['players.club_id', '=', $club1->id],
                             ])
                     ->get();
@@ -808,7 +812,8 @@ class AdminController extends Controller
                             'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                             'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                     ->where([
-                                ['round_player.round_id','=',$request->r_id],
+                                // ['round_player.round_id','=',$request->r_id],
+                                ['round_player.round_id','=',$match->round_id],
                                 ['players.club_id', '=', $club2->id],
                             ])
                     ->get();

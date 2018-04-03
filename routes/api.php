@@ -50,6 +50,8 @@ Route::post('getNews', 'HomeController@getNewsByLeague');
 Route::post('getAllPoints', 'HomeController@getAllPoints')->middleware('jwt.auth');
 Route::post('getUserRank', 'HomeController@getUserRank')->middleware('jwt.auth');
 Route::get('getRankingTable/{l_id}', 'HomeController@getRankingTable');
+Route::post('getUserStats', 'HomeController@getUserStats');
+Route::post('getUsersStats', 'HomeController@getUsersStats');
 
 Route::get('getJersey/{name}', 'HomeController@getJersey');
 Route::post('saveImage', 'HomeController@saveImage');
@@ -60,6 +62,7 @@ Route::get('getJerseyId/{$id}', 'HomeController@getJerseyId');
 Route::get('getArticle/{slug}', 'HomeController@getArticle');
 Route::post('sendTip', 'HomeController@sendTip');
 Route::post('checkUser', 'HomeController@checkUser');
+Route::post('getPlayerInfo', 'HomeController@getPlayerInfo');
 
 
 

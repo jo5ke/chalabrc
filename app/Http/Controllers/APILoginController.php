@@ -46,7 +46,7 @@ class APILoginController extends Controller
         $role_id = $user->roles()->first();
         $role = Role::where('id',$role_id->pivot->role_id)->first();
        //  $user = $user->with('leagues')->where('email',$user->email)->get();
-
+        
          $leagues = DB::table('users')
                         ->join('user_league','users.id','=','user_league.user_id')
                         ->select('user_league.league_id')

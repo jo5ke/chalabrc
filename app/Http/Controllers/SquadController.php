@@ -119,12 +119,12 @@ class SquadController extends Controller
 
         for($i=0;$i<count($starting);$i++){
             $starting[$i]=Player::where('id',$starting[$i])->with('club')->first();
-            // $team_val += $starting[$i]->price;
+            $team_val += $starting[$i]->price;
         }
 
         for($i=0;$i<count($subs);$i++){
             $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
-            // $team_val += $starting[$i]->price;
+            $team_val += $subs[$i]->price;
         }
 
         $league = League::where('id',$request->l_id)->first();
@@ -169,13 +169,14 @@ class SquadController extends Controller
     //getting All Players from all Clubs
     public function getPlayers(Request $request)
     {
-        $players = League::where('id',$request->l_id)->with('players')->get();
+        // $players = League::where('id',$request->l_id)->with('players')->get();
+        $results = Player::with('club')->where('league_id',$request->l_id)->get();
      //   $players = Player::all();
-        if ($players === null) {
+        if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
-        return $this->json($players);
+        return $this->json($results);
     }
 
     //  get the info and its players

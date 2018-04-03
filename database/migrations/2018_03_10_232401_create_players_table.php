@@ -23,6 +23,7 @@ class CreatePlayersTable extends Migration
             $table->integer('price')->nullable()->unsigned();          
             $table->integer('number')->nullable()->unsigned();       
             $table->integer('wont_play')->unsigned()->default(0);          
+            $table->string('reason')->nullable();          
             $table->timestamps();
         });
     }
