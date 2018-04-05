@@ -8,6 +8,8 @@ use App\Article as Article;
 use App\User as User;
 use App\League as League;
 use App\Tip as Tip;
+use App\Club as Club;
+use App\Match as Match;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\File;
@@ -324,11 +326,46 @@ class HomeController extends Controller
             $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
         }
 
+
+        $user = User::where('uuid',$request->uuid)->first();
         $meta = $user->leagues->where('id',$request->l_id)->first();
         $meta = $meta->pivot;
 
-        $user = User::where('uuid',$request->uuid)->first();
-                
+        // user rank finding
+
+            $results = DB::table('users')
+                ->join('user_league','users.id','=','user_league.user_id')
+                ->select('users.first_name','users.last_name','users.uuid','users.username',
+                        'user_league.points','user_league.squad_id')
+                ->where('user_league.league_id','=',$request->l_id)
+                ->orderBy('user_league.points', 'desc')
+                ->orderBy('users.username','asc')
+                ->get();
+
+            //this gets first position of points
+            $i=0;
+            foreach($results as $result)
+            {
+                $points[$i] = $result->points;
+                $i++;
+            }
+            $key = array_search($meta->points,$points);
+            $key++;
+
+            $prev_round = League::where('id',$request->l_id)->first()->current_round;
+            $prev_round--;
+
+            $previous = DB::table('squad_round')
+                ->select('points')
+                ->where([
+                    ['round_no','=',$prev_round],
+                    ['squad_id','=',$team->id]
+                ])
+                ->get();
+
+        //
+
+                            
         $results = [
             "user"      =>  $user,
             "squad"     =>  $team,
@@ -336,7 +373,9 @@ class HomeController extends Controller
             "players" => [
                 "starting" => $starting,
                 "subs" => $subs
-            ]
+            ],
+            "position"  => $key,
+            "previous"  => $previous
 
         ];
 
@@ -764,7 +803,7 @@ class HomeController extends Controller
         $league = League::where('id',$player->league_id)->first()->current_round;
         $total = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select(DB::raw('SUM(players.price) as price'))
+                ->select(DB::raw('SUM(round_player.total) as total'))
                 ->where('players.id','=',$request->id)
                 ->groupBy('players.id')
                 ->get();
@@ -786,6 +825,251 @@ class HomeController extends Controller
             "total"  => $total,
             "current"=> $current,
             "avg"    => $avg
+        ];
+
+        if ($results === null) {
+            $response = 'User does not exist';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getMatchInfo(Request $request)
+    {
+        $match = Match::where('id', $request->m_id)->first();
+        $club1 = Club::where('league_id',$request->l_id)->where('name', $match->club1_name)->first();
+        $club2 = Club::where('league_id',$request->l_id)->where('name', $match->club2_name)->first();
+
+        $clubs = array($club1->id , $club2->id);
+
+        $players1 = DB::table('players')
+                    ->join('clubs','players.club_id','=','clubs.id')
+                    ->select('players.id')
+                    ->where('clubs.id','=',$club1->id)
+                    ->get();
+
+        $players2 = DB::table('players')
+                    ->join('clubs','players.club_id','=','clubs.id')
+                    ->select('players.id')
+                    ->where('clubs.id',$club2->id)
+                    ->get();
+        $players1 = array_values(json_decode(json_encode($players1), true)); 
+        $players2 = array_values(json_decode(json_encode($players2), true)); 
+    
+        $player_ids1 = array();  
+        foreach($players1 as $player){
+            array_push($player_ids1,$player['id']);
+        }
+        
+
+        $player_ids2 = array();  
+        foreach($players2 as $player){
+            array_push($player_ids2,$player['id']);
+        }
+
+                    
+        $score1 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids1)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.score', '>', 0],
+                        ])
+                      
+                ->get();
+
+        $score2 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids2)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.score', '>', 0],
+                        ])
+                      
+                ->get();
+
+
+        $assists1 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids1)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.assist', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $assists2 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids2)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.assist', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $yellow1 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids1)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.yellow', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $yellow2 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids2)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.yellow', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $red1 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids1)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.red', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $red2 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids2)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.red', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $clean_sheat1 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids1)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.clean', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $clean_sheat2 = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids2)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.clean', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $missed_penal1 =DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids1)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.miss', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $missed_penal2 =DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids2)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.miss', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $saved_penal1 =DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids1)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.k_save', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $saved_penal2 =DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->whereIn('players.id',$player_ids2)  
+                ->where([
+                            // ['round_player.round_id','=',$request->r_id],
+                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.score', 'NOT', NULL],
+                            ['round_player.k_save', '>', 0],
+                        ])
+                    
+                ->get();
+
+        $results = [
+            "club1" => [
+                "score" => $score1,
+                "assist" => $assists1,
+                "yellow" => $yellow1,
+                "red"   => $red1,
+                "clean_sheat" => $clean_sheat1,
+                "missed"    =>  $missed_penal1,
+                "saved" =>  $saved_penal1
+            ],
+            "club2" =>  [
+                "score" => $score2,
+                "assist" => $assists2,
+                "yellow" => $yellow2,
+                "red"   => $red2,
+                "clean_sheat" => $clean_sheat2,
+                "missed"    =>  $missed_penal2,
+                "saved" =>  $saved_penal2
+            ]
         ];
 
         if ($results === null) {

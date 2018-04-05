@@ -11,6 +11,7 @@ use App\League as League;
 use App\Transfer as Transfer;
 use App\Round as Round;
 use JWTAuth;
+use Illuminate\Support\Facades\DB;
 
 
 class SquadController extends Controller
@@ -114,6 +115,9 @@ class SquadController extends Controller
         $starting = json_decode($team->selected_team);
         $subs = json_decode($team->substitutions);
 
+        $starting_arr = array_values(json_decode(json_encode($starting), true));
+        $subs_arr = array_values(json_decode(json_encode($subs), true));
+
         $team_val = 0;
         
 
@@ -127,6 +131,28 @@ class SquadController extends Controller
             $team_val += $subs[$i]->price;
         }
 
+
+
+        $starting_stats = DB::table('players')
+            ->join('clubs','players.club_id','=','clubs.id')
+            ->join('round_player','players.id','=','round_player.player_id')
+            ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number','clubs.name as club_name'
+                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
+            ->whereIn('players.id',$starting_arr)
+            ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+            ->get();
+
+        $subs_stats = DB::table('players')
+            ->join('clubs','players.club_id','=','clubs.id')
+            ->join('round_player','players.id','=','round_player.player_id')
+            ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name'
+                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
+            ->whereIn('players.id',$subs_arr)
+            ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+            ->get();
+
+
+
         $league = League::where('id',$request->l_id)->first();
         $deadline = Round::where('league_id',$league->id)->where('round_no',$league->current_round)->first()->deadline;
         
@@ -139,8 +165,8 @@ class SquadController extends Controller
             "team" => $team,
             "squad_value" => $team_val,
             "players" => [
-                "starting" => $starting,
-                "subs" => $subs
+                "starting" => $starting_stats,
+                "subs" => $subs_stats
             ],
             "deadline" => $deadline,
             "current_round" => $league->current_round
@@ -169,6 +195,15 @@ class SquadController extends Controller
     //getting All Players from all Clubs
     public function getPlayers(Request $request)
     {
+        $pstats = DB::table('players')
+                ->join('clubs','players.club_id','=','clubs.id')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name'
+                        ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
+                ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+                ->get();
+
+
         // $players = League::where('id',$request->l_id)->with('players')->get();
         $results = Player::with('club')->where('league_id',$request->l_id)->get();
      //   $players = Player::all();
@@ -176,7 +211,7 @@ class SquadController extends Controller
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
-        return $this->json($results);
+        return $this->json($pstats);
     }
 
     //  get the info and its players
@@ -500,7 +535,7 @@ class SquadController extends Controller
         if($league->current_round == 1 ){
             $meta->pivot->transfers = 2;
             $meta->pivot->save();
-        }
+        } 
         
         $transfer = $meta->pivot->transfers;
         

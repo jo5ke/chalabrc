@@ -1035,11 +1035,12 @@ class AdminController extends Controller
     {
             $users = User::all();
             $prev = League::where('id',$request->l_id)->first()->current_round;
-            if($prev >1){
-                $prev = $prev-1;
-            }
+            // if($prev >1){
+            //     $prev = $prev-1;
+            // }
             foreach($users as $user){
                 $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+                $cpt = $team->captain_id;
                 if($team==null){
                     continue;
                 }else{
@@ -1065,21 +1066,56 @@ class AdminController extends Controller
                         ->where('round_player.round_id','=',$prev)
                         ->whereIn('players.id',$subs)
                         ->get();
+                    
+                   
             
                     // $meta = $user->oneLeague($l_id)->first();
                     $meta = $user->oneLeague($request->l_id)->first();
                     if($meta==null){
                         continue;
                     }else{
-                    $meta = $meta->pivot;
-                    $total = $meta->points;
+                        $meta = $meta->pivot;
+                        $prev_total = $meta->points;
+                        $total = 0;
+                        $started = 0;
+                        $gk = 0;
                         foreach($st as $s){
-                            $total += $s->total;
+                            if(($s->start || $s->sub) && $s->position!="GK"){
+                                if($s->id===$cpt){
+                                    $total += ($s->total)*2;
+                                }else{
+                                    $total += $s->total;
+                                }
+                                $started++;
+                            }elseif(($s->start || $s->sub) && $s->position==="GK"){
+                                $gk = 1;
+                            }
+                            
                         }
-                        
-                        foreach($su as $s){
-                            $total += $s->total;
+                        $left = 10-$started;
+                        if($left>3){
+                            $left=3;
                         }
+                        if($gk=0){
+                            $total += $su[0];
+                        }
+                        // return $left;
+                        for($i=1;$i<=$left;$i++){
+                            if($su[$i]->id===$cpt){
+                                $total += ($su[$i]->total)*2;
+                            }else{
+                                $total += $su[$i]->total;
+                            }
+                        }
+                        // foreach($su as $s){
+                        //     $total += $s->total;
+                        // }
+                        $round = Round::where('round_no',$prev)->where('league_id',$request->l_id)->first();
+
+                        $team->rounds()->attach($team,['points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id]);
+
+                        $total += $prev_total;
+
                         $meta->points = $total;
                         $meta->save();
                     }
@@ -1090,6 +1126,46 @@ class AdminController extends Controller
             }
             
         
+    }
+
+    public function prevRound(Request $request)
+    {
+        $users = User::all();
+        $league = League::where('id',$request->l_id)->first();
+        if($league->current_round > 1){
+            $league->current_round--;
+            $league->save();
+            $users = User::all();
+            foreach($users as $user){
+                $meta = $user->oneLeague($request->l_id)->first()->pivot;
+                $meta->transfers = 2;
+                $meta->save();
+            }
+        }else{
+            $response = "There is no previous round.";
+            return $this->json($response,404);
+        }
+        return $this->json($league->current_round);
+    }
+
+    public function nextRound(Request $request)
+    {
+       
+        $league = League::where('id',$request->l_id)->first();
+        if($league->current_round < $league->number_of_rounds){
+            $league->current_round++;
+            $league->save();
+            $users = User::all();
+            foreach($users as $user){
+                $meta = $user->oneLeague($request->l_id)->first()->pivot;
+                $meta->transfers = 2;
+                $meta->save();
+            }
+        }else{
+            $response = "There is no next round.";
+            return $this->json($response,404);
+        }
+        return $this->json($league->current_round);
     }
 
 }

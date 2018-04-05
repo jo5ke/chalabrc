@@ -439,14 +439,15 @@ class PrivateLeagueController extends Controller
             $usernames[$i] = $users[$i]->username;
             $i++;
         }
-        // $us = DB::table('users')
-        //         ->join('user_leagues','users.id','=','user_league.user_id')
-        //         ->join('private_leagues','private_leagues.id','=',$pl->id)
-        //         ->select('users.username','user_league.points')
-        //         ->where('user_league.league_id','=',$pl->league_id)
-        //         ->where('private_leagues','=',$pl->id)
-        //         ->orderBy('user_league.points','desc')
-        //         ->get();
+        $us = DB::table('users')
+                ->join('user_league','users.id','=','user_league.user_id')
+                ->join('private_leagues','private_leagues.league_id','=','user_league.league_id')
+                ->select('users.username','user_league.points','users.email')
+                ->whereIn('users.email',$emails)
+                ->where('user_league.league_id','=',$pl->league_id)
+                ->where('private_leagues.id','=',$pl->id)
+                ->orderBy('user_league.points','desc')
+                ->get();
 
         
         $points = array();

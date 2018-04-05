@@ -63,6 +63,7 @@ Route::get('getArticle/{slug}', 'HomeController@getArticle');
 Route::post('sendTip', 'HomeController@sendTip')->middleware('jwt.auth');
 Route::post('checkUser', 'HomeController@checkUser');
 Route::post('getPlayerInfo', 'HomeController@getPlayerInfo');
+Route::post('getMatchInfo', 'HomeController@getMatchInfo');
 
 
 
@@ -168,4 +169,6 @@ Route::post('admin/getTip', 'AdminController@getTip');
 Route::post('admin/removeTip', 'AdminController@removeTip');
 
 Route::post('admin/evaluateUserPoints', 'AdminController@evaluateUserPoints');
+Route::post('admin/prevRound', 'AdminController@prevRound');
+Route::post('admin/nextRound', 'AdminController@nextRound');
 
