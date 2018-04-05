@@ -12,11 +12,11 @@ class SendTip extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $user;
-    protected $subject;
-    protected $body;
-    protected $view;
-    protected $league;
+    public $user;
+    public $subject;
+    public $body;
+    public $view;
+    public $league;
 
     /**
      * Create a new message instance.

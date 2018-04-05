@@ -14,6 +14,7 @@ use App\Season as Season;
 use App\User as User;
 use App\PlayerStats as PlayerStats;
 use App\Squad as Squad;
+use App\Tip as Tip;
 use Faker\Factory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
@@ -332,6 +333,26 @@ class AdminController extends Controller
         //return $round;
         $match->round_id = $round->id;
         $match->league_id = $request->l_id;
+        $match->club1_score = $request->c1_score;
+        $match->club2_score = $request->c2_score;
+
+        $matches = $round->matches()->get();
+        
+        if($matches!==null){    
+            if(isset($round->matches()->first()->time)){
+                $end_time = $round->matches()->first()->time;
+            
+            foreach($matches as $match){
+                if($match->time > $end_time){
+                    $end_time = $match->time;
+                }
+            }
+            $round->end_time = $end_time;
+            $round->save();
+         }
+        }
+
+
 
 
         $club1 = Club::where('name',$match->club1_name)->first();
@@ -394,7 +415,7 @@ class AdminController extends Controller
         // $new_round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
         // return $round->id;
         $match = Match::where('id',$request->id)->first();
-        $current_round = $match->round;
+        $round = $match->round;
 
         // if($current_round->round_no != $request->r_no)
         // {
@@ -411,8 +432,23 @@ class AdminController extends Controller
         // }     
         $match->club1_name = $request->c1_name;
         $match->club2_name = $request->c2_name;
+        $match->club1_score = $request->c1_score;
+        $match->club2_score = $request->c2_score;
+
         $match->time = $request->time;
         $match->save();
+
+
+        $matches = $round->matches()->get();
+        $end_time = $round->matches()->first()->time;
+        foreach($matches as $match){
+            if($match->time > $end_time){
+                $end_time = $match->time;
+            }
+        }
+        $round->end_time = $end_time;
+        $round->save();
+        $match = Match::where('id',$request->id)->first();
         
         if ($match === null) {
             $response = 'There was a problem fetching your data.';
@@ -605,8 +641,11 @@ class AdminController extends Controller
         $user = new User;
         $user->username = $request->name;
         $user->email = $request->email;
-        $user->password = Hash::make($request->new_password);
+        $user->password = Hash::make($request->password);
+        // $user->password = bcrypt($request->password);
         $user->uuid = Factory::create()->uuid;
+        $user->first_name = "created by admin";
+        $user->last_name = "created by admin";
         $user->save();
         $squad = new Squad;
         $squad->user_id = $user->id;
@@ -617,7 +656,7 @@ class AdminController extends Controller
         $league->users()->attach($user,['money' => 100000 ,'points' => 0,'league_id'=>$request->l_id ,'squad_id'=> $squad->id]);
         $user->roles()->attach($user,['role_id'=>1]);
 
-        $results = Season::where('id', $user->id)->get();
+        $results = User::where('id', $user->id)->get();
         if ($results === null) {
             $response = 'There was a problem saving your data.';
             return $this->json($response, 404);
@@ -628,6 +667,7 @@ class AdminController extends Controller
     public function removeUser(Request $request)
     {
         $user = User::where('uuid',$request->uuid)->first();
+        $squad = Squad::where('user_id',$user->id)->first();
         
         if ($user === null) {
             $response = 'There was a problem fetching your data.';
@@ -645,7 +685,7 @@ class AdminController extends Controller
 
     	$user->save();
 
-        $user = Season::where('id', $user->id)->get();
+        $user = User::where('id', $user->id)->get();
         if ($user === null) {
             $response = 'There was a problem saving your data.';
             return $this->json($response, 404);
@@ -737,6 +777,42 @@ class AdminController extends Controller
     }
   
     /////////////////////////////////News ends
+
+    //Tips CRUD
+
+  	public function getTips(Request $request)
+      {
+          $results = Tip::where('league_id',$request->l_id)->get();
+          if ($results === null) {
+              $response = 'There was a problem fetching your data.';
+              return $this->json($response, 404);
+          }
+          return $this->json($results);
+      }
+  
+    public function getTip(Request $request)
+    {
+        $results = Tip::where('id', $request->id)->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+  
+    public function removeTip(Request $request)
+    {
+        $tip = Tip::where('id',$request->id)->first();
+        
+        if ($tip === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        $tip->delete();
+        return $this->json($tip);
+    }
+
+    /////////////////////////////////Tips ends
 
     //Post match stats
 
@@ -955,6 +1031,65 @@ class AdminController extends Controller
 
     /////////////////////////////////Post match stats ends
 
-
+    public function evaluateUserPoints(Request $request)
+    {
+            $users = User::all();
+            $prev = League::where('id',$request->l_id)->first()->current_round;
+            if($prev >1){
+                $prev = $prev-1;
+            }
+            foreach($users as $user){
+                $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+                if($team==null){
+                    continue;
+                }else{
+                    $starting = json_decode($team->selected_team);
+                    $subs = json_decode($team->substitutions);
+            
+                    $st = DB::table('players')
+                            ->join('round_player','players.id','=','round_player.player_id')
+                            ->join('clubs','players.club_id','=','clubs.id')
+                            ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                                    'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                                    'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                            ->where('round_player.round_id','=',$prev)
+                            ->whereIn('players.id',$starting)
+                            ->get();
+            
+                    $su = DB::table('players')
+                            ->join('round_player','players.id','=','round_player.player_id')
+                            ->join('clubs','players.club_id','=','clubs.id')
+                            ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                                'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                                'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                        ->where('round_player.round_id','=',$prev)
+                        ->whereIn('players.id',$subs)
+                        ->get();
+            
+                    // $meta = $user->oneLeague($l_id)->first();
+                    $meta = $user->oneLeague($request->l_id)->first();
+                    if($meta==null){
+                        continue;
+                    }else{
+                    $meta = $meta->pivot;
+                    $total = $meta->points;
+                        foreach($st as $s){
+                            $total += $s->total;
+                        }
+                        
+                        foreach($su as $s){
+                            $total += $s->total;
+                        }
+                        $meta->points = $total;
+                        $meta->save();
+                    }
+                    $response = "success";
+                    return $this->json($response);
+            }
+                
+            }
+            
+        
+    }
 
 }

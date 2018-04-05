@@ -60,7 +60,7 @@ Route::get('getImage/{name}', 'HomeController@getImage');
 Route::post('getDreamTeam', 'HomeController@getDreamTeam');
 Route::get('getJerseyId/{$id}', 'HomeController@getJerseyId');
 Route::get('getArticle/{slug}', 'HomeController@getArticle');
-Route::post('sendTip', 'HomeController@sendTip');
+Route::post('sendTip', 'HomeController@sendTip')->middleware('jwt.auth');
 Route::post('checkUser', 'HomeController@checkUser');
 Route::post('getPlayerInfo', 'HomeController@getPlayerInfo');
 
@@ -97,6 +97,7 @@ Route::post('privateLeague/sendInvite', 'PrivateLeagueController@sendInvite')->m
 Route::post('privateLeague/banUser', 'PrivateLeagueController@banUser')->middleware('jwt.auth');
 Route::post('privateLeague/showTable', 'PrivateLeagueController@showTable')->middleware('jwt.auth');
 Route::post('privateLeague/getTable', 'PrivateLeagueController@getTable')->middleware('jwt.auth');
+Route::get('privateLeague/joinLeague/{code}', 'PrivateLeagueController@joinLeagueLink')->middleware('jwt.auth');
 
 
 
@@ -161,4 +162,10 @@ Route::post('admin/getClubsByMatch', 'AdminController@getClubsByMatch');
 Route::post('admin/getPlayersStats', 'AdminController@getPlayersStats');
 Route::post('admin/postPlayerStats', 'AdminController@postPlayerStats');
 Route::post('admin/playerTotalPoints', 'AdminController@playerTotalPoints');
+// tips
+Route::post('admin/getTips', 'AdminController@getTips');
+Route::post('admin/getTip', 'AdminController@getTip');
+Route::post('admin/removeTip', 'AdminController@removeTip');
+
+Route::post('admin/evaluateUserPoints', 'AdminController@evaluateUserPoints');
 

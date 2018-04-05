@@ -57,5 +57,10 @@ class User extends Authenticatable
         return $this->hasMany('App\PrivateLeagues','owner_id','id');
     }
 
+    public function tips()
+    {
+        return $this->hasMany('App\Tip');
+    }
+
 
 }

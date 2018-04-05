@@ -9,15 +9,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use App\User as User;
 use App\PrivateLeague as PrivateLeague;
 
-class RegistrationMail extends Mailable
+class LeagueMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $subject;
-    protected $view;
-    protected $sender;
-    protected $receiver;
-    protected $pl;
+    public $subject;
+    public $view;
+    public $sender;
+    public $receiver;
+    public $pl;
 
     /**
      * Create a new message instance.
@@ -42,6 +42,6 @@ class RegistrationMail extends Mailable
     public function build()
     {
        // return $this->view('view.name');
-        return $this->from("mg.breddefantasy@office.com")->subject($this->subject)->view($this->view);
+        return $this->from("mg.breddefantasy@gmail.com")->subject($this->subject)->view($this->view);
     }
 }

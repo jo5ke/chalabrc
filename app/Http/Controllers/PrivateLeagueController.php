@@ -13,6 +13,8 @@ use App\PrivateLeague;
 use Faker\Factory as Faker;
 use Illuminate\Support\Facades\DB;
 use JWTAuth;
+use Mail as Mail;
+use App\Mail\LeagueMail as LeagueMail;
 
 class PrivateLeagueController extends Controller
 {
@@ -163,12 +165,17 @@ class PrivateLeagueController extends Controller
         $user = JWTAuth::authenticate();        
         $pl = PrivateLeague::where('code',$request->code)->first();
         $emails = json_decode($pl->emails);
-        $emails = array_values(json_decode(json_encode($emails), true));
 
+        if($user->id==$pl->owner_id){
+            $response = "You are the owner of the league.";
+            return $this->json($response, 404);
+        }
+        
         if(empty($emails)){
             $emails = array();
             $search=null;
         }else{
+            $emails = array_values(json_decode(json_encode($emails), true));
             $search = array_search($user->email,$emails);
         }
 
@@ -178,21 +185,30 @@ class PrivateLeagueController extends Controller
             }
         
          $invites = json_decode($pl->invites);
-        // $invites = array_values(json_decode(json_encode($invites), true));
         if(empty($invites)){
             $invites = array();
             $search=null;
         }else{
+            $invites = array_values(json_decode(json_encode($invites), true));            
             $search = array_search($user->email,$invites);
+            if($search===false){
+                $response = "You are not invited to this league!";
+                return $this->json($response);
+            }
             unset($invites[$search]);
         }
-            if($search==true){
-                $response = 'You have already joined the league.';
-                return $this->json($response, 404);
-            }
+            // if($search==true){
+            //     $response = 'You have already joined the league.';
+            //     return $this->json($response, 404);
+            // }
 
         if($request->code == $pl->code){
+            
             array_push($emails,$user->email);
+        }
+        foreach($emails as $email){
+        $receiver = User::where('email',$email)->first();
+        // Mail::to($email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
         }
         
         $emails = json_encode($emails);
@@ -225,6 +241,83 @@ class PrivateLeagueController extends Controller
         return $this->json($pl); 
     }
 
+    public function joinLeagueLink($code)
+    {
+        $user = JWTAuth::authenticate();        
+        $pl = PrivateLeague::where('code',$request->code)->first();
+        $emails = json_decode($pl->emails);
+
+        if($user->id==$pl->owner_id){
+            $response = "You are the owner of the league.";
+            return $this->json($response, 404);
+        }
+        
+        if(empty($emails)){
+            $emails = array();
+            $search=null;
+        }else{
+            $emails = array_values(json_decode(json_encode($emails), true));
+            $search = array_search($user->email,$emails);
+        }
+
+            if($search==true){
+                $response = 'You have already joined the league.';
+                return $this->json($response, 404);
+            }
+        
+         $invites = json_decode($pl->invites);
+        if(empty($invites)){
+            $invites = array();
+            $search=null;
+        }else{
+            $invites = array_values(json_decode(json_encode($invites), true));            
+            $search = array_search($user->email,$invites);
+            if($search===false){
+                $response = "You are not invited to this league!";
+                return $this->json($response);
+            }
+            unset($invites[$search]);
+        }
+        if($request->code == $pl->code){
+            
+            array_push($emails,$user->email);
+        }
+        foreach($emails as $email){
+        $receiver = User::where('email',$email)->first();
+        // Mail::to($email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
+        }
+        
+        $emails = json_encode($emails);
+        $invites = json_encode($invites);
+        $pl->emails = $emails;
+        $pl->invites = $invites;
+        $pl->save();
+
+        $meta = $user->oneLeague($pl->league_id)->first();
+
+        $joined = $meta->pivot->joined_privates;
+        $joined = json_decode($joined);
+        
+        if($joined===null){
+            $joined = array();
+        }else{
+            $joined = array_values(json_decode(json_encode($joined), true));
+        }
+
+        array_push($joined,$pl->id);
+
+        $meta->pivot->joined_privates = json_encode($joined);
+        $meta->pivot->privates++;
+        $meta->pivot->save();
+
+        if ($pl === null) {
+            $response = 'There was a problem with league code.';
+            return $this->json($response, 404);
+        }
+        return $this->json($pl); 
+
+    }
+
     public function sendInvite(Request $request)
     {
         // $user = JWTAuth::authenticate();
@@ -234,15 +327,17 @@ class PrivateLeagueController extends Controller
         // $emails = json_decode($pl->emails);
 
         $invites = json_decode($pl->invites);
-       // $invites = array_values(json_decode(json_encode($invites), true));
         
         if($invites===null){
             $invites = array();
+        }else{
+             $invites = array_values(json_decode(json_encode($invites), true));            
         }
         $invalid = array();
         $new_invs = $request->email;
+       
         foreach($new_invs as $new_inv){
-            if($key=array_search($new_inv,$invites)!==null){
+            if(array_search($new_inv,$invites)==true){
                 array_push($invalid,$new_inv);
             }else{
                 array_push($invites,$new_inv);
@@ -291,12 +386,12 @@ class PrivateLeagueController extends Controller
     public function banUser(Request $request)
     {
         // $user = JWTAuth::authenticate();
+        $pl = PrivateLeague::where('id',$request->id)->first();
         $user = User::where('email',$request->email)->first();
-        if($user->email===$request->email){
+        if($pl->owner_id===$user->id){
             $response = "Can't ban admin!";
             return $this->json($response,404);
         }
-        $pl = PrivateLeague::where('id',$request->id)->first();
         $emails = json_decode($pl->emails);
         $emails = array_values(json_decode(json_encode($emails), true));
         
@@ -310,6 +405,7 @@ class PrivateLeagueController extends Controller
         unset($joined[$key_mail]);
         $joined = json_encode($joined);
         $meta->pivot->joined_privates = $joined;
+        $meta->pivot->privates--;
         $meta->pivot->save();
 
         
@@ -336,15 +432,26 @@ class PrivateLeagueController extends Controller
         }
         
         $users= array();
+        $usernames = array();
         $i=0;
         foreach($emails as $email){
             $users[$i] = User::where('email',$email)->first();
             $usernames[$i] = $users[$i]->username;
             $i++;
         }
+        // $us = DB::table('users')
+        //         ->join('user_leagues','users.id','=','user_league.user_id')
+        //         ->join('private_leagues','private_leagues.id','=',$pl->id)
+        //         ->select('users.username','user_league.points')
+        //         ->where('user_league.league_id','=',$pl->league_id)
+        //         ->where('private_leagues','=',$pl->id)
+        //         ->orderBy('user_league.points','desc')
+        //         ->get();
+
         
         $points = array();
         $j=0;
+        
         foreach($users as $user){
             $points[$j] = $user->oneLeague($pl->league_id)->first()->pivot->points;
             $j++;
@@ -352,7 +459,8 @@ class PrivateLeagueController extends Controller
 
         $res = [
             "users"  =>  $users,
-            "points" =>  $points
+            "points" =>  $points,
+            "sorted" => $us
         ];
 
         //?

@@ -54,4 +54,9 @@ class League extends Model
         return $this->hasMany('App\PrivateLeague');
     }
 
+    public function tips()
+    {
+        return $this->hasMany('App\Tip');
+    }
+
 }

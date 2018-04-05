@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Article as Article;
 use App\User as User;
 use App\League as League;
+use App\Tip as Tip;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\File;
@@ -524,16 +525,19 @@ class HomeController extends Controller
                ->whereIn('players.id',$subs)
                ->get();
 
-
+        // $meta = $user->oneLeague($l_id)->first();
+        $meta = $user->oneLeague($request->l_id)->first()->pivot;
         $total = 0;
         foreach($st as $s){
             $total += $s->total;
         }
-
+        
         foreach($su as $s){
             $total += $s->total;
         }
-
+        // $meta->points = $total;
+        // $meta->save();
+        
         $results = [
             "selected_team" => $st,
             "substitutions" => $su,
@@ -633,16 +637,23 @@ class HomeController extends Controller
         $subject = $request->subject;
         $body = $request->body;
         $league = League::where('id',$request->l_id)->first()->name;
+        
+        $tip = new Tip;
+        $tip->subject = $request->subject;
+        $tip->body = $request->body;
+        $tip->league_id = $request->l_id;
+        $tip->user_id = $user->id;
+        $tip->save();
 
-        Mail::to($user->email)->send(new RegistrationMail($user,"You have successfully submitted a tip!","emails.tip_confirm"));        
-        Mail::to("breddefantasy@gmail.com")->send(new SendTip($user,"$user->first_name $user->last_name has submitted a tip!",$request->body,"emails.tip_send",$league));
+     
+        // Mail::to("breddefantasy@gmail.com")->send(new SendTip($user,"$user->first_name $user->last_name has submitted a tip!",$request->body,"emails.tip_send",$league));
 
 
-        if ($results === null) {
+        if ($tip === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
-        return $this->json($results);
+        return $this->json($tip);
     }
 
     public function checkUser(Request $request)

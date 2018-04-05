@@ -12,9 +12,9 @@ class RegistrationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $subject;
-    protected $view;
-    protected $user;
+    public $subject;
+    public $view;
+    public $user;
 
     /**
      * Create a new message instance.
@@ -37,6 +37,6 @@ class RegistrationMail extends Mailable
     public function build()
     {
        // return $this->view('view.name');
-        return $this->from("mg.breddefantasy@office.com")->subject($this->subject)->view($this->view);
+        return $this->from("mg.breddefantasy@gmail.com")->subject($this->subject)->view($this->view);
     }
 }
