@@ -150,6 +150,13 @@ class AdminController extends Controller
         $player->reason = $request->reason;
         $player->save();
 
+        $league = League::where('id',$club->league_id)->first();
+        // $round = Round::where('round_no',$league->current_round)->where('league_id',$league->id)->first();
+        $rounds = Round::where('league_id',$league->id)->where('round_no','>=',$league->current_round)->get();
+        foreach($rounds as $round){
+            $round->players()->attach($player);
+        }
+
         $results = Player::where('id', $player->id)->get();
         if ($results === null) {
             $response = 'There was a problem fetching your data.';
@@ -161,6 +168,14 @@ class AdminController extends Controller
     public function removePlayer(Request $request)
     {
         $player = Player::where('id',$request->id)->first();
+        $round_players = $player->rounds()->where('player_id',$player->id)->get();
+   
+        foreach($round_players as $round_player){
+            $round_player->pivot->delete();
+        }
+        // $club = Club::where('id',$player->club_id)->first();
+        // $league = League::where('id',$club->league_id)->first();
+        // $round = Round::where('league_id',$league->id)->where()
         
         if ($player === null) {
             $response = 'There was a problem fetching your data.';
@@ -335,16 +350,26 @@ class AdminController extends Controller
         $match->league_id = $request->l_id;
         $match->club1_score = $request->c1_score;
         $match->club2_score = $request->c2_score;
-
+        // important order
         $matches = $round->matches()->get();
+    	$match->save();
         
+
+        $exists1 = 0;
+        $exists2 = 0;
         if($matches!==null){    
             if(isset($round->matches()->first()->time)){
                 $end_time = $round->matches()->first()->time;
             
-            foreach($matches as $match){
-                if($match->time > $end_time){
-                    $end_time = $match->time;
+            foreach($matches as $m){
+                if($m->time > $end_time){
+                    $end_time = $m->time;
+                }
+                if(($m->club1_name === $request->c1_name) or ($m->club2_name === $request->c1_name)){
+                    $exists1 = 1;
+                }
+                if(($m->club1_name === $request->c2_name) or ($m->club2_name === $request->c2_name)){
+                    $exists2 = 1;
                 }
             }
             $round->end_time = $end_time;
@@ -352,29 +377,21 @@ class AdminController extends Controller
          }
         }
 
-
-
-
-        $club1 = Club::where('name',$match->club1_name)->first();
-        $club2 = Club::where('name',$match->club2_name)->first();
-
-        $players1 = $club1->players;
-        foreach($players1 as $player){
-            $round->players()->attach($player);     
-          //  $stats = new PlayerStats;
-                   
+        if($exists1===0){
+            $club1 = Club::where('name',$request->c1_name)->first();
+            $players1 = $club1->players;
+            foreach($players1 as $player){
+                $round->players()->attach($player);            
+            }
         }
 
-        $players2 = $club2->players;
-        foreach($players2 as $player){
-              $round->players()->attach($player);     
-            // $stats = new PlayerStats;
-            // $stats->first_name = $player->first_name;       
-            // $stats->last_name = $player->last_name;  
-            // $stats->save();     
+        if($exists2===0){
+            $club2 = Club::where('name',$request->c2_name)->first();
+            $players2 = $club2->players;
+            foreach($players2 as $player){
+                  $round->players()->attach($player);      
+            }    
         }
-       
-    	$match->save();
 
         if ($match === null) {
             $response = 'There was a problem fetching your data.';
@@ -386,27 +403,63 @@ class AdminController extends Controller
     public function removeMatch(Request $request)
     {
         $match = Match::where('id',$request->id)->first();
-
-        $club1 = Club::where('name',$match->club1_name)->first();
-        $club2 = Club::where('name',$match->club2_name)->first();
         $round = Round::where('league_id',$request->l_id)->where('round_no',$request->r_no)->first();
         
+        $count1 = 0;
+        $count2 = 0;
+        $matches = $round->matches()->get();
 
-        $players1 = $club1->players;
-        foreach($players1 as $player){
-            $round->players()->detach($player);     
+        $time = 0;
+        $end_time = $round->end_time;
+        if($match->time >= $end_time){
+            $time = 1;
         }
 
-        $players2 = $club2->players;
-        foreach($players2 as $player){
-            $round->players()->detach($player);   
+        foreach($matches as $m){
+            if($match->club1_name == $m->club1_name || $match->club2_name == $m->club1_name){
+                $count1++;
+            }
+            if($match->club1_name == $m->club2_name || $match->club2_name == $m->club2_name){
+                $count2++;
+            }
+
         }
         
+        if($count1<2){
+            $club1 = Club::where('name',$match->club1_name)->first();
+            $players1 = $club1->players;
+            foreach($players1 as $player){
+                $round->players()->detach($player);     
+            }
+        }
+
+        if($count2<2){
+             $club2 = Club::where('name',$match->club2_name)->first();
+             $players2 = $club2->players;
+             foreach($players2 as $player){
+                 $round->players()->detach($player);   
+             }
+        }
+
         if ($match === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
         }
         $match->delete();
+        $matches = $round->matches()->get();
+        if($time == 1 ){
+            if(isset($round->matches()->first()->time)){
+                $end_time = $round->matches()->first()->time;
+            }
+            foreach($matches as $m){
+                if($m->time > $end_time){
+                    $end_time = $m->time;
+                }
+            }
+            $round->end_time = $end_time;
+            $round->save();
+        }
+
         return $this->json($match);
     }
 
@@ -438,8 +491,29 @@ class AdminController extends Controller
         $match->time = $request->time;
         $match->save();
 
-
         $matches = $round->matches()->get();
+/////////////////
+
+        $club1 = Club::where('name',$match->club1_name)->first();
+        $players1 = $club1->players;
+        foreach($players1 as $player){
+            if($round->players()->where('player_id',$player->id)->exists()){
+                break;
+            }else{
+              $round->players()->attach($player);              
+            }
+        }
+
+        $club2 = Club::where('name',$match->club2_name)->first();
+        $players2 = $club2->players;
+        foreach($players2 as $player){
+            if($round->players()->where('player_id',$player->id)->exists()){
+                break;
+            }else{
+              $round->players()->attach($player);              
+            }
+        }
+
         $end_time = $round->matches()->first()->time;
         foreach($matches as $match){
             if($match->time > $end_time){
@@ -1040,13 +1114,16 @@ class AdminController extends Controller
             // }
             foreach($users as $user){
                 $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+
+                // return $team->with('rounds')->where()->get();
                 $cpt = $team->captain_id;
-                if($team==null){
+                if($team->selected_team === NULL || $team->substitutions === NULL){
                     continue;
                 }else{
                     $starting = json_decode($team->selected_team);
                     $subs = json_decode($team->substitutions);
-            
+
+
                     $st = DB::table('players')
                             ->join('round_player','players.id','=','round_player.player_id')
                             ->join('clubs','players.club_id','=','clubs.id')
@@ -1056,18 +1133,19 @@ class AdminController extends Controller
                             ->where('round_player.round_id','=',$prev)
                             ->whereIn('players.id',$starting)
                             ->get();
-            
+                    
+                    
                     $su = DB::table('players')
                             ->join('round_player','players.id','=','round_player.player_id')
                             ->join('clubs','players.club_id','=','clubs.id')
                             ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                                 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                                 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                        ->where('round_player.round_id','=',$prev)
-                        ->whereIn('players.id',$subs)
-                        ->get();
-                    
+                            ->where('round_player.round_id','=',$prev)
+                            ->whereIn('players.id',$subs)
+                            ->get();
                    
+                    
             
                     // $meta = $user->oneLeague($l_id)->first();
                     $meta = $user->oneLeague($request->l_id)->first();
@@ -1078,52 +1156,81 @@ class AdminController extends Controller
                         $prev_total = $meta->points;
                         $total = 0;
                         $started = 0;
-                        $gk = 0;
+                        $gk = 0; 
                         foreach($st as $s){
-                            if(($s->start || $s->sub) && $s->position!="GK"){
+                            if(($s->start==1 || $s->sub==1) && $s->position!="GK"){
                                 if($s->id===$cpt){
                                     $total += ($s->total)*2;
                                 }else{
                                     $total += $s->total;
                                 }
                                 $started++;
-                            }elseif(($s->start || $s->sub) && $s->position==="GK"){
+                            }elseif(($s->start==1 || $s->sub==1) && $s->position==="GK"){
                                 $gk = 1;
                             }
                             
                         }
+                       
                         $left = 10-$started;
                         if($left>3){
                             $left=3;
                         }
-                        if($gk=0){
-                            $total += $su[0];
-                        }
+                        // if($gk=0){
+                        //     $total += $su[0];
+                        // }
                         // return $left;
-                        for($i=1;$i<=$left;$i++){
-                            if($su[$i]->id===$cpt){
-                                $total += ($su[$i]->total)*2;
+                        foreach($su as $s){
+                            if($left==0){
+                                break;
                             }else{
-                                $total += $su[$i]->total;
+                                if($s->position!="GK"){
+                                    $total += $s->total;
+                                    $left--;
+                                }else{
+                                    if($gk===0){
+                                        $total += $s->total;
+                                    }
+                                }
                             }
                         }
+
+
+
+                        // for($i=1;$i<=$left;$i++){
+                        //     if($su[$i]->id===$cpt){
+                        //         $total += ($su[$i]->total)*2;
+                        //     }else{
+                        //         $total += $su[$i]->total;
+                        //     }
+                        // }
+
                         // foreach($su as $s){
                         //     $total += $s->total;
                         // }
                         $round = Round::where('round_no',$prev)->where('league_id',$request->l_id)->first();
 
-                        $team->rounds()->attach($team,['points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id]);
+                        $q = $team->rounds()->where('round_id',$round->id)->first();     
+                        if(empty($q)){
+                            $team->rounds()->attach($team,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id]);
+                            // return "prazno";
+                        }else{
+                            $prev_total -= $q->pivot->points;
+                            $team->rounds()->updateExistingPivot($round->id,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id]);
+                            // return "neprazno";
+                        }
 
                         $total += $prev_total;
 
                         $meta->points = $total;
                         $meta->save();
                     }
+                }
+                }
                     $response = "success";
                     return $this->json($response);
-            }
+            
                 
-            }
+            
             
         
     }

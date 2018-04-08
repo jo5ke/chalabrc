@@ -201,8 +201,11 @@ class HomeController extends Controller
         if($this->term==""){
             $results = DB::table('users')
                     ->join('user_league','users.id','=','user_league.user_id')
+                    ->join('squads','users.id','=','squads.user_id')
+                    ->join('squad_round','squads.id','=','squad_round.squad_id')
                     ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
-                            'user_league.money','user_league.points','user_league.squad_id')
+                            'user_league.money','user_league.points','user_league.squad_id','squad_round.points as prev_round')
+                    ->where('squad_round.round_no','=',$prev_round)
                     ->where('user_league.league_id','=',$request->l_id)
                     ->orderBy('user_league.points','desc')
                     ->orderBy('users.username','asc');
@@ -212,8 +215,10 @@ class HomeController extends Controller
             $this->term = $this->term . "%";
             $results = DB::table('users')
                     ->join('user_league','users.id','=','user_league.user_id')
+                    ->join('squads','users.id','=','squads.user_id')
+                    ->join('squad_round','squads.id','=','squad_round.squad_id')
                     ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
-                            'user_league.money','user_league.points','user_league.squad_id')
+                            'user_league.money','user_league.points','user_league.squad_id','squad_round.points as prev_round')
                     // ->where([
                     //             ['user_league.league_id','=',$request->l_id],
                     //             ['users.first_name','LIKE',$term]
@@ -223,6 +228,7 @@ class HomeController extends Controller
                                 $query->where('users.first_name','LIKE',$this->term)
                                 ->orWhere('users.last_name','LIKE',$this->term);
                     })
+                    ->where('squad_round.round_no','=',$prev_round)
                         
                     ->orderBy('user_league.points','desc')
                     ->orderBy('users.username','asc');
@@ -417,15 +423,18 @@ class HomeController extends Controller
 
     public function getDreamTeam(Request $request)
     {
-        $league = League::where('id',$request->l_id)->first();
+        $current_round = $league = League::where('id',$request->l_id)->first()->current_round;
+        if($current_round > 1){
+            $current_round--;
+        }
       
         $gk = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
-                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id',
+                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
                         'round_player.total','clubs.name')
                 ->where([
-                            ['round_player.round_id','=',$league->current_round],
+                            ['round_player.round_id','=',$current_round],
                             ['players.position','=','GK'],
                         ])
                 ->orderBy('round_player.total','desc')
@@ -435,10 +444,10 @@ class HomeController extends Controller
         $def = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
-                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id',
+                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
                         'round_player.total','clubs.name')
                 ->where([
-                            ['round_player.round_id','=',$league->current_round],
+                            ['round_player.round_id','=',$current_round],
                             ['players.position','=','DEF'],
                         ])
                 ->orderBy('round_player.total','desc')
@@ -448,10 +457,10 @@ class HomeController extends Controller
         $mid = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
-                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id',
+                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
                         'round_player.total','clubs.name')
                 ->where([
-                            ['round_player.round_id','=',$league->current_round],
+                            ['round_player.round_id','=',$current_round],
                             ['players.position','=','MID'],
                         ])
                 ->orderBy('round_player.total','desc')
@@ -461,10 +470,10 @@ class HomeController extends Controller
         $atk = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
-                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id',
+                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
                         'round_player.total','clubs.name')
                 ->where([
-                            ['round_player.round_id','=',$league->current_round],
+                            ['round_player.round_id','=',$current_round],
                             ['players.position','=','ATK'],
                         ])
                 ->orderBy('round_player.total','desc')
@@ -552,6 +561,7 @@ class HomeController extends Controller
                         'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                 ->where('round_player.round_id','=',$prev)
                 ->whereIn('players.id',$starting)
+                ->orderBy('players.position','desc')
                 ->get();
 
         $su = DB::table('players')
@@ -562,6 +572,7 @@ class HomeController extends Controller
                        'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                ->where('round_player.round_id','=',$prev)
                ->whereIn('players.id',$subs)
+               ->orderBy('players.position','desc')
                ->get();
 
         // $meta = $user->oneLeague($l_id)->first();
@@ -722,7 +733,7 @@ class HomeController extends Controller
     public function getUserStats(Request $request)
     {
         $user = User::where('uuid',$request->uuid)->first();
-        $squad = Squad::where('league_id',$request->l_id)->where('user_id',$request->id)->first();
+        $squad = Squad::where('league_id',$request->l_id)->where('user_id',$user->id)->first();
         $prev_round = League::where('id',$request->l_id)->first()->current_round;
         $prev_round--;
         $stats = DB::table('users')
@@ -772,16 +783,19 @@ class HomeController extends Controller
         $previous = DB::table('squad_round')
                 ->select('points')
                 ->where([
-                    ['round_no','=',$prev_round]
+                    ['round_no','=',$prev_round],
+                    ['league_id','=',$request->l_id]
                 ])
                 ->get();
 
         $avg = DB::table('squad_round')
+                ->select(DB::raw('AVG(squad_round.points) as avg'))
                 ->where([
                     ['league_id','=',$request->l_id],
                 ])
                 ->groupBy('squad_id')
-                ->avg('points');
+                ->get();
+                
         
         $results = [
             "current" => $stats,
@@ -800,7 +814,9 @@ class HomeController extends Controller
     public function getPlayerInfo(Request $request)
     {
         $player = Player::where('id',$request->id)->first();
-        $league = League::where('id',$player->league_id)->first()->current_round;
+        $club = $player->club;
+        $current_round = League::where('id',$club->league_id)->first()->current_round;
+        $price = $player->price;
         $total = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->select(DB::raw('SUM(round_player.total) as total'))
@@ -824,7 +840,9 @@ class HomeController extends Controller
             "player" => $player,
             "total"  => $total,
             "current"=> $current,
-            "avg"    => $avg
+            "avg"    => $avg,
+            "price"  => $price,
+            "round"  => $current_round
         ];
 
         if ($results === null) {

@@ -121,18 +121,18 @@ class SquadController extends Controller
         $team_val = 0;
         
 
-        for($i=0;$i<count($starting);$i++){
-            $starting[$i]=Player::where('id',$starting[$i])->with('club')->first();
-            $team_val += $starting[$i]->price;
-        }
+        // for($i=0;$i<count($starting);$i++){
+        //     $starting[$i]=Player::where('id',$starting[$i])->with('club')->first();
+        //     $team_val += $starting[$i]->price;
+        // }
 
-        for($i=0;$i<count($subs);$i++){
-            $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
-            $team_val += $subs[$i]->price;
-        }
+        // for($i=0;$i<count($subs);$i++){
+        //     $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
+        //     $team_val += $subs[$i]->price;
+        // }
 
 
-
+        $start_ = implode(',', $starting_arr);
         $starting_stats = DB::table('players')
             ->join('clubs','players.club_id','=','clubs.id')
             ->join('round_player','players.id','=','round_player.player_id')
@@ -140,8 +140,10 @@ class SquadController extends Controller
                     ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
             ->whereIn('players.id',$starting_arr)
             ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+            ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
             ->get();
 
+        $subs_ = implode(',', $subs_arr);
         $subs_stats = DB::table('players')
             ->join('clubs','players.club_id','=','clubs.id')
             ->join('round_player','players.id','=','round_player.player_id')
@@ -149,8 +151,10 @@ class SquadController extends Controller
                     ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
             ->whereIn('players.id',$subs_arr)
             ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+            ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
             ->get();
-
+            
+       
 
 
         $league = League::where('id',$request->l_id)->first();
@@ -200,6 +204,7 @@ class SquadController extends Controller
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name'
                         ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
+                ->where('clubs.league_id','=',$request->l_id)
                 ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
                 ->get();
 
@@ -207,7 +212,7 @@ class SquadController extends Controller
         // $players = League::where('id',$request->l_id)->with('players')->get();
         $results = Player::with('club')->where('league_id',$request->l_id)->get();
      //   $players = Player::all();
-        if ($results === null) {
+        if ($pstats === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
         }
@@ -285,6 +290,7 @@ class SquadController extends Controller
         $starting_ids = json_encode($request->selected_team);
         $subs_ids = json_encode($request->substitutions);
         //$full_squad = array_merge($starting_ids,$subs_ids);
+        
 
         $user = JWTAuth::authenticate();
   
