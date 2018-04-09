@@ -42,6 +42,7 @@ Route::get('topFivePlayersDivision2', 'HomeController@topFivePlayersDivision2');
 //
 Route::post('payment', 'PaymentController@payment');
 Route::post('users', 'HomeController@getUsers');
+Route::post('getUserPointsPerWeek', 'HomeController@getUserPointsPerWeek');
 Route::post('getCurrentRound', 'HomeController@getCurrentRound');
 Route::post('getUserSquad', 'HomeController@getUserSquad');
 Route::get('getAllLeagues', 'HomeController@getAllLeagues');

@@ -190,11 +190,14 @@ class HomeController extends Controller
     // with i argument???
     public function getUsers(Request $request)
     {
-        // $results = User::with(['oneLeague' => $request->l_id])->get();
-        // $users = User::all();
-        // $results = $users->oneLeague($request->l_id)->get();
         $league = League::where('id',$request->l_id)->first();
-        $prev_round = $league->current_round-1;
+        $current_round = $league->current_round;
+        $prev_round = $current_round - 1;
+        // if($league->current_round>1){
+        //     $prev_round = $league->current_round-1;
+        // }else{
+        //     $prev_round = $league->current_round;
+        // }
         $this->term = $request->term ? $request->term : "";
         $per_page = $request->per_page ? $request->per_page : null;
 
@@ -205,7 +208,7 @@ class HomeController extends Controller
                     ->join('squad_round','squads.id','=','squad_round.squad_id')
                     ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
                             'user_league.money','user_league.points','user_league.squad_id','squad_round.points as prev_round')
-                    ->where('squad_round.round_no','=',$prev_round)
+                    ->where('squad_round.round_no','=',$current_round)
                     ->where('user_league.league_id','=',$request->l_id)
                     ->orderBy('user_league.points','desc')
                     ->orderBy('users.username','asc');
@@ -228,7 +231,7 @@ class HomeController extends Controller
                                 $query->where('users.first_name','LIKE',$this->term)
                                 ->orWhere('users.last_name','LIKE',$this->term);
                     })
-                    ->where('squad_round.round_no','=',$prev_round)
+                    ->where('squad_round.round_no','=',$current_round)
                         
                     ->orderBy('user_league.points','desc')
                     ->orderBy('users.username','asc');
@@ -236,35 +239,73 @@ class HomeController extends Controller
                     // ->get();
         }
         if($per_page===null){
-            $results = $results->take(11)->get();
+            $results = $results->take(10)->get();
         }else{
             $results = $results->paginate($per_page);
         }
 
-        // $previous = DB::table('squad_round')
-        //     ->select('points')
-        //     ->where([
-        //         ['round_no','=',$prev_round]
-        //     ])
-        //     ->get();
-
-        // $avg = DB::table('squad_round')
-        //     ->where([
-        //         ['league_id','=',$request->l_id],
-        //     ])
-        //     ->groupBy('squad_id')
-        //     ->avg('points');
-
-
-
-        // $res = [
-        //     "users" => $results,
-        //     "previous" => $previous,
-        //     "avg"   => $avg
-        // ];
-
         if ($results === null) {
             $response = 'There was a problem fetching players.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getUserPointsPerWeek(Request $request)
+    {
+        $league = League::where('id',$request->l_id)->first();
+        $this->term = $request->term ? $request->term : "";
+        $per_page = $request->per_page ? $request->per_page : null;
+
+        $gw = intval($request->gw);
+        if($gw == 0){
+            $gw = $league->current_round;
+        }
+        if($this->term==""){
+            $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->join('squads','users.id','=','squads.user_id')
+                    ->join('squad_round','squads.id','=','squad_round.squad_id')
+                    ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
+                            'user_league.money','user_league.points','user_league.squad_id','squad_round.points as prev_round')
+                    ->where('squad_round.round_no','=',$gw)
+                    ->where('user_league.league_id','=',$request->l_id)
+                    ->orderBy('prev_round','desc')
+                    ->orderBy('users.username','asc');
+                    // ->take(10)
+                    // ->get();
+        }else{
+            $this->term = $this->term . "%";
+            $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->join('squads','users.id','=','squads.user_id')
+                    ->join('squad_round','squads.id','=','squad_round.squad_id')
+                    ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
+                            'user_league.money','user_league.points','user_league.squad_id','squad_round.points as prev_round')
+                    // ->where([
+                    //             ['user_league.league_id','=',$request->l_id],
+                    //             ['users.first_name','LIKE',$term]
+                    //          ])
+                    ->where('user_league.league_id','=',$request->l_id)
+                    ->where(function ($query) {
+                                $query->where('users.first_name','LIKE',$this->term)
+                                ->orWhere('users.last_name','LIKE',$this->term);
+                    })
+                    ->where('squad_round.round_no','=',$gw)
+                        
+                    ->orderBy('prev_round','desc')
+                    ->orderBy('users.username','asc');
+                    // ->take(10)
+                    // ->get();
+        }
+        if($per_page===null){
+            $results = $results->take(10)->get();
+        }else{
+            $results = $results->paginate($per_page);
+        }
+
+        if ($results === null) {
+            $response = 'There was a problem fetching user points.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -358,13 +399,21 @@ class HomeController extends Controller
             $key = array_search($meta->points,$points);
             $key++;
 
-            $prev_round = League::where('id',$request->l_id)->first()->current_round;
-            $prev_round--;
+            $current_round = League::where('id',$request->l_id)->first()->current_round;
+            $prev_round = $current_round-1;
 
             $previous = DB::table('squad_round')
                 ->select('points')
                 ->where([
                     ['round_no','=',$prev_round],
+                    ['squad_id','=',$team->id]
+                ])
+                ->get();
+
+            $current = DB::table('squad_round')
+                ->select('points')
+                ->where([
+                    ['round_no','=',$current_round],
                     ['squad_id','=',$team->id]
                 ])
                 ->get();
@@ -381,7 +430,8 @@ class HomeController extends Controller
                 "subs" => $subs
             ],
             "position"  => $key,
-            "previous"  => $previous
+            "previous"  => $previous,
+            "current"   => $current
 
         ];
 
@@ -547,11 +597,14 @@ class HomeController extends Controller
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
         $starting = json_decode($team->selected_team);
         $subs = json_decode($team->substitutions);
-
-        $prev = League::where('id',$request->l_id)->first()->current_round;
-        if($prev >1){
-            $prev = $prev-1;
-        }
+        $starting_arr = array_values(json_decode(json_encode($starting), true));
+        $subs_arr = array_values(json_decode(json_encode($subs), true));
+        $league = League::where('id',$request->l_id)->first();
+        $current_round = $league->current_round;
+        // if($prev >1){
+        //     $prev = $prev-1;
+        // }
+        $round_no = intval($request->gw);
 
         $st = DB::table('players')
                  ->join('round_player','players.id','=','round_player.player_id')
@@ -559,39 +612,96 @@ class HomeController extends Controller
                  ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                         'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                         'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                ->where('round_player.round_id','=',$prev)
+                ->where('round_player.round_id','=',$current_round)
                 ->whereIn('players.id',$starting)
                 ->orderBy('players.position','desc')
                 ->get();
 
+        $subs_ = implode(',', $subs_arr);
         $su = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
                 ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                        'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                        'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-               ->where('round_player.round_id','=',$prev)
+               ->where('round_player.round_id','=',$current_round)
+               ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                ->whereIn('players.id',$subs)
-               ->orderBy('players.position','desc')
                ->get();
+
+        $gk = 0;
+        $started = 0;
+        foreach($st as $s){
+            if(($s->start==1 || $s->sub==1) && $s->position!="GK"){
+                $started++;
+            }
+            elseif(($s->start==1 || $s->sub==1) && $s->position==="GK"){
+                $gk=1;
+            }
+        }
+        if($gk===0 && ($su[0]->start=="1" || $su[0]->sub=="1")){
+                $gk = 2;
+        }
+        $subs = 10-$started;
+        if($subs > 3){
+            $subs = 3;
+        }
+        // $subs = 3 - $subs;
 
         // $meta = $user->oneLeague($l_id)->first();
         $meta = $user->oneLeague($request->l_id)->first()->pivot;
-        $total = 0;
-        foreach($st as $s){
-            $total += $s->total;
+
+        $total = $meta->points;
+
+
+
+        if($current_round >1 && $current_round< $league->number_of_rounds){
+            $previous = DB::table('squad_round')
+                ->select('points')
+                ->where([
+                    ['round_no','=',$current_round-1],
+                    ['squad_id','=',$team->id]
+                ])
+                ->get(); 
+            $next = DB::table('squad_round')
+                ->select('points')
+                ->where([
+                    ['round_no','=',$current_round+1],
+                    ['squad_id','=',$team->id]
+                ])
+                ->get();
+        }elseif($current_round == 1){
+            $previous = null;
+            $next = DB::table('squad_round')
+                ->select('points')
+                ->where([
+                    ['round_no','=',$current_round+1],
+                    ['squad_id','=',$team->id]
+                ])
+                ->get();
+            
+        }elseif($current_round === $league->number_of_rounds){
+            $next = null;
+            $previous = DB::table('squad_round')
+                ->select('points')
+                ->where([
+                    ['round_no','=',$current_round-1],
+                    ['squad_id','=',$team->id]
+                ])
+                ->get();
         }
-        
-        foreach($su as $s){
-            $total += $s->total;
-        }
-        // $meta->points = $total;
-        // $meta->save();
+
         
         $results = [
             "selected_team" => $st,
             "substitutions" => $su,
-            "total"         => $total
+            "total"         => $total,
+            "previous"      => $previous,
+            "next"          => $next,
+            "captain_id"    => $team->captain_id,
+            "gk"            => $gk,
+            "subs"          => $subs
+
         ];
 
 
@@ -606,8 +716,8 @@ class HomeController extends Controller
     {
         $user = JWTAuth::authenticate();
         $meta = $user->oneLeague($request->l_id)->first()->pivot;
-        $prev_round = League::where('id',$request->l_id)->first()->current_round;
-        $prev_round--;
+        $current_round = League::where('id',$request->l_id)->first()->current_round;
+        $prev_round = $current_round-1;
         $squad = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
         
         $results = DB::table('users')
@@ -640,11 +750,20 @@ class HomeController extends Controller
                             ['squad_id','=',$squad->id]
                         ])
                         ->get();
+        
+        $current = DB::table('squad_round')
+                    ->select('points')
+                    ->where([
+                        ['round_no','=',$current_round],
+                        ['squad_id','=',$squad->id]
+                    ])
+                    ->get();
 
         $results = [
             "position" => $key,
             "total_players" => $no_of_users,
-            "last_round"    => $previous
+            "last_round"    => $previous,
+            "current"       => $current
         ];
 
         //this gets back exact position in table
@@ -816,6 +935,11 @@ class HomeController extends Controller
         $player = Player::where('id',$request->id)->first();
         $club = $player->club;
         $current_round = League::where('id',$club->league_id)->first()->current_round;
+        // if($current_round > 1){
+        //     $current_round--;
+        // }
+        $prev_round = $current_round-1;
+
         $price = $player->price;
         $total = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
@@ -836,10 +960,19 @@ class HomeController extends Controller
                 ->where('player_id','=',$request->id)
                 ->avg('total');
 
+        $prev = DB::table('round_player')
+                ->select('total')
+                ->where([
+                    ['player_id','=',$request->id],
+                    ['round_id','=',$prev_round]
+                    ])
+                ->get();
+
         $results = [
             "player" => $player,
             "total"  => $total,
             "current"=> $current,
+            "prev"   => $prev,
             "avg"    => $avg,
             "price"  => $price,
             "round"  => $current_round

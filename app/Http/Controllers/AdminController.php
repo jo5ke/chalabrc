@@ -888,6 +888,96 @@ class AdminController extends Controller
 
     /////////////////////////////////Tips ends
 
+    //Admin accounts CRUD
+
+    public function getAdmins(Request $request)
+    {
+        // $results = User::all();
+        $results = DB::table('users')
+                    ->join('user_league','users.id','=','user_league.user_id')
+                    ->select('users.*')
+                    ->where('user_league.league_id','=',$request->l_id)
+                    ->get();
+            
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+   	public function getAdmin(Request $request)
+    {
+        $results = User::where('id', $request->id)->get();
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function postAdmin(Request $request)
+    {
+        $user = new User;
+        $user->username = $request->name;
+        $user->email = $request->email;
+        $user->password = Hash::make($request->password);
+        // $user->password = bcrypt($request->password);
+        $user->uuid = Factory::create()->uuid;
+        $user->first_name = "created by admin";
+        $user->last_name = "created by admin";
+        $user->save();
+        $squad = new Squad;
+        $squad->user_id = $user->id;
+        $squad->league_id = $request->l_id;
+        $squad->save();
+        $league = League::where('id',$request->l_id)->first();
+        // $user->leagues()->attach($request->l_id,$user);
+        $league->users()->attach($user,['money' => 100000 ,'points' => 0,'league_id'=>$request->l_id ,'squad_id'=> $squad->id]);
+        $user->roles()->attach($user,['role_id'=>1]);
+
+        $results = User::where('id', $user->id)->get();
+        if ($results === null) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function removeAdmin(Request $request)
+    {
+        $user = User::where('uuid',$request->uuid)->first();
+        $squad = Squad::where('user_id',$user->id)->first();
+        
+        if ($user === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        $user->delete();
+        return $this->json($user);
+    }
+
+    public function updateAdmin(Request $request)
+    {
+        $user = User::where('uuid',$request->id)->first();
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+    	$user->save();
+
+        $user = User::where('id', $user->id)->get();
+        if ($user === null) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($user);
+    }
+
+
+
+    /////////////////////////////////Admin accounts ends
+    
+
     //Post match stats
 
     public function getClubsByMatch(Request $request)
@@ -1122,8 +1212,10 @@ class AdminController extends Controller
                 }else{
                     $starting = json_decode($team->selected_team);
                     $subs = json_decode($team->substitutions);
+                    $starting_arr = array_values(json_decode(json_encode($starting), true));
+                    $subs_arr = array_values(json_decode(json_encode($subs), true));
 
-
+                    $start_ = implode(',', $starting_arr);
                     $st = DB::table('players')
                             ->join('round_player','players.id','=','round_player.player_id')
                             ->join('clubs','players.club_id','=','clubs.id')
@@ -1131,10 +1223,11 @@ class AdminController extends Controller
                                     'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                                     'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                             ->where('round_player.round_id','=',$prev)
-                            ->whereIn('players.id',$starting)
+                            ->whereIn('players.id',$starting_arr)
+                            ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
                             ->get();
                     
-                    
+                    $subs_ = implode(',', $subs_arr);
                     $su = DB::table('players')
                             ->join('round_player','players.id','=','round_player.player_id')
                             ->join('clubs','players.club_id','=','clubs.id')
@@ -1142,10 +1235,11 @@ class AdminController extends Controller
                                 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                                 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                             ->where('round_player.round_id','=',$prev)
-                            ->whereIn('players.id',$subs)
+                            ->whereIn('players.id',$subs_arr)
+                            ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                             ->get();
                    
-                    
+                 
             
                     // $meta = $user->oneLeague($l_id)->first();
                     $meta = $user->oneLeague($request->l_id)->first();
@@ -1166,43 +1260,38 @@ class AdminController extends Controller
                                 }
                                 $started++;
                             }elseif(($s->start==1 || $s->sub==1) && $s->position==="GK"){
+                                if($s->id===$cpt){
+                                    $total += ($s->total)*2;
+                                }else{
+                                    $total += $s->total;
+                                }
                                 $gk = 1;
                             }
                             
                         }
-                       
+                        
                         $left = 10-$started;
                         if($left>3){
                             $left=3;
                         }
-                        // if($gk=0){
-                        //     $total += $su[0];
-                        // }
-                        // return $left;
-                        foreach($su as $s){
-                            if($left==0){
-                                break;
+                        if($gk==0){
+                            if($su[0]->id===$cpt){
+                                $total += ($su[0]->total)*2;
                             }else{
-                                if($s->position!="GK"){
-                                    $total += $s->total;
-                                    $left--;
+                                $total += $su[0]->total;
+                            }
+                        }
+                        
+                        if($left>0){
+                            for($i=1;$i<=$left;$i++){
+                                if($su[$i]->id===$cpt){
+                                    $total += ($su[$i]->total)*2;
                                 }else{
-                                    if($gk===0){
-                                        $total += $s->total;
-                                    }
+                                    $total += $su[$i]->total;
                                 }
                             }
                         }
-
-
-
-                        // for($i=1;$i<=$left;$i++){
-                        //     if($su[$i]->id===$cpt){
-                        //         $total += ($su[$i]->total)*2;
-                        //     }else{
-                        //         $total += $su[$i]->total;
-                        //     }
-                        // }
+        
 
                         // foreach($su as $s){
                         //     $total += $s->total;

@@ -9,7 +9,7 @@ class PaymentController extends Controller
 {
     public function payment(Request $request)
     {
-        \Stripe\Stripe::setApiKey('sk_test_WnJcOeq6NrJ5ZA7u8JahXLLO');
+        \Stripe\Stripe::setApiKey('sk_live_ygsrmDmJjajdk16AqUkrnZl2');
         // Get the token from the JS script
         $token = $request->stripeToken;
         // user info
@@ -20,14 +20,14 @@ class PaymentController extends Controller
         // Create a Customer
         $customer = \Stripe\Customer::create(array(
             "email" => $email,
-            "source" => "tok_amex",
+            "source" => $token,
             'metadata' => array("name" => $name, "last_name" => $lastName)
         ));
 
         $charge = \Stripe\Charge::create(array(
             "amount" => $amount*100,
             "currency" => "NOK",
-            "source" => $token, // obtained with Stripe.js
+            "customer" => $customer->id,
             'metadata' => array("name" => $name, "last_name" => $lastName)
         ));
 

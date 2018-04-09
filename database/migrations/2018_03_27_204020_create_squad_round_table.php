@@ -20,6 +20,7 @@ class CreateSquadRoundTable extends Migration
             $table->integer('league_id')->onDelete('cascade');
             $table->integer('round_no');
             $table->integer('points')->nullable();
+            $table->integer('captain_id')->nullable();
             $table->timestamps();
         });
     }
