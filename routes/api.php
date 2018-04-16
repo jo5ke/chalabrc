@@ -41,6 +41,7 @@ Route::get('topFivePlayersDivision1', 'HomeController@topFivePlayersDivision1');
 Route::get('topFivePlayersDivision2', 'HomeController@topFivePlayersDivision2');
 //
 Route::post('payment', 'PaymentController@payment');
+Route::post('additionalPayment', 'PaymentController@additionalPayment')->middleware('jwt.auth');
 Route::post('users', 'HomeController@getUsers');
 Route::post('getUserPointsPerWeek', 'HomeController@getUserPointsPerWeek');
 Route::post('getCurrentRound', 'HomeController@getCurrentRound');
@@ -153,6 +154,14 @@ Route::post('admin/getUser', 'AdminController@getUser');
 Route::post('admin/postUser', 'AdminController@postUser');
 Route::post('admin/removeUser', 'AdminController@removeUser');
 Route::put('admin/updateUser', 'AdminController@updateUser');
+//admin
+Route::post('admin/getAdmins', 'AdminController@getAdmins');
+Route::post('admin/getAdmin', 'AdminController@getAdmin');
+Route::post('admin/postAdmin', 'AdminController@postAdmin');
+Route::post('admin/removeAdmin', 'AdminController@removeAdmin');
+Route::put('admin/updateAdmin', 'AdminController@updateAdmin');
+Route::post('admin/makeAdmin', 'AdminController@makeAdmin');
+Route::post('admin/unMakeAdmin', 'AdminController@unMakeAdmin');
 //news
 Route::get('admin/getArticles', 'AdminController@getArticles');
 Route::post('admin/getArticle', 'AdminController@getArticle');

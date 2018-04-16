@@ -49,7 +49,7 @@ class User extends Authenticatable
     
     public function roles()
     {
-        return $this->belongsToMany('App\Role')->withPivot('secret');
+        return $this->belongsToMany('App\Role')->withPivot('secret','league');
     }
 
     public function privateleagues()

@@ -42,6 +42,6 @@ class LeagueMail extends Mailable
     public function build()
     {
        // return $this->view('view.name');
-        return $this->from("mg.breddefantasy@gmail.com")->subject($this->subject)->view($this->view);
+        return $this->from("info@breddefantasy.com")->subject($this->subject)->view($this->view);
     }
 }

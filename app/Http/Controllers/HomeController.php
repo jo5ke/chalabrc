@@ -10,6 +10,7 @@ use App\League as League;
 use App\Tip as Tip;
 use App\Club as Club;
 use App\Match as Match;
+use App\Round as Round;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\File;
@@ -239,7 +240,24 @@ class HomeController extends Controller
                     // ->get();
         }
         if($per_page===null){
-            $results = $results->take(10)->get();
+            $results = $results->get();
+            $i=0;
+            foreach($results as $result)
+            {  
+                $points[$i] = $result->points;
+                $i++;
+            }
+
+            $i=0;
+            foreach($results as $result)
+            {
+                $point = $result->points;
+                $key[$i] = array_search($point,$points);
+                $key[$i]++;
+                $result->position = $key[$i]; 
+            }
+
+            $results = $results->take(10);  
         }else{
             $results = $results->paginate($per_page);
         }
@@ -274,6 +292,7 @@ class HomeController extends Controller
                     ->orderBy('users.username','asc');
                     // ->take(10)
                     // ->get();
+                     
         }else{
             $this->term = $this->term . "%";
             $results = DB::table('users')
@@ -297,9 +316,27 @@ class HomeController extends Controller
                     ->orderBy('users.username','asc');
                     // ->take(10)
                     // ->get();
+
         }
         if($per_page===null){
-            $results = $results->take(10)->get();
+            $results = $results->get();
+            $i=0;
+            foreach($results as $result)
+            {  
+                $points[$i] = $result->points;
+                $i++;
+            }
+
+            $i=0;
+            foreach($results as $result)
+            {
+                $point = $result->points;
+                $key[$i] = array_search($point,$points);
+                $key[$i]++;
+                $result->position = $key[$i]; 
+            }
+
+            $results = $results->take(10);            
         }else{
             $results = $results->paginate($per_page);
         }
@@ -477,6 +514,7 @@ class HomeController extends Controller
         if($current_round > 1){
             $current_round--;
         }
+        $round = Round::where('league_id',$request->l_id)->where('round_no',$current_round)->first();
       
         $gk = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
@@ -484,8 +522,9 @@ class HomeController extends Controller
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
                         'round_player.total','clubs.name')
                 ->where([
-                            ['round_player.round_id','=',$current_round],
+                            ['round_player.round_id','=',$round->id],
                             ['players.position','=','GK'],
+                            ['clubs.league_id','=',$request->l_id],                            
                         ])
                 ->orderBy('round_player.total','desc')
                 ->take(1)
@@ -497,8 +536,9 @@ class HomeController extends Controller
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
                         'round_player.total','clubs.name')
                 ->where([
-                            ['round_player.round_id','=',$current_round],
+                            ['round_player.round_id','=',$round->id],
                             ['players.position','=','DEF'],
+                            ['clubs.league_id','=',$request->l_id],
                         ])
                 ->orderBy('round_player.total','desc')
                 ->take(4)
@@ -510,8 +550,9 @@ class HomeController extends Controller
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
                         'round_player.total','clubs.name')
                 ->where([
-                            ['round_player.round_id','=',$current_round],
+                            ['round_player.round_id','=',$round->id],
                             ['players.position','=','MID'],
+                            ['clubs.league_id','=',$request->l_id],                            
                         ])
                 ->orderBy('round_player.total','desc')
                 ->take(4)
@@ -523,8 +564,9 @@ class HomeController extends Controller
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
                         'round_player.total','clubs.name')
                 ->where([
-                            ['round_player.round_id','=',$current_round],
+                            ['round_player.round_id','=',$round->id],
                             ['players.position','=','ATK'],
+                            ['clubs.league_id','=',$request->l_id],                            
                         ])
                 ->orderBy('round_player.total','desc')
                 ->take(2)
@@ -605,6 +647,7 @@ class HomeController extends Controller
         //     $prev = $prev-1;
         // }
         $round_no = intval($request->gw);
+        $round = Round::where('league_id',$request->l_id)->where('round_no',$current_round)->first();        
 
         $st = DB::table('players')
                  ->join('round_player','players.id','=','round_player.player_id')
@@ -612,7 +655,7 @@ class HomeController extends Controller
                  ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                         'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                         'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                ->where('round_player.round_id','=',$current_round)
+                ->where('round_player.round_id','=',$round->id)
                 ->whereIn('players.id',$starting)
                 ->orderBy('players.position','desc')
                 ->get();
@@ -624,7 +667,7 @@ class HomeController extends Controller
                 ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                        'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                        'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-               ->where('round_player.round_id','=',$current_round)
+               ->where('round_player.round_id','=',$round->id)
                ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                ->whereIn('players.id',$subs)
                ->get();
@@ -644,8 +687,13 @@ class HomeController extends Controller
         }
         $subs = 10-$started;
         if($subs > 3){
-            $subs = 3;
+            if($subs==10){
+                $subs=0;
+            }else{
+                $subs = 3;
+            }
         }
+
         // $subs = 3 - $subs;
 
         // $meta = $user->oneLeague($l_id)->first();
@@ -653,51 +701,56 @@ class HomeController extends Controller
 
         $total = $meta->points;
 
-
-
-        if($current_round >1 && $current_round< $league->number_of_rounds){
-            $previous = DB::table('squad_round')
+        $current = DB::table('squad_round')
                 ->select('points')
                 ->where([
-                    ['round_no','=',$current_round-1],
-                    ['squad_id','=',$team->id]
-                ])
-                ->get(); 
-            $next = DB::table('squad_round')
-                ->select('points')
-                ->where([
-                    ['round_no','=',$current_round+1],
+                    ['round_no','=',$round_no],
                     ['squad_id','=',$team->id]
                 ])
                 ->get();
-        }elseif($current_round == 1){
-            $previous = null;
-            $next = DB::table('squad_round')
-                ->select('points')
-                ->where([
-                    ['round_no','=',$current_round+1],
-                    ['squad_id','=',$team->id]
-                ])
-                ->get();
+
+        // if($current_round >1 && $current_round< $league->number_of_rounds){
+        //     $previous = DB::table('squad_round')
+        //         ->select('points')
+        //         ->where([
+        //             ['round_no','=',$current_round-1],
+        //             ['squad_id','=',$team->id]
+        //         ])
+        //         ->get(); 
+        //     $next = DB::table('squad_round')
+        //         ->select('points')
+        //         ->where([
+        //             ['round_no','=',$current_round+1],
+        //             ['squad_id','=',$team->id]
+        //         ])
+        //         ->get();
+        // }elseif($current_round == 1){
+        //     $previous = null;
+        //     $next = DB::table('squad_round')
+        //         ->select('points')
+        //         ->where([
+        //             ['round_no','=',$current_round+1],
+        //             ['squad_id','=',$team->id]
+        //         ])
+        //         ->get();
             
-        }elseif($current_round === $league->number_of_rounds){
-            $next = null;
-            $previous = DB::table('squad_round')
-                ->select('points')
-                ->where([
-                    ['round_no','=',$current_round-1],
-                    ['squad_id','=',$team->id]
-                ])
-                ->get();
-        }
+        // }elseif($current_round === $league->number_of_rounds){
+        //     $next = null;
+        //     $previous = DB::table('squad_round')
+        //         ->select('points')
+        //         ->where([
+        //             ['round_no','=',$current_round-1],
+        //             ['squad_id','=',$team->id]
+        //         ])
+        //         ->get();
+        // }
 
         
         $results = [
             "selected_team" => $st,
             "substitutions" => $su,
             "total"         => $total,
-            "previous"      => $previous,
-            "next"          => $next,
+            "current"       => $current,
             "captain_id"    => $team->captain_id,
             "gk"            => $gk,
             "subs"          => $subs
@@ -758,6 +811,10 @@ class HomeController extends Controller
                         ['squad_id','=',$squad->id]
                     ])
                     ->get();
+
+        if(!isset($current[0])){
+            $current = 0;
+        }
 
         $results = [
             "position" => $key,

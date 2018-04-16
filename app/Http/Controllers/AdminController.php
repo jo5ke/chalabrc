@@ -376,12 +376,17 @@ class AdminController extends Controller
             $round->save();
          }
         }
+        
 
         if($exists1===0){
             $club1 = Club::where('name',$request->c1_name)->first();
             $players1 = $club1->players;
             foreach($players1 as $player){
-                $round->players()->attach($player);            
+                if($round->players()->where('player_id',$player->id)->exists()){
+                    break;
+                }else{
+                  $round->players()->attach($player);              
+                }           
             }
         }
 
@@ -389,7 +394,11 @@ class AdminController extends Controller
             $club2 = Club::where('name',$request->c2_name)->first();
             $players2 = $club2->players;
             foreach($players2 as $player){
-                  $round->players()->attach($player);      
+                if($round->players()->where('player_id',$player->id)->exists()){
+                    break;
+                }else{
+                  $round->players()->attach($player);              
+                }     
             }    
         }
 
@@ -934,7 +943,7 @@ class AdminController extends Controller
         $league = League::where('id',$request->l_id)->first();
         // $user->leagues()->attach($request->l_id,$user);
         $league->users()->attach($user,['money' => 100000 ,'points' => 0,'league_id'=>$request->l_id ,'squad_id'=> $squad->id]);
-        $user->roles()->attach($user,['role_id'=>1]);
+        $user->roles()->attach($user,['role_id'=>2, 'secret' => "jZLNLcdbCe?)z>5DJ,4ZGt9tbR5P:x"]);
 
         $results = User::where('id', $user->id)->get();
         if ($results === null) {
@@ -973,6 +982,36 @@ class AdminController extends Controller
         return $this->json($user);
     }
 
+    public function makeAdmin(Request $request)
+    {
+        $user = User::where('email',$request->email)->first();
+        $role = $user->roles()->first();
+        // $role = Role::where('name','user')->first();
+        
+        $user->roles()->updateExistingPivot($role->id,['role_id'=>2,'secret' => "jZLNLcdbCe?)z>5DJ,4ZGt9tbR5P:x",'league' => $request->league]);
+
+        if ($user === null) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($user);
+
+    }
+
+    public function unMakeAdmin(Request $request)
+    {
+        $user = User::where('email',$request->email)->first();
+        $role = $user->roles()->first();
+        // $role = Role::where('name','user')->first();
+        $user->roles()->updateExistingPivot($role->id,['role_id'=>1,'secret' => null,'league' => null]);
+
+        if ($user === null) {
+            $response = 'There was a problem saving your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($user);
+
+    }
 
 
     /////////////////////////////////Admin accounts ends
@@ -1203,13 +1242,17 @@ class AdminController extends Controller
             //     $prev = $prev-1;
             // }
             foreach($users as $user){
-                $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
-
+                if(count(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first())){
+                    $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+                }else{
+                    continue;
+                }
                 // return $team->with('rounds')->where()->get();
-                $cpt = $team->captain_id;
+                $cpt = null;
                 if($team->selected_team === NULL || $team->substitutions === NULL){
                     continue;
                 }else{
+                    $cpt = $team->captain_id;
                     $starting = json_decode($team->selected_team);
                     $subs = json_decode($team->substitutions);
                     $starting_arr = array_values(json_decode(json_encode($starting), true));
@@ -1361,6 +1404,10 @@ class AdminController extends Controller
             $response = "There is no next round.";
             return $this->json($response,404);
         }
+
+        $req = new Request;
+        $req->l_id = $request->l_id;
+        $this->evaluateUserPoints($req);
         return $this->json($league->current_round);
     }
 

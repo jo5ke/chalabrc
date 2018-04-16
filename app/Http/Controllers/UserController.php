@@ -28,7 +28,9 @@ class UserController extends Controller
             "last_name"  => $user->last_name,
             "city"       => $user->city,
             "country"    => $user->country,
-            "birthdate"  => $user->birthdate   
+            "birthdate"  => $user->birthdate,
+            "zip"        => $user->zip,
+            "address"    => $user->address,
         ];
 
         if ($results === null) {

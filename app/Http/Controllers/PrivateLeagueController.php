@@ -282,10 +282,10 @@ class PrivateLeagueController extends Controller
             
             array_push($emails,$user->email);
         }
-        foreach($emails as $email){
-        $receiver = User::where('email',$email)->first();
-        // Mail::to($email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
-        }
+        // foreach($emails as $email){
+        // $receiver = User::where('email',$email)->first();
+        // // Mail::to($email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
+        // }
         
         $emails = json_encode($emails);
         $invites = json_encode($invites);
@@ -320,7 +320,7 @@ class PrivateLeagueController extends Controller
 
     public function sendInvite(Request $request)
     {
-        // $user = JWTAuth::authenticate();
+        $user = JWTAuth::authenticate();
         // $pl = PrivateLeague::where('owner_id',$user->id)->first();
         $pl = PrivateLeague::where('id',$request->id)->first();
         $code = $pl->code;
@@ -341,8 +341,12 @@ class PrivateLeagueController extends Controller
                 array_push($invalid,$new_inv);
             }else{
                 array_push($invites,$new_inv);
+                $receiver = User::where('email',$new_inv)->first();
+                Mail::to($receiver->email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
             }
             // Mail::to
+           
+            
         }
         $invites = json_encode($invites);
         $pl->invites = $invites;
@@ -436,8 +440,10 @@ class PrivateLeagueController extends Controller
         $i=0;
         foreach($emails as $email){
             $users[$i] = User::where('email',$email)->first();
-            $usernames[$i] = $users[$i]->username;
-            $i++;
+            if(count(User::where('email',$email)->first())){
+                $usernames[$i] = $users[$i]->username;
+                $i++;
+            }
         }
         $us = DB::table('users')
                 ->join('user_league','users.id','=','user_league.user_id')
@@ -454,8 +460,10 @@ class PrivateLeagueController extends Controller
         $j=0;
         
         foreach($users as $user){
-            $points[$j] = $user->oneLeague($pl->league_id)->first()->pivot->points;
-            $j++;
+            if(count($user->oneLeague($pl->league_id)->first())){
+                $points[$j] = $user->oneLeague($pl->league_id)->first()->pivot->points;
+                $j++;
+            }
         }
 
         $res = [
@@ -465,7 +473,7 @@ class PrivateLeagueController extends Controller
         ];
 
         //?
-        $results = array_combine($usernames,$points);
+        // $results = array_combine($usernames,$points);
         //return $results;
         
      

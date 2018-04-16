@@ -58,7 +58,7 @@ class APILoginController extends Controller
             $league_ids[$i] = intval($league->league_id);
             $i++;
         }
-
+        
         if($role->name === "user" ){
             $response = [
                 'user' => $user,
@@ -67,13 +67,18 @@ class APILoginController extends Controller
                 'leagues' => $league_ids        
                 ];
         }else{
-            $secret = $role_id->pivot->secret;            
+            $secret = $role_id->pivot->secret;  
+            $a_leagues = $role_id->pivot->league;  
+            $i=0;
+            $a_league = array();
+            array_push($a_league,$a_leagues);
             $response = [
                 'user' => $user,
                 'token' => $token,
                 'role' => $role->name,
                 'leagues' => $league_ids,
-                'secret' => $secret
+                'secret' => $secret,
+                'admin' =>  $a_league
                 ];
         }
 
