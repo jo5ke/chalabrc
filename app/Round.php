@@ -32,6 +32,6 @@ class Round extends Model
 
     public function squad()
     {
-        return $this->belongsToMany('App\Squad','squad_round')->withPivot('points')->withTimestamps();
+        return $this->belongsToMany('App\Squad','squad_round')->withPivot('points','selected_team','substitutions')->withTimestamps();
     }
 }

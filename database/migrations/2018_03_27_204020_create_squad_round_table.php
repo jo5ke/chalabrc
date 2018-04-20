@@ -21,6 +21,8 @@ class CreateSquadRoundTable extends Migration
             $table->integer('round_no');
             $table->integer('points')->nullable();
             $table->integer('captain_id')->nullable();
+            $table->text('selected_team')->nullable();
+            $table->text('substitutions')->nullable();
             $table->timestamps();
         });
     }

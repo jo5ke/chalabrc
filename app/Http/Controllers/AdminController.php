@@ -865,7 +865,17 @@ class AdminController extends Controller
 
   	public function getTips(Request $request)
       {
-          $results = Tip::where('league_id',$request->l_id)->get();
+          $tips = Tip::where('league_id',$request->l_id)->get();
+          $i = 0;
+          foreach($tips as $tip){
+              $user = $tip->user()->select('email','first_name','last_name')->first();
+              $results[$i] = [
+                  'tip' => $tip,
+                  'user' => $user,
+              ];
+              $i++;
+          }
+          
           if ($results === null) {
               $response = 'There was a problem fetching your data.';
               return $this->json($response, 404);
@@ -1242,7 +1252,7 @@ class AdminController extends Controller
             //     $prev = $prev-1;
             // }
             foreach($users as $user){
-                if(count(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first())){
+                if(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()!==null){
                     $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
                 }else{
                     continue;
@@ -1343,11 +1353,11 @@ class AdminController extends Controller
 
                         $q = $team->rounds()->where('round_id',$round->id)->first();     
                         if(empty($q)){
-                            $team->rounds()->attach($team,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id]);
+                            $team->rounds()->attach($team,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id , "selected_team" => $team->selected_team, "substitutions" => $team->substitutions]);
                             // return "prazno";
                         }else{
                             $prev_total -= $q->pivot->points;
-                            $team->rounds()->updateExistingPivot($round->id,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id]);
+                            $team->rounds()->updateExistingPivot($round->id,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id, "selected_team" => $team->selected_team, "substitutions" => $team->substitutions]);
                             // return "neprazno";
                         }
 

@@ -118,12 +118,23 @@ class SquadController extends Controller
         $pstats = DB::table('players')
                 ->join('clubs','players.club_id','=','clubs.id')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name'
-                        ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
+                ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name',
+                        DB::raw('SUM(round_player.sub) as total_sub'),DB::raw('SUM(round_player.start) as total_start'),DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
                 ->where('clubs.league_id','=',$request->l_id)
                 ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
                 ->get();
-
+        
+        // antiqueandarts.com
+        foreach($pstats as $pstat){
+            $pstat->total = intval($pstat->total);
+            $pstat->total_red = intval($pstat->total_red);
+            $pstat->total_yellow = intval($pstat->total_yellow);
+            $pstat->total_clean = intval($pstat->total_clean);
+            $pstat->total_assist = intval($pstat->total_assist);
+            $pstat->total_start = intval($pstat->total_start);
+            $pstat->total_sub = intval($pstat->total_sub);
+            $pstat->total_score = intval($pstat->total_score);
+        }
 
         // $players = League::where('id',$request->l_id)->with('players')->get();
         $results = Player::with('club')->where('league_id',$request->l_id)->get();
