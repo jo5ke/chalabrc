@@ -79,6 +79,8 @@ Route::put('myTeam/updateSquad', 'SquadController@updateSquad')->middleware('jwt
 Route::post('myTeam/postSquad', 'SquadController@postSquad')->middleware('jwt.auth');
 Route::post('myTeam/makeTransfer', 'SquadController@makeTransfer')->middleware('jwt.auth');
 Route::delete('myTeam/sellPlayer', 'SquadController@sellPlayer')->middleware('jwt.auth');
+Route::post('myTeam/transferRevert', 'SquadController@transferRevert');
+
 // duplicated routes(admin)
 Route::post('myTeam/getClubs', 'AdminController@getClubs');
 Route::post('myTeam/getClub', 'AdminController@getClub');

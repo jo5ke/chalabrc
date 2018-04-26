@@ -373,6 +373,7 @@ class SquadController extends Controller
         $transfer->league_id = $request->l_id;
         $transfer->buy = json_encode($request->buy);
         $transfer->sell = json_encode($request->sell);
+        $transfer->round_no = League::where('id',$request->l_id)->first()->current_round;
         $transfers_left = $meta->pivot->transfers;
 
         $buyed = array();
@@ -508,6 +509,50 @@ class SquadController extends Controller
             return $this->json($response, 404);
         }
         return $this->json($flag);
+    }
+
+    public function transferRevert(Request $request)
+    {
+        return "no access";
+        $transfers = Transfer::where('league_id',1)->where('created_at','>','2018-04-15 10:59:43')->get();
+        foreach($transfers as $t)
+        {
+
+                    // $t = Transfer::where('id',848)->first();
+                    $squad = Squad::where('id',$t->squad->id)->first();
+                    $selected_team = json_decode($squad->selected_team);
+                    $substitutions = json_decode($squad->substitutions);
+    
+    
+                    $sell = json_decode($t->sell);
+                    $buy = json_decode($t->buy);
+    
+                    $i = 0;
+                    foreach($buy as $s){
+                        $selac = array();
+                        if(in_array($s,$selected_team)){
+                            array_push($selac,$s);
+                            $key = array_search($s,$selected_team);
+                            // $selected_team = array_diff($selected_team, $selac);
+                            // $selected_team = array_values(json_decode(json_encode($selected_team), true));   
+                            // array_push($selected_team,$sell[$i]);
+                            $selected_team[$key] = $sell[$i];
+                            $i++;   
+                        }else{
+                            array_push($selac,$s);         
+                            $key = array_search($s,$substitutions);                    
+                            // $substitutions = array_diff($substitutions, $selac);
+                            // $substitutions = array_values(json_decode(json_encode($substitutions), true));   
+                            // array_push($substitutions,$sell[$i]); 
+                            $substitutions[$key] = $sell[$i];
+                            $i++;
+                        }
+                    }
+                    $squad->selected_team = json_encode($selected_team);
+                    $squad->substitutions = json_encode($substitutions);
+                    $squad->save();
+        }
+
     }
 
 }

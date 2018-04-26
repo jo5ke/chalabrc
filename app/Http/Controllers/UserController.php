@@ -11,6 +11,7 @@ use Mail as Mail;
 use App\Mail\RegistrationMail;
 use App\Mail\SendTip;
 use Carbon\Carbon;
+use App\User as User;
 
 class UserController extends Controller
 {
@@ -85,19 +86,22 @@ class UserController extends Controller
     public function sendResetPassword(Request $request)
     {
         $user = User::where('email',$request->email)->first();
-        $league = League::where('id',$request->l_id)->first();
+        // $league = League::where('id',$request->l_id)->first();
         $faker = Faker::create();
         $token = $faker->sha1();
 
         DB::table('password_resets')->insert([
-            ['email' => $request->email , 'token' => $token, 'created_at' => \Carbon::now() ]
+            ['email' => $request->email , 'token' => $token, 'created_at' => Carbon::now() ]
         ]);
 
         if ($user === null) {
             $response = 'User with that email does not exist.';
             return $this->json($response, 404);
         }
-        Mail::to($user->email)->send(new SendTip($user,"Password reset request on breddefantasy.com!",$token ,"emails.registration"));
+
+
+        Mail::to($user->email)->send(new RegistrationMail($user,"Password reset request on breddefantasy.com!","emails.forget_password",$token));      
+        // Mail::to($user->email)->send(new SendTip($user,"Password reset request on breddefantasy.com!",$token ,"emails.registration"));
         return $this->json($user);
     }
 
@@ -127,7 +131,8 @@ class UserController extends Controller
 
         if($request->new_password==$request->new_password_confirm)
             {
-                $user->password = Hash::make($request->new_password);
+                // $user->password = Hash::make($request->new_password);
+                $user->password = bcrypt($request->new_password);
                 $user->save();
             }else{
                 $response = "Password doesn't match";

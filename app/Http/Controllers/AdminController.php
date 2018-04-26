@@ -1133,8 +1133,8 @@ class AdminController extends Controller
 
     public function postPlayerStats(Request $request)
     {
-        $round = Round::where('round_no',$request->input('data.round_id'))->where('league_id',$request->l_id)->first();
-        $player = $round->players->where('pivot.player_id',$request->input('data.player_id'))->where('pivot.round_id',$round->round_no)->first()->pivot;
+        $round = Round::where('id',$request->input('data.round_id'))->where('league_id',$request->l_id)->first();
+        $player = $round->players->where('pivot.player_id',$request->input('data.player_id'))->where('pivot.round_id',$round->id)->first()->pivot;
         $position = Player::where('id',$request->input('data.player_id'))->first()->position;
         $stats = [
             "start"     =>  $player->start = $request->input('data.start'),
@@ -1248,6 +1248,7 @@ class AdminController extends Controller
     {
             $users = User::all();
             $prev = League::where('id',$request->l_id)->first()->current_round;
+            $round = Round::where('round_no',$prev)->where('league_id',$request->l_id)->first();
             // if($prev >1){
             //     $prev = $prev-1;
             // }
@@ -1257,6 +1258,11 @@ class AdminController extends Controller
                 }else{
                     continue;
                 }
+                // if($team->created_at!==null){
+                //     if($team->created_at > $round->deadline){
+                //         continue;
+                //     }
+                // }
                 // return $team->with('rounds')->where()->get();
                 $cpt = null;
                 if($team->selected_team === NULL || $team->substitutions === NULL){
@@ -1275,7 +1281,7 @@ class AdminController extends Controller
                             ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                                     'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                                     'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                            ->where('round_player.round_id','=',$prev)
+                            ->where('round_player.round_id','=',$round->id)
                             ->whereIn('players.id',$starting_arr)
                             ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
                             ->get();
@@ -1287,7 +1293,7 @@ class AdminController extends Controller
                             ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                                 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                                 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                            ->where('round_player.round_id','=',$prev)
+                            ->where('round_player.round_id','=',$round->id)
                             ->whereIn('players.id',$subs_arr)
                             ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                             ->get();
@@ -1353,11 +1359,11 @@ class AdminController extends Controller
 
                         $q = $team->rounds()->where('round_id',$round->id)->first();     
                         if(empty($q)){
-                            $team->rounds()->attach($team,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id , "selected_team" => $team->selected_team, "substitutions" => $team->substitutions]);
+                            $team->rounds()->attach($team,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id , "selected_team" => $team->selected_team, "substitutions" => $team->substitutions, "captain_id" => $team->captain_id]);
                             // return "prazno";
                         }else{
                             $prev_total -= $q->pivot->points;
-                            $team->rounds()->updateExistingPivot($round->id,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id, "selected_team" => $team->selected_team, "substitutions" => $team->substitutions]);
+                            $team->rounds()->updateExistingPivot($round->id,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id, "selected_team" => $team->selected_team, "substitutions" => $team->substitutions, "captain_id" => $team->captain_id]);
                             // return "neprazno";
                         }
 
@@ -1406,9 +1412,11 @@ class AdminController extends Controller
             $league->save();
             $users = User::all();
             foreach($users as $user){
-                $meta = $user->oneLeague($request->l_id)->first()->pivot;
-                $meta->transfers = 2;
-                $meta->save();
+                if($user->oneLeague($request->l_id)->first()!==null){
+                    $meta = $user->oneLeague($request->l_id)->first()->pivot;
+                    $meta->transfers = 2;
+                    $meta->save();
+                }
             }
         }else{
             $response = "There is no next round.";

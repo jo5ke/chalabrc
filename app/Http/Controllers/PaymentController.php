@@ -12,7 +12,7 @@ class PaymentController extends Controller
 {
     public function payment(Request $request)
     {
-        \Stripe\Stripe::setApiKey('sk_test_WnJcOeq6NrJ5ZA7u8JahXLLO');
+        \Stripe\Stripe::setApiKey('sk_live_ygsrmDmJjajdk16AqUkrnZl2');
         // Get the token from the JS script
         $token = $request->stripeToken;
         // user info
@@ -39,7 +39,7 @@ class PaymentController extends Controller
     
     public function additionalPayment(Request $request)
     {
-        \Stripe\Stripe::setApiKey('sk_test_WnJcOeq6NrJ5ZA7u8JahXLLO');
+        \Stripe\Stripe::setApiKey('sk_live_ygsrmDmJjajdk16AqUkrnZl2');
         // Get the token from the JS script
         $token = $request->stripeToken;
         // user info

@@ -81,10 +81,9 @@ class APILoginController extends Controller
                 'admin' =>  $a_league
                 ];
         }
-
         // Mail::to($user->email)->send(new RegistrationMail($user,"Welcome to breddefantasy.com,  $user->first_name $user->last_name. Please verify your account!","emails.registration"));
-
-        return $this->json($response);
+        
+      return $this->json($response);
      //   return response()->json($response);
     }
 }

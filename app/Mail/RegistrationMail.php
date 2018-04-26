@@ -15,18 +15,20 @@ class RegistrationMail extends Mailable
     public $subject;
     public $view;
     public $user;
+    public $token;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct(User $user,$subject,$view)
+    public function __construct(User $user,$subject,$view,$token="")
     {
         //
         $this->user = $user;
         $this->subject = $subject;
         $this->view = $view;
+        $this->token = $token;
     }
 
     /**

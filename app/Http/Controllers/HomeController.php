@@ -193,7 +193,11 @@ class HomeController extends Controller
     {
         $league = League::where('id',$request->l_id)->first();
         $current_round = $league->current_round;
-        $prev_round = $current_round - 1;
+        if($current_round > 1){
+            $prev_round = $current_round - 1;        
+        }else{
+            $prev_round = $current_round;
+        }
         // if($league->current_round>1){
         //     $prev_round = $league->current_round-1;
         // }else{
@@ -647,30 +651,89 @@ class HomeController extends Controller
         //     $prev = $prev-1;
         // }
         $round_no = intval($request->gw);
-        $round = Round::where('league_id',$request->l_id)->where('round_no',$current_round)->first();        
+        $round = Round::where('league_id',$request->l_id)->where('round_no',$round_no)->first();        
 
-        $st = DB::table('players')
-                 ->join('round_player','players.id','=','round_player.player_id')
-                 ->join('clubs','players.club_id','=','clubs.id')
-                 ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+        if($current_round === $round_no){
+            $st = DB::table('players')
+            ->join('round_player','players.id','=','round_player.player_id')
+            ->join('clubs','players.club_id','=','clubs.id')
+            ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                   'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                   'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+           ->where('round_player.round_id','=',$round->id)
+           ->whereIn('players.id',$starting)
+           ->orderBy('players.position','desc')
+           ->get();
+
+            $subs_ = implode(',', $subs_arr);
+            $su = DB::table('players')
+                    ->join('round_player','players.id','=','round_player.player_id')
+                    ->join('clubs','players.club_id','=','clubs.id')
+                    ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                            'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                    ->where('round_player.round_id','=',$round->id)
+                    ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
+                    ->whereIn('players.id',$subs)
+                    ->get();
+        }else{
+            if($team->rounds()->where('squad_round.round_no',$round_no)->first()!==null){
+                $sq = $team->rounds()->where('squad_round.round_no',$round_no)->first();
+                $starting_arr = json_decode($sq->pivot->selected_team);
+                $subs_arr =  json_decode($sq->pivot->substitutions);
+    
+                $st = DB::table('players')
+                    ->join('round_player','players.id','=','round_player.player_id')
+                    ->join('clubs','players.club_id','=','clubs.id')
+                    ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                         'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                         'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                ->where('round_player.round_id','=',$round->id)
-                ->whereIn('players.id',$starting)
-                ->orderBy('players.position','desc')
-                ->get();
+                    ->where('round_player.round_id','=',$round->id)
+                    ->whereIn('players.id',$starting_arr)
+                    ->orderBy('players.position','desc')
+                    ->get();
+    
+                $subs_ = implode(',', $subs_arr);
+                $su = DB::table('players')
+                    ->join('round_player','players.id','=','round_player.player_id')
+                    ->join('clubs','players.club_id','=','clubs.id')
+                    ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                            'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                    ->where('round_player.round_id','=',$round->id)
+                    ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
+                    ->whereIn('players.id',$subs)
+                    ->get();
+                    // privremeno resenje
+            }else{
+                $response = "No records for that round";
+                return $this->json($response,404);
+            //     $st = DB::table('players')
+            //     ->join('round_player','players.id','=','round_player.player_id')
+            //     ->join('clubs','players.club_id','=','clubs.id')
+            //     ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+            //            'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+            //            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+            //    ->where('round_player.round_id','=',$round->id)
+            //    ->whereIn('players.id',$starting)
+            //    ->orderBy('players.position','desc')
+            //    ->get();
+    
+            //     $subs_ = implode(',', $subs_arr);
+            //     $su = DB::table('players')
+            //             ->join('round_player','players.id','=','round_player.player_id')
+            //             ->join('clubs','players.club_id','=','clubs.id')
+            //             ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+            //                     'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+            //                     'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+            //             ->where('round_player.round_id','=',$round->id)
+            //             ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
+            //             ->whereIn('players.id',$subs)
+            //             ->get();
 
-        $subs_ = implode(',', $subs_arr);
-        $su = DB::table('players')
-                ->join('round_player','players.id','=','round_player.player_id')
-                ->join('clubs','players.club_id','=','clubs.id')
-                ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-                       'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                       'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-               ->where('round_player.round_id','=',$round->id)
-               ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
-               ->whereIn('players.id',$subs)
-               ->get();
+            }
+        }
+
 
         $gk = 0;
         $started = 0;
@@ -871,9 +934,14 @@ class HomeController extends Controller
         $tip->user_id = $user->id;
         $tip->save();
 
-     
-        // Mail::to("breddefantasy@gmail.com")->send(new SendTip($user,"$user->first_name $user->last_name has submitted a tip!",$request->body,"emails.tip_send",$league));
+        $info = new User;
+        $info->email = "info@breddefantasy.com"; 
+        $info->first_name = $user->first_name;
+        $info->last_name = $user->last_name;
 
+        Mail::to("breddefantasy@gmail.com")->send(new SendTip($user,"$user->first_name $user->last_name has submitted a tip!",$request->body,"emails.tip_send",$league));
+        Mail::to($user->email)->send(new SendTip($info,"You have just submitted a tip on breddefantasy.com!",$request->body,"emails.tip_confirm",$league));
+        
 
         if ($tip === null) {
             $response = 'There was a problem fetching players.';
@@ -1025,6 +1093,19 @@ class HomeController extends Controller
                     ])
                 ->get();
 
+        $gameweeks = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->select('round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','round_player.k_save','round_player.miss',
+                'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                ->where('players.id','=',$player->id)
+                ->orderBy('round_player.round_id','asc')
+                ->get();
+
+        $i = 1;
+        foreach($gameweeks as $gameweek){
+            $gameweek->round_no = $i++;
+        }
+
         $results = [
             "player" => $player,
             "total"  => $total,
@@ -1032,8 +1113,10 @@ class HomeController extends Controller
             "prev"   => $prev,
             "avg"    => $avg,
             "price"  => $price,
-            "round"  => $current_round
+            "round"  => $current_round,
+            "gameweeks" => $gameweeks
         ];
+
 
         if ($results === null) {
             $response = 'User does not exist';
