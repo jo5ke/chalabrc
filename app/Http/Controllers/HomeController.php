@@ -1161,7 +1161,7 @@ class HomeController extends Controller
                     
         $score1 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.score as ammount')
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1174,7 +1174,7 @@ class HomeController extends Controller
 
         $score2 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.score as ammount')
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1188,7 +1188,7 @@ class HomeController extends Controller
 
         $assists1 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.assists as ammount')
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1201,7 +1201,7 @@ class HomeController extends Controller
 
         $assists2 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.assists as ammount')
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1214,7 +1214,7 @@ class HomeController extends Controller
 
         $yellow1 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.yellow as ammount')
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1227,7 +1227,7 @@ class HomeController extends Controller
 
         $yellow2 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.yellow as ammount')
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1240,7 +1240,7 @@ class HomeController extends Controller
 
         $red1 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.red as ammount')
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1253,7 +1253,7 @@ class HomeController extends Controller
 
         $red2 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.red as ammount')
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1266,7 +1266,7 @@ class HomeController extends Controller
 
         $clean_sheat1 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.clean_sheat as ammount')
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1279,7 +1279,7 @@ class HomeController extends Controller
 
         $clean_sheat2 = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.clean_sheat as ammount')
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1292,7 +1292,7 @@ class HomeController extends Controller
 
         $missed_penal1 =DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.position','players.missed_penal as ammount')
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1305,7 +1305,7 @@ class HomeController extends Controller
 
         $missed_penal2 =DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.position','players.missed_penal as ammount')
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1318,7 +1318,7 @@ class HomeController extends Controller
 
         $saved_penal1 =DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.position','players.saved_penal as ammount')
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1331,7 +1331,7 @@ class HomeController extends Controller
 
         $saved_penal2 =DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('players.first_name','players.last_name','players.id','players.number','players.position')
+                ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.position','players.saved_penal as ammount')
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
@@ -1348,18 +1348,18 @@ class HomeController extends Controller
                 "assist" => $assists1,
                 "yellow" => $yellow1,
                 "red"   => $red1,
-                "clean_sheat" => $clean_sheat1,
-                "missed"    =>  $missed_penal1,
-                "saved" =>  $saved_penal1
+                // "clean_sheat" => $clean_sheat1,
+                // "missed"    =>  $missed_penal1,
+                // "saved" =>  $saved_penal1
             ],
             "club2" =>  [
                 "score" => $score2,
                 "assist" => $assists2,
                 "yellow" => $yellow2,
                 "red"   => $red2,
-                "clean_sheat" => $clean_sheat2,
-                "missed"    =>  $missed_penal2,
-                "saved" =>  $saved_penal2
+                // "clean_sheat" => $clean_sheat2,
+                // "missed"    =>  $missed_penal2,
+                // "saved" =>  $saved_penal2
             ]
         ];
 

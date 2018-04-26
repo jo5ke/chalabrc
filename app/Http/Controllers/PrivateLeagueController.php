@@ -208,7 +208,7 @@ class PrivateLeagueController extends Controller
         }
         foreach($emails as $email){
         $receiver = User::where('email',$email)->first();
-        // Mail::to($email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
+        Mail::to($email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
         }
         
         $emails = json_encode($emails);
@@ -241,9 +241,10 @@ class PrivateLeagueController extends Controller
         return $this->json($pl); 
     }
 
-    public function joinLeagueLink($code)
+    public function joinLeagueLink(Request $request)
     {
-        $user = JWTAuth::authenticate();        
+        // $user = JWTAuth::authenticate();        
+        $user = User::where('username',$request->email)->first();
         $pl = PrivateLeague::where('code',$request->code)->first();
         $emails = json_decode($pl->emails);
 
@@ -449,11 +450,16 @@ class PrivateLeagueController extends Controller
         $round_no = intval($request->gw);
         
         $by_rounds = DB::table('users')
-                ->join('user_league','users.id','=','user_league.user_id')                
+                // ->join('user_league','users.id','=','user_league.user_id')         
+                ->join('user_league', function ($join){
+                    $join->on('users.id','=','user_league.user_id')
+                    ->where('user_league.league_id','=',1);
+                })     
                 ->join('squads','users.id','=','squads.user_id')
                 ->join('squad_round','squads.id','=','squad_round.squad_id')
                 ->select('users.username','user_league.points as total','squad_round.points','users.email','squad_round.round_no')
                 ->whereIn('users.email',$emails)
+                ->where('squad_round.league_id','=',$pl->league_id)
                 ->where('squads.league_id','=',$pl->league_id)
                 ->where('squad_round.round_no','=',$round_no) 
                 ->orderBy('user_league.points','desc')                

@@ -102,7 +102,7 @@ Route::post('privateLeague/sendInvite', 'PrivateLeagueController@sendInvite')->m
 Route::post('privateLeague/banUser', 'PrivateLeagueController@banUser')->middleware('jwt.auth');
 Route::post('privateLeague/showTable', 'PrivateLeagueController@showTable')->middleware('jwt.auth');
 Route::post('privateLeague/getTable', 'PrivateLeagueController@getTable')->middleware('jwt.auth');
-Route::get('privateLeague/joinLeague/{code}', 'PrivateLeagueController@joinLeagueLink')->middleware('jwt.auth');
+Route::get('privateLeague/joinLeague/{email}/{code}', 'PrivateLeagueController@joinLeagueLink');
 
 
 
