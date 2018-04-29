@@ -20,6 +20,7 @@ class CreateArticlesTable extends Migration
             $table->string('slug')->nullable();
             $table->string('image_path')->nullable();
             $table->integer('league_id')->unsigned();
+            $table->integer('public')->default(0)->unsigned();
             $table->timestamps();
         });
     }

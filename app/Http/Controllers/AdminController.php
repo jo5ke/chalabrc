@@ -817,6 +817,7 @@ class AdminController extends Controller
         $article->body = $request->body;
         $article->league_id = $request->l_id;
         $article->image_path = $png_url;
+        $article->public = $request->public;
         $article->slug = strtolower(str_replace(' ','-',$article->title));
         $article->save();
 
@@ -845,6 +846,7 @@ class AdminController extends Controller
         $article->title = $request->title;
         $article->body = $request->body;
         $article->league_id = $request->l_id;
+        $article->public = $request->public;        
         $oldpath = $article->image;
         $article->save();
 
@@ -1333,15 +1335,34 @@ class AdminController extends Controller
                         if($left>3){
                             $left=3;
                         }
+
+                        // $count_su = count($su);
+                        $c_players = 0;
+                        foreach($su as $s){
+                            if($s->position!=="GK"){
+                                $c_players++;
+                            }
+                        }
+
+                        if($c_players < $left){
+                            $left = $c_players;
+                        }
+
                         if($gk==0){
-                            if($su[0]->id===$cpt){
+                            if($su[0]->id===$cpt && $su[0]->position==="GK"){
                                 $total += ($su[0]->total)*2;
-                            }else{
+                            }elseif($su[0]->position==="GK"){
                                 $total += $su[0]->total;
                             }
                         }
+
+                        if($su[0]->position==="GK"){
+                            $g = 1;
+                        }else{
+                            $g = 0;
+                        }
                         
-                        if($left>0){
+                        if($left>0 && $g===1){
                             for($i=1;$i<=$left;$i++){
                                 if($su[$i]->id===$cpt){
                                     $total += ($su[$i]->total)*2;
@@ -1349,6 +1370,14 @@ class AdminController extends Controller
                                     $total += $su[$i]->total;
                                 }
                             }
+                        }elseif($g===0){
+                            for($i=0;$i<$left;$i++){
+                                if($su[$i]->id===$cpt){
+                                    $total += ($su[$i]->total)*2;
+                                }else{
+                                    $total += $su[$i]->total;
+                                }
+                            } 
                         }
         
 
