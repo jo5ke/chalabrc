@@ -112,6 +112,16 @@ class SquadController extends Controller
         return $this->json($player);
     }
 
+    public function getAllPlayers()
+    {
+        $results = Player::with('club')->get();
+        if ($results->isEmpty()) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
     //getting All Players from all Clubs
     public function getPlayers(Request $request)
     {

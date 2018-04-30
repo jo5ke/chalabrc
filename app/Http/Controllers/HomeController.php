@@ -70,7 +70,7 @@ class HomeController extends Controller
 
     public function getAllNews()
     {
-        $results = Article::where('public',1)->get();
+        $results = Article::where('public',1)->where('published',1)->get();
         if ($results === null) {
             $response = 'There was a problem fetching news.';
             return $this->json($response, 404);
@@ -80,7 +80,7 @@ class HomeController extends Controller
 
     public function getNewsByLeague(Request $request)
     {
-        $results = Article::where('league_id', $request->l_id)->orderBy('created_at','desc')->paginate(3);
+        $results = Article::where('league_id', $request->l_id)->where('published',1)->orderBy('created_at','desc')->paginate(3);
         if ($results === null) {
             $response = 'There was a problem fetching news.';
             return $this->json($response, 404);
@@ -90,7 +90,7 @@ class HomeController extends Controller
 
     public function getLatestNews(Request $request)
     {
-        $results = Article::where('league_id',$request->l_id)->orderBy('created_at', 'desc')->first();
+        $results = Article::where('league_id',$request->l_id)->where('public',1)->where('published',1)->orderBy('created_at', 'desc')->first();
  
         if ($results === null) {
             $response = 'There was a problem fetching news.';

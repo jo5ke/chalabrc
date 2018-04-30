@@ -20,12 +20,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Image;
+use Carbon\Carbon;
 
 
 class AdminController extends Controller
 {
     // *** DO NOT FORGET TO ADD RELATIONS TO QUERIES ONCE EVERYTHING IS DEFINED ***
-    
+    public $club_name;
     //Club CRUD section
    	public function getClubs(Request $request)
     {
@@ -149,12 +150,27 @@ class AdminController extends Controller
         $player->club_id = $club->id;
         $player->reason = $request->reason;
         $player->save();
+        $this->club_name = $club->name;
+
 
         $league = League::where('id',$club->league_id)->first();
         // $round = Round::where('round_no',$league->current_round)->where('league_id',$league->id)->first();
         $rounds = Round::where('league_id',$league->id)->where('round_no','>=',$league->current_round)->get();
         foreach($rounds as $round){
-            $round->players()->attach($player);
+            $match = Match::where('round_id',$round->id)->where('league_id',$league->id)
+                        ->where(function($query){
+                            $query->where('club1_name',$this->club_name)
+                                 ->orWhere('club2_name',$this->club_name);
+                        })
+                        ->get();
+                        
+            if(count($match)===1){
+                $round->players()->attach($player,['match_id' => $match[0]->id]);  
+            }elseif(count($match)>1){
+                foreach($match as $m){
+                    $round->players()->attach($player,['match_id' => $m->id]); 
+                }
+            }
         }
 
         $results = Player::where('id', $player->id)->get();
@@ -503,25 +519,88 @@ class AdminController extends Controller
         $matches = $round->matches()->get();
 /////////////////
 
-        $club1 = Club::where('name',$match->club1_name)->first();
+        $club1 = Club::where('name',$request->c1_name)->first();
+        $this->club_name = $club1->name;
         $players1 = $club1->players;
+        return $players1;
         foreach($players1 as $player){
+            $match = Match::where('round_id',$round->id)->where('league_id',$request->l_id)
+                ->where(function($query){
+                    $query->where('club1_name',$this->club_name)
+                        ->orWhere('club2_name',$this->club_name);
+                })
+                ->get();
+
             if($round->players()->where('player_id',$player->id)->exists()){
-                break;
+                if(count($match)===1){
+                    $round->players()->updateExistingPivot($player,['match_id' => $match[0]->id]);  
+                }elseif(count($match)>1){
+                    foreach($match as $m){
+                        $round->players()->updateExistingPivot($player,['match_id' => $m->id]); 
+                    }
+                }
             }else{
-              $round->players()->attach($player);              
+                if(count($match)===1){
+                    $round->players()->attach($player,['match_id' => $match[0]->id]);  
+                }elseif(count($match)>1){
+                    foreach($match as $m){
+                        $round->players()->attach($player,['match_id' => $m->id]); 
+                    }
+                }            
             }
         }
 
-        $club2 = Club::where('name',$match->club2_name)->first();
+        $club2 = Club::where('name',$request->c2_name)->first();
+        $this->club_name = $club1->name;        
         $players2 = $club2->players;
         foreach($players2 as $player){
+            $match = Match::where('round_id',$round->id)->where('league_id',$request->l_id)
+                ->where(function($query){
+                    $query->where('club1_name',$this->club_name)
+                        ->orWhere('club2_name',$this->club_name);
+                })
+                ->get();
+
             if($round->players()->where('player_id',$player->id)->exists()){
-                break;
+                if(count($match)===1){
+                    $round->players()->updateExistingPivot($player,['match_id' => $match[0]->id]);  
+                }elseif(count($match)>1){
+                    foreach($match as $m){
+                        $round->players()->updateExistingPivot($player,['match_id' => $m->id]); 
+                    }
+                }
             }else{
-              $round->players()->attach($player);              
+                if(count($match)===1){
+                    $round->players()->attach($player,['match_id' => $match[0]->id]);  
+                }elseif(count($match)>1){
+                    foreach($match as $m){
+                        $round->players()->attach($player,['match_id' => $m->id]); 
+                    }
+                }            
             }
         }
+        
+        ////////// old code, without match_id
+        
+        // $club1 = Club::where('name',$match->club1_name)->first();
+        // $players1 = $club1->players;
+        // foreach($players1 as $player){
+        //     if($round->players()->where('player_id',$player->id)->exists()){
+        //         break;
+        //     }else{
+        //       $round->players()->attach($player);              
+        //     }
+        // }
+
+        // $club2 = Club::where('name',$match->club2_name)->first();
+        // $players2 = $club2->players;
+        // foreach($players2 as $player){
+        //     if($round->players()->where('player_id',$player->id)->exists()){
+        //         break;
+        //     }else{
+        //       $round->players()->attach($player);              
+        //     }
+        // }
 
         $end_time = $round->matches()->first()->time;
         foreach($matches as $match){
@@ -819,6 +898,11 @@ class AdminController extends Controller
         $article->image_path = $png_url;
         $article->public = $request->public;
         $article->slug = strtolower(str_replace(' ','-',$article->title));
+        if($article->scheduled_time !== null){
+            $article->published = 0;
+        }else{
+            $article->published = 1;
+        }
         $article->save();
 
         if ($article === null) {
@@ -1091,8 +1175,8 @@ class AdminController extends Controller
                             'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                             'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                     ->where([
-                                // ['round_player.round_id','=',$request->r_id],
-                                ['round_player.round_id','=',$match->round_id],
+                                // ['round_player.round_id','=',$match->round_id],
+                                ['round_player.match_id','=',$match->id],
                                 ['players.club_id', '=', $club1->id],
                             ])
                     ->get();
@@ -1103,8 +1187,8 @@ class AdminController extends Controller
                             'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
                             'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                     ->where([
-                                // ['round_player.round_id','=',$request->r_id],
-                                ['round_player.round_id','=',$match->round_id],
+                                // ['round_player.round_id','=',$match->round_id],
+                                ['round_player.match_id','=',$match->id],                                
                                 ['players.club_id', '=', $club2->id],
                             ])
                     ->get();
@@ -1136,7 +1220,7 @@ class AdminController extends Controller
     public function postPlayerStats(Request $request)
     {
         $round = Round::where('id',$request->input('data.round_id'))->where('league_id',$request->l_id)->first();
-        $player = $round->players->where('pivot.player_id',$request->input('data.player_id'))->where('pivot.round_id',$round->id)->first()->pivot;
+        $player = $round->players->where('pivot.player_id',$request->input('data.player_id'))->where('pivot.round_id',$round->id)->where('pivot.match_id',$request->m_id)->first()->pivot;
         $position = Player::where('id',$request->input('data.player_id'))->first()->position;
         $stats = [
             "start"     =>  $player->start = $request->input('data.start'),

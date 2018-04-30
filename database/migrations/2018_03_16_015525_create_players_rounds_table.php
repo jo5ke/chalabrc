@@ -17,6 +17,7 @@ class CreatePlayersRoundsTable extends Migration
             $table->increments('id');
             $table->integer('round_id')->onDelete('cascade');
             $table->integer('player_id')->onDelete('cascade');
+            $table->integer('match_id')->onDelete('cascade');
             $table->integer('start')->unsigned()->nullable();
             $table->integer('sub')->unsigned()->nullable();
             $table->integer('assist')->unsigned()->nullable();

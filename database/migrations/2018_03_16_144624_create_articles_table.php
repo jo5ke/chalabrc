@@ -21,6 +21,8 @@ class CreateArticlesTable extends Migration
             $table->string('image_path')->nullable();
             $table->integer('league_id')->unsigned();
             $table->integer('public')->default(0)->unsigned();
+            $table->integer('published')->default(0)->unsigned();
+            $table->timestamp('scheduled_time')->nullable();
             $table->timestamps();
         });
     }

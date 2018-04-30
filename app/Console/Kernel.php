@@ -2,8 +2,11 @@
 
 namespace App\Console;
 
+use DB;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Article as Article;
+use Carbon\Carbon;
 
 class Kernel extends ConsoleKernel
 {
@@ -26,6 +29,17 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
+        $schedule->call(function () {
+            $articles = Article::all();
+            foreach($articles as $article){
+                if($article->scheduled_time!==null){
+                    if(Carbon::now()->setTimezone('Europe/Belgrade') > $article->scheduled_time){
+                        $article->published=1;
+                        $article->save();
+                    }
+                }
+            }
+        });
     }
 
     /**
