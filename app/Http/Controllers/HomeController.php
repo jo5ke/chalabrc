@@ -80,7 +80,18 @@ class HomeController extends Controller
 
     public function getNewsByLeague(Request $request)
     {
-        $results = Article::where('league_id', $request->l_id)->where('published',1)->orderBy('created_at','desc')->paginate(3);
+        $results = Article::where('league_id', $request->l_id)->orWhere('public',1)->where('published',1)->orderBy('created_at','desc')->paginate(3);
+        if ($results === null) {
+            $response = 'There was a problem fetching news.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
+
+    public function getLatestNewsByLeague(Request $request)
+    {
+        $results = Article::where('league_id',$request->l_id)->where('published',1)->orderBy('created_at', 'desc')->first();
+ 
         if ($results === null) {
             $response = 'There was a problem fetching news.';
             return $this->json($response, 404);
@@ -90,7 +101,7 @@ class HomeController extends Controller
 
     public function getLatestNews(Request $request)
     {
-        $results = Article::where('league_id',$request->l_id)->where('public',1)->where('published',1)->orderBy('created_at', 'desc')->first();
+        $results = Article::where('public',1)->where('published',1)->orderBy('created_at', 'desc')->first();
  
         if ($results === null) {
             $response = 'There was a problem fetching news.';
@@ -206,19 +217,21 @@ class HomeController extends Controller
         $this->term = $request->term ? $request->term : "";
         $per_page = $request->per_page ? $request->per_page : null;
 
+        $l_id = intval($request->l_id);
         if($this->term==""){
             $results = DB::table('users')
                     ->join('user_league','users.id','=','user_league.user_id')
-                    ->join('squads','users.id','=','squads.user_id')
-                    ->join('squad_round','squads.id','=','squad_round.squad_id')
+                    // ->join('squads','users.id','=','squads.user_id')
+                    ->join('squad_round','user_league.squad_id','=','squad_round.squad_id')
                     ->select('users.first_name','users.last_name','users.uuid','users.created_at','users.username',
                             'user_league.money','user_league.points','user_league.squad_id','squad_round.points as prev_round')
                     ->where('squad_round.round_no','=',$current_round)
-                    ->where('user_league.league_id','=',$request->l_id)
+                    ->where('user_league.league_id','=',$l_id)
                     ->orderBy('user_league.points','desc')
                     ->orderBy('users.username','asc');
                     // ->take(10)
                     // ->get();
+
         }else{
             $this->term = $this->term . "%";
             $results = DB::table('users')
@@ -534,6 +547,21 @@ class HomeController extends Controller
                 ->take(1)
                 ->get();
 
+        $gk_t = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
+                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
+                        'clubs.name',(DB::raw('SUM(round_player.total) as total')))
+                ->where([
+                            ['players.position','=','GK'],
+                            ['clubs.league_id','=',$request->l_id],                            
+                        ])
+                ->groupBy('players.id','players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','clubs.name')
+                ->orderBy('total','desc')                
+                ->take(1)
+                ->get();
+
+
         $def = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
@@ -545,6 +573,20 @@ class HomeController extends Controller
                             ['clubs.league_id','=',$request->l_id],
                         ])
                 ->orderBy('round_player.total','desc')
+                ->take(4)
+                ->get();
+
+        $def_t = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
+                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
+                        'clubs.name',(DB::raw('SUM(round_player.total) as total')))
+                ->where([
+                            ['players.position','=','DEF'],
+                            ['clubs.league_id','=',$request->l_id],                            
+                        ])
+                ->groupBy('players.id','players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','clubs.name')
+                ->orderBy('total','desc')                                
                 ->take(4)
                 ->get();
                 
@@ -562,6 +604,20 @@ class HomeController extends Controller
                 ->take(4)
                 ->get();
 
+        $mid_t = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
+                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
+                        'clubs.name',(DB::raw('SUM(round_player.total) as total')))
+                ->where([
+                            ['players.position','=','MID'],
+                            ['clubs.league_id','=',$request->l_id],                            
+                        ])
+                ->groupBy('players.id','players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','clubs.name')
+                ->orderBy('total','desc')                            
+                ->take(4)
+                ->get();
+
         $atk = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
@@ -576,11 +632,33 @@ class HomeController extends Controller
                 ->take(2)
                 ->get();
 
+        $atk_t = DB::table('players')
+                ->join('round_player','players.id','=','round_player.player_id')
+                ->join('clubs','players.club_id','=','clubs.id')
+                ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
+                        'clubs.name',(DB::raw('SUM(round_player.total) as total')))
+                ->where([
+                            ['players.position','=','ATK'],
+                            ['clubs.league_id','=',$request->l_id],                            
+                        ])
+                ->groupBy('players.id','players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','clubs.name')
+                ->orderBy('total','desc')                            
+                ->take(2)
+                ->get();
+
         $results = [
-            "gk"    => $gk,
-            "def"   => $def,
-            "mid"   => $mid,
-            "atk"   => $atk
+            "previous" => [
+                "gk"    => $gk,
+                "def"   => $def,
+                "mid"   => $mid,
+                "atk"   => $atk
+            ],
+            "total" => [
+                "gk"    => $gk_t,
+                "def"   => $def_t,
+                "mid"   => $mid_t,
+                "atk"   => $atk_t
+            ]
         ];
                 
         if ($results === null) {
@@ -589,6 +667,7 @@ class HomeController extends Controller
         }
         return $this->json($results);
     }
+
 
     public function getArticle($slug)
     {
@@ -708,28 +787,6 @@ class HomeController extends Controller
             }else{
                 $response = "No records for that round";
                 return $this->json($response,404);
-            //     $st = DB::table('players')
-            //     ->join('round_player','players.id','=','round_player.player_id')
-            //     ->join('clubs','players.club_id','=','clubs.id')
-            //     ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-            //            'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-            //            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-            //    ->where('round_player.round_id','=',$round->id)
-            //    ->whereIn('players.id',$starting)
-            //    ->orderBy('players.position','desc')
-            //    ->get();
-    
-            //     $subs_ = implode(',', $subs_arr);
-            //     $su = DB::table('players')
-            //             ->join('round_player','players.id','=','round_player.player_id')
-            //             ->join('clubs','players.club_id','=','clubs.id')
-            //             ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-            //                     'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-            //                     'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-            //             ->where('round_player.round_id','=',$round->id)
-            //             ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
-            //             ->whereIn('players.id',$subs)
-            //             ->get();
 
             }
         }
@@ -1063,8 +1120,14 @@ class HomeController extends Controller
         // if($current_round > 1){
         //     $current_round--;
         // }
-        $prev_round = $current_round-1;
+        if($current_round>1){
+            $prev_round = $current_round-1;            
+        }else{
+            $prev_round = 1;
+        }
 
+        $c_round = Round::where('round_no',$current_round)->where('league_id',$club->league_id)->first();
+        $p_round = Round::where('round_no',$prev_round)->where('league_id',$club->league_id)->first();
         $price = $player->price;
         $total = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
@@ -1077,7 +1140,7 @@ class HomeController extends Controller
                 ->select('total')
                 ->where([
                     ['player_id','=',$request->id],
-                    ['round_id','=',$current_round]
+                    ['round_id','=',$c_round->id]
                     ])
                 ->get();
         
@@ -1089,7 +1152,7 @@ class HomeController extends Controller
                 ->select('total')
                 ->where([
                     ['player_id','=',$request->id],
-                    ['round_id','=',$prev_round]
+                    ['round_id','=',$p_round->id]
                     ])
                 ->get();
 
@@ -1369,7 +1432,6 @@ class HomeController extends Controller
         }
         return $this->json($results);
     }
-
 
     
     

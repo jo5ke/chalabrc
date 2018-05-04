@@ -133,9 +133,38 @@ class SquadController extends Controller
                 ->where('clubs.league_id','=',$request->l_id)
                 ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
                 ->get();
+
+        $users = DB::table('users')
+                ->join('user_league','users.id','=','user_league.user_id')
+                ->join('squads','users.id','=','squads.user_id')
+                ->select('users.username','squads.selected_team','squads.substitutions','squads.league_id')
+                ->where('user_league.league_id','=',$request->l_id)
+                ->where('squads.league_id','=',$request->l_id)
+                ->get();
         
+        $total_users = count($users);
         // antiqueandarts.com
         foreach($pstats as $pstat){
+            $belongs = 0;
+            foreach($users as $user){
+                if($user->selected_team === null){
+                    continue;
+                }else{
+                    $selected_team = json_decode($user->selected_team); 
+                }
+                if($user->substitutions === null){
+                    continue;
+                }else{
+                    $substitutions = json_decode($user->substitutions);
+                }
+                if(in_array($pstat->id,$selected_team)){
+                    $belongs++;
+                }elseif(in_array($pstat->id,$substitutions)){
+                    $belongs++;
+                }
+            }
+            $per_user = round($belongs/$total_users*100,2);
+
             $pstat->total = intval($pstat->total);
             $pstat->total_red = intval($pstat->total_red);
             $pstat->total_yellow = intval($pstat->total_yellow);
@@ -144,6 +173,7 @@ class SquadController extends Controller
             $pstat->total_start = intval($pstat->total_start);
             $pstat->total_sub = intval($pstat->total_sub);
             $pstat->total_score = intval($pstat->total_score);
+            $pstat->per_user = round($per_user,2);
         }
 
         // $players = League::where('id',$request->l_id)->with('players')->get();

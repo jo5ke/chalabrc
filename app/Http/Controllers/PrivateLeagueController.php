@@ -18,6 +18,8 @@ use App\Mail\LeagueMail as LeagueMail;
 
 class PrivateLeagueController extends Controller
 {
+    public $l_id;
+
     public function createLeague(Request $request)
     {
         $league = League::where('id',$request->l_id)->first();
@@ -208,7 +210,7 @@ class PrivateLeagueController extends Controller
         }
         foreach($emails as $email){
         $receiver = User::where('email',$email)->first();
-        Mail::to($email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
+        // Mail::to($email)->send(new LeagueMail($user, $receiver, $pl,"New invite on breddefantasy.com,  $user->username has invited you to his private league!","emails.league"));
         }
         
         $emails = json_encode($emails);
@@ -448,12 +450,12 @@ class PrivateLeagueController extends Controller
                 ->get();
 
         $round_no = intval($request->gw);
-        
+        $this->l_id = $pl->league_id;
         $by_rounds = DB::table('users')
                 // ->join('user_league','users.id','=','user_league.user_id')         
                 ->join('user_league', function ($join){
                     $join->on('users.id','=','user_league.user_id')
-                    ->where('user_league.league_id','=',1);
+                    ->where('user_league.league_id','=',$this->l_id);
                 })     
                 ->join('squads','users.id','=','squads.user_id')
                 ->join('squad_round','squads.id','=','squad_round.squad_id')
@@ -462,8 +464,8 @@ class PrivateLeagueController extends Controller
                 ->where('squad_round.league_id','=',$pl->league_id)
                 ->where('squads.league_id','=',$pl->league_id)
                 ->where('squad_round.round_no','=',$round_no) 
-                ->orderBy('user_league.points','desc')                
                 ->orderBy('squad_round.points','desc')
+                ->orderBy('total','desc')                
                 ->orderBy('users.id','desc')
                 // ->having('round_no','>',$pl->start_round)                
                 ->get();

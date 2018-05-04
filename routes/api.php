@@ -29,6 +29,7 @@ Route::middleware('jwt.auth')->get('/users', function(Request $request) {
 //Home page controller
 Route::get('news', 'HomeController@getAllNews');
 Route::post('getLatestNews', 'HomeController@getLatestNews');
+Route::post('getLatestNewsByLeague', 'HomeController@getLatestNewsByLeague');
 Route::get('topFivePlayers', 'HomeController@getTopFivePlayers');
 Route::put('updateUserSettings', 'UserController@updateUserSettings')->middleware('jwt.auth');
 Route::get('getUserSettings', 'UserController@getUserSettings')->middleware('jwt.auth');
@@ -105,6 +106,7 @@ Route::get('privateLeague/joinLeague/{email}/{code}', 'PrivateLeagueController@j
 
 
 
+
 // Admin routes
 
 //club
@@ -152,6 +154,10 @@ Route::post('admin/getUser', 'AdminController@getUser');
 Route::post('admin/postUser', 'AdminController@postUser');
 Route::post('admin/removeUser', 'AdminController@removeUser');
 Route::put('admin/updateUser', 'AdminController@updateUser');
+//squads 
+Route::post('admin/getSquads', 'AdminController@getSquads');
+Route::post('admin/resetSquad', 'AdminController@resetSquad');
+
 //admin
 Route::post('admin/getAdmins', 'AdminController@getAdmins');
 Route::post('admin/getAdmin', 'AdminController@getAdmin');

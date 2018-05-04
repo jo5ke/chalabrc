@@ -22,6 +22,10 @@ class CreateMatchesTable extends Migration
             $table->string('club2_name')->nullable();         
             $table->integer('club1_score')->nullable()->unsigned();         
             $table->integer('club2_score')->nullable()->unsigned();     
+            $table->float('odd_1')->nullable()->unsigned();     
+            $table->float('odd_x')->nullable()->unsigned();     
+            $table->float('odd_2')->nullable()->unsigned();   
+            $table->string('link')->nullable();                       
             $table->timestamp('time')->nullable();    
             $table->timestamps();
         });
