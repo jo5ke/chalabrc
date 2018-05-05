@@ -600,6 +600,7 @@ class HomeController extends Controller
                             ['players.position','=','MID'],
                             ['clubs.league_id','=',$request->l_id],                            
                         ])
+                        
                 ->orderBy('round_player.total','desc')
                 ->take(4)
                 ->get();
@@ -725,35 +726,89 @@ class HomeController extends Controller
         $starting_arr = array_values(json_decode(json_encode($starting), true));
         $subs_arr = array_values(json_decode(json_encode($subs), true));
         $league = League::where('id',$request->l_id)->first();
-        $current_round = $league->current_round;
+        $current_round = intval($league->current_round);
         // if($prev >1){
         //     $prev = $prev-1;
         // }
         $round_no = intval($request->gw);
         $round = Round::where('league_id',$request->l_id)->where('round_no',$round_no)->first();        
 
-        if($current_round === $round_no){
-            $st = DB::table('players')
+        if($current_round == $round_no){
+        //     $st = DB::table('players')
+        //     ->join('round_player','players.id','=','round_player.player_id')
+        //     ->join('clubs','players.club_id','=','clubs.id')
+        //     ->select('clubs.name as club_name','players.first_name','players.last_name','players.id as id','players.number','players.position','players.price','players.club_id',
+        //     DB::raw('SUM(round_player.assist) as assist'),
+        //     DB::raw('SUM(round_player.captain) as captain'),
+        //     DB::raw('SUM(round_player.clean) as clean'),
+        //     DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
+        //     DB::raw('SUM(round_player.k_save) as k_save'),
+        //     DB::raw('SUM(round_player.miss) as miss'),
+        //     DB::raw('SUM(round_player.own_goal) as own_goal'),
+        //     DB::raw('SUM(round_player.red) as red'),            
+        //     DB::raw('SUM(round_player.yellow) as yellow'),            
+        //     DB::raw('SUM(round_player.score) as score'),            
+        //     DB::raw('SUM(round_player.start) as start'),            
+        //     DB::raw('SUM(round_player.sub) as sub'),          
+        //     DB::raw('SUM(round_player.total) as total'),                        
+        //              'round_player.player_id','round_player.round_id')
+        //     ->whereIn('players.id',$starting)
+        //    ->where('round_player.round_id','=',$round->id)
+        //    ->groupBy('id','round_player.player_id','round_player.round_id','round_player.match_id',
+        //    'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name')
+        //    ->orderBy('players.position','desc')
+        //    ->get();
+
+        $st = DB::table('players')
             ->join('round_player','players.id','=','round_player.player_id')
-            ->join('clubs','players.club_id','=','clubs.id')
-            ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-                   'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                   'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+            // ->join('clubs','players.club_id','=','clubs.id')
+            ->select('players.first_name','players.last_name','players.id as id','players.number','players.position','players.price','players.club_id',
+            DB::raw('SUM(round_player.assist) as assist'),
+            DB::raw('SUM(round_player.captain) as captain'),
+            DB::raw('SUM(round_player.clean) as clean'),
+            DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
+            DB::raw('SUM(round_player.k_save) as k_save'),
+            DB::raw('SUM(round_player.miss) as miss'),
+            DB::raw('SUM(round_player.own_goal) as own_goal'),
+            DB::raw('SUM(round_player.red) as red'),            
+            DB::raw('SUM(round_player.yellow) as yellow'),            
+            DB::raw('SUM(round_player.score) as score'),            
+            DB::raw('SUM(round_player.start) as start'),            
+            DB::raw('SUM(round_player.sub) as sub'),          
+            DB::raw('SUM(round_player.total) as total'),                        
+                     'round_player.player_id','round_player.round_id')
+            ->whereIn('players.id',$starting)
            ->where('round_player.round_id','=',$round->id)
-           ->whereIn('players.id',$starting)
+           ->groupBy('id','round_player.player_id','round_player.round_id','round_player.match_id',
+           'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id')
            ->orderBy('players.position','desc')
            ->get();
+
 
             $subs_ = implode(',', $subs_arr);
             $su = DB::table('players')
                     ->join('round_player','players.id','=','round_player.player_id')
                     ->join('clubs','players.club_id','=','clubs.id')
                     ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-                            'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                    DB::raw('SUM(round_player.assist) as assist'),
+                    DB::raw('SUM(round_player.captain) as captain'),
+                    DB::raw('SUM(round_player.clean) as clean'),
+                    DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
+                    DB::raw('SUM(round_player.k_save) as k_save'),
+                    DB::raw('SUM(round_player.miss) as miss'),
+                    DB::raw('SUM(round_player.own_goal) as own_goal'),
+                    DB::raw('SUM(round_player.red) as red'),            
+                    DB::raw('SUM(round_player.yellow) as yellow'),            
+                    DB::raw('SUM(round_player.score) as score'),            
+                    DB::raw('SUM(round_player.start) as start'),            
+                    DB::raw('SUM(round_player.sub) as sub'),          
+                    DB::raw('SUM(round_player.total) as total'),                        
+                           'round_player.player_id','round_player.round_id')
                     ->where('round_player.round_id','=',$round->id)
-                    ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
+                    ->groupBy('round_player.player_id','players.id','round_player.round_id','round_player.match_id',
+                    'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name')           
                     ->whereIn('players.id',$subs)
+                    ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                     ->get();
         }else{
             if($team->rounds()->where('squad_round.round_no',$round_no)->first()!==null){
@@ -765,10 +820,24 @@ class HomeController extends Controller
                     ->join('round_player','players.id','=','round_player.player_id')
                     ->join('clubs','players.club_id','=','clubs.id')
                     ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-                        'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                        'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                    ->where('round_player.round_id','=',$round->id)
+                    DB::raw('SUM(round_player.assist) as assist'),
+                    DB::raw('SUM(round_player.captain) as captain'),
+                    DB::raw('SUM(round_player.clean) as clean'),
+                    DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
+                    DB::raw('SUM(round_player.k_save) as k_save'),
+                    DB::raw('SUM(round_player.miss) as miss'),
+                    DB::raw('SUM(round_player.own_goal) as own_goal'),
+                    DB::raw('SUM(round_player.red) as red'),            
+                    DB::raw('SUM(round_player.yellow) as yellow'),            
+                    DB::raw('SUM(round_player.score) as score'),            
+                    DB::raw('SUM(round_player.start) as start'),            
+                    DB::raw('SUM(round_player.sub) as sub'),          
+                    DB::raw('SUM(round_player.total) as total'),                           
+                           'round_player.player_id','round_player.round_id')
                     ->whereIn('players.id',$starting_arr)
+                    ->where('round_player.round_id','=',$round->id)
+                    ->groupBy('id','round_player.player_id','round_player.round_id','round_player.match_id',
+                    'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name')                             
                     ->orderBy('players.position','desc')
                     ->get();
     
@@ -777,11 +846,25 @@ class HomeController extends Controller
                     ->join('round_player','players.id','=','round_player.player_id')
                     ->join('clubs','players.club_id','=','clubs.id')
                     ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-                            'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                            'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                    ->where('round_player.round_id','=',$round->id)
-                    ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
+                    DB::raw('SUM(round_player.assist) as assist'),
+                    DB::raw('SUM(round_player.captain) as captain'),
+                    DB::raw('SUM(round_player.clean) as clean'),
+                    DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
+                    DB::raw('SUM(round_player.k_save) as k_save'),
+                    DB::raw('SUM(round_player.miss) as miss'),
+                    DB::raw('SUM(round_player.own_goal) as own_goal'),
+                    DB::raw('SUM(round_player.red) as red'),            
+                    DB::raw('SUM(round_player.yellow) as yellow'),            
+                    DB::raw('SUM(round_player.score) as score'),            
+                    DB::raw('SUM(round_player.start) as start'),            
+                    DB::raw('SUM(round_player.sub) as sub'),          
+                    DB::raw('SUM(round_player.total) as total'),                         
+                           'round_player.player_id','round_player.round_id')
                     ->whereIn('players.id',$subs)
+                    ->where('round_player.round_id','=',$round->id)
+                    ->groupBy('id','round_player.player_id','players.id','round_player.round_id','round_player.match_id',
+                    'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name')                               
+                    ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                     ->get();
                     // privremeno resenje
             }else{
@@ -1131,17 +1214,18 @@ class HomeController extends Controller
         $price = $player->price;
         $total = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select(DB::raw('SUM(round_player.total) as total'))
+                ->select(DB::raw('SUM(round_player.total) as total'),'players.id')
                 ->where('players.id','=',$request->id)
                 ->groupBy('players.id')
                 ->get();
         
         $current = DB::table('round_player')
-                ->select('total')
+                ->select(DB::raw('SUM(total) as total'))
                 ->where([
                     ['player_id','=',$request->id],
                     ['round_id','=',$c_round->id]
                     ])
+                ->groupBy('player_id')
                 ->get();
         
         $avg = DB::table('round_player')
@@ -1149,18 +1233,32 @@ class HomeController extends Controller
                 ->avg('total');
 
         $prev = DB::table('round_player')
-                ->select('total')
+                ->select(DB::raw('SUM(total) as total'))
                 ->where([
                     ['player_id','=',$request->id],
                     ['round_id','=',$p_round->id]
                     ])
+                ->groupBy('player_id')
                 ->get();
 
         $gameweeks = DB::table('players')
                 ->join('round_player','players.id','=','round_player.player_id')
-                ->select('round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','round_player.k_save','round_player.miss',
-                'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                ->select('round_player.player_id','round_player.round_id',
+                DB::raw('SUM(round_player.assist) as assist'),
+                DB::raw('SUM(round_player.captain) as captain'),
+                DB::raw('SUM(round_player.clean) as clean'),
+                DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
+                DB::raw('SUM(round_player.k_save) as k_save'),
+                DB::raw('SUM(round_player.miss) as miss'),
+                DB::raw('SUM(round_player.own_goal) as own_goal'),
+                DB::raw('SUM(round_player.red) as red'),            
+                DB::raw('SUM(round_player.yellow) as yellow'),            
+                DB::raw('SUM(round_player.score) as score'),            
+                DB::raw('SUM(round_player.start) as start'),            
+                DB::raw('SUM(round_player.sub) as sub'),          
+                DB::raw('SUM(round_player.total) as total')   )
                 ->where('players.id','=',$player->id)
+                ->groupBy('round_player.player_id','round_player.round_id')
                 ->orderBy('round_player.round_id','asc')
                 ->get();
 
@@ -1228,7 +1326,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.score', '>', 0],
                         ])
@@ -1241,7 +1340,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.score', '>', 0],
                         ])
@@ -1255,7 +1355,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.assist', '>', 0],
                         ])
@@ -1268,7 +1369,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.assist', '>', 0],
                         ])
@@ -1281,7 +1383,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.yellow', '>', 0],
                         ])
@@ -1294,7 +1397,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.yellow', '>', 0],
                         ])
@@ -1307,7 +1411,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.red', '>', 0],
                         ])
@@ -1320,7 +1425,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.red', '>', 0],
                         ])
@@ -1333,7 +1439,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.clean', '>', 0],
                         ])
@@ -1346,7 +1453,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.clean', '>', 0],
                         ])
@@ -1359,7 +1467,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.miss', '>', 0],
                         ])
@@ -1372,7 +1481,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.miss', '>', 0],
                         ])
@@ -1385,7 +1495,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids1)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.k_save', '>', 0],
                         ])
@@ -1398,7 +1509,8 @@ class HomeController extends Controller
                 ->whereIn('players.id',$player_ids2)  
                 ->where([
                             // ['round_player.round_id','=',$request->r_id],
-                            ['round_player.round_id','=',$match->round_id],
+                            // ['round_player.round_id','=',$match->round_id],
+                            ['round_player.match_id','=',$match->id],                            
                             // ['round_player.score', 'NOT', NULL],
                             ['round_player.k_save', '>', 0],
                         ])

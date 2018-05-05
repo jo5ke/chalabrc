@@ -184,8 +184,9 @@ class AdminController extends Controller
     public function removePlayer(Request $request)
     {
         $player = Player::where('id',$request->id)->first();
-        $round_players = $player->rounds()->where('player_id',$player->id)->get();
-   
+        $current_round = League::where('id',$player->league_id)->first()->current_round;
+        $round_players = $player->rounds()->where('player_id',$player->id)->where('round_id','>',$current_round)->get();
+        
         foreach($round_players as $round_player){
             $round_player->pivot->delete();
         }
@@ -366,6 +367,11 @@ class AdminController extends Controller
         $match->league_id = $request->l_id;
         $match->club1_score = $request->c1_score;
         $match->club2_score = $request->c2_score;
+        //odds
+        $match->odd_1 = round($request->odd_1,2);
+        $match->odd_x = round($request->odd_x,2);
+        $match->odd_2 = round($request->odd_2,2);   
+        $match->link = $request->link;     
         // important order
         $matches = $round->matches()->get();
     	$match->save();
@@ -393,30 +399,43 @@ class AdminController extends Controller
          }
         }
         
-
-        if($exists1===0){
-            $club1 = Club::where('name',$request->c1_name)->first();
-            $players1 = $club1->players;
-            foreach($players1 as $player){
-                if($round->players()->where('player_id',$player->id)->exists()){
-                    break;
-                }else{
-                  $round->players()->attach($player);              
-                }           
-            }
+        $club1 = Club::where('name',$request->c1_name)->first();
+        $players1 = $club1->players;
+        foreach($players1 as $player){ 
+                 $round->players()->attach($player,['match_id' => $match->id]);            
         }
 
-        if($exists2===0){
-            $club2 = Club::where('name',$request->c2_name)->first();
-            $players2 = $club2->players;
-            foreach($players2 as $player){
-                if($round->players()->where('player_id',$player->id)->exists()){
-                    break;
-                }else{
-                  $round->players()->attach($player);              
-                }     
-            }    
-        }
+        $club2 = Club::where('name',$request->c2_name)->first();
+        $players2 = $club2->players;
+        foreach($players2 as $player){
+                 $round->players()->attach($player,['match_id' => $match->id]);        
+        }   
+
+        // if($exists1===0){
+        //     $club1 = Club::where('name',$request->c1_name)->first();
+        //     $players1 = $club1->players;
+        //     foreach($players1 as $player){
+        //         if($round->players()->where('player_id',$player->id)->exists()){
+        //             break;
+        //         }else{
+        //         //   $round->players()->attach($player);   
+        //              $round->players()->attach($player,['match_id' => $match->id]);           
+        //         }           
+        //     }
+        // }
+
+        // if($exists2===0){
+        //     $club2 = Club::where('name',$request->c2_name)->first();
+        //     $players2 = $club2->players;
+        //     foreach($players2 as $player){
+        //         if($round->players()->where('player_id',$player->id)->exists()){
+        //             break;
+        //         }else{
+        //         //   $round->players()->attach($player);      
+        //              $round->players()->attach($player,['match_id' => $match->id]);        
+        //         }     
+        //     }    
+        // }
 
         if ($match === null) {
             $response = 'There was a problem fetching your data.';
@@ -488,95 +507,227 @@ class AdminController extends Controller
         return $this->json($match);
     }
 
+//     public function updateMatch(Request $request)
+//     {
+//         // $new_round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
+//         // return $round->id;
+//         $match = Match::where('id',$request->id)->first();
+//         $round = $match->round;
+
+//         // if($current_round->round_no != $request->r_no)
+//         // {
+//         //     $match->delete();
+
+//         //     $newMatch = new Match;
+//         //     $newMatch->club1_name = $request->c1_name;
+//         //     $newMatch->club2_name = $request->c2_name;
+//         //     $newMatch->time = $request->time;   
+//         //     $newMatch->round_id = $new_round->id;
+//         //     $newMatch->league_id = $request->l_id;
+//         //     $newMatch->save();
+//         //     return $this->json($newMatch);
+//         // }     
+//         $match->club1_name = $request->c1_name;
+//         $match->club2_name = $request->c2_name;
+//         $match->club1_score = $request->c1_score;
+//         $match->club2_score = $request->c2_score;
+
+//         $match->odd_1 = round($request->odd_1,2);
+//         $match->odd_x = round($request->odd_x,2);
+//         $match->odd_2 = round($request->odd_2,2);    
+//         $match->link = $request->link;     
+
+//         $match->time = $request->time;
+//         $match->save();
+
+//         $matches = $round->matches()->get();
+// /////////////////
+//         $rundes = Round::all();
+
+// foreach($rundes as $round){
+
+//     $matchovi = $round->matches()->get();
+//     foreach($matchovi as $m){
+//             $club1 = Club::where('name',$m->club1_name)->first();
+//             $this->club_name = $club1->name;
+//             $players1 = $club1->players;
+//             // $match1 = Match::where('round_id',$round->id)->where('league_id',$request->l_id)
+//             //     ->where(function($query){
+//             //         $query->where('club1_name',$this->club_name)
+//             //             ->orWhere('club2_name',$this->club_name);
+//             //     })
+//             //     ->get();
+//             foreach($players1 as $player){
+//                 if($round->players()->where('player_id',$player->id)->exists()){
+
+//                     $round->players()->updateExistingPivot($player->id,['match_id' => $m->id]);  
+                    
+//                 }else{
+                    
+//                     $round->players()->attach($player,['match_id' => $m->id]);  
+                    
+//                 }
+//             }
+
+//             $club2 = Club::where('name',$m->club2_name)->first();
+//             $this->club_name = $club2->name;        
+//             $players2 = $club2->players;
+//             // $match2 = Match::where('round_id',$round->id)->where('league_id',$request->l_id)
+//             //     ->where(function($query){
+//             //         $query->where('club1_name',$this->club_name)
+//             //             ->orWhere('club2_name',$this->club_name);
+//             //     })
+//             //     ->get();
+//             foreach($players2 as $player){
+//                 if($round->players()->where('player_id',$player->id)->exists()){
+
+//                     $round->players()->updateExistingPivot($player->id,['match_id' => $m->id]);  
+                    
+//                 }else{
+                    
+//                     $round->players()->attach($player,['match_id' => $m->id]);  
+                    
+//                 }
+//             }
+//     }
+// }
+// return "ok";        
+//         ////////// old code, without match_id
+        
+//         // $club1 = Club::where('name',$match->club1_name)->first();
+//         // $players1 = $club1->players;
+//         // foreach($players1 as $player){
+//         //     if($round->players()->where('player_id',$player->id)->exists()){
+//         //         break;
+//         //     }else{
+//         //       $round->players()->attach($player);              
+//         //     }
+//         // }
+
+//         // $club2 = Club::where('name',$match->club2_name)->first();
+//         // $players2 = $club2->players;
+//         // foreach($players2 as $player){
+//         //     if($round->players()->where('player_id',$player->id)->exists()){
+//         //         break;
+//         //     }else{
+//         //       $round->players()->attach($player);              
+//         //     }
+//         // }
+
+//         $end_time = $round->matches()->first()->time;
+//         foreach($matches as $match){
+//             if($match->time > $end_time){
+//                 $end_time = $match->time;
+//             }
+//         }
+//         $round->end_time = $end_time;
+//         $round->save();
+//         $match = Match::where('id',$request->id)->first();
+        
+//         if ($match === null) {
+//             $response = 'There was a problem fetching your data.';
+//             return $this->json($response, 404);
+//         }
+//         return $this->json($match);
+//     }
+
     public function updateMatch(Request $request)
     {
         // $new_round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
         // return $round->id;
         $match = Match::where('id',$request->id)->first();
         $round = $match->round;
-
-        // if($current_round->round_no != $request->r_no)
-        // {
-        //     $match->delete();
-
-        //     $newMatch = new Match;
-        //     $newMatch->club1_name = $request->c1_name;
-        //     $newMatch->club2_name = $request->c2_name;
-        //     $newMatch->time = $request->time;   
-        //     $newMatch->round_id = $new_round->id;
-        //     $newMatch->league_id = $request->l_id;
-        //     $newMatch->save();
-        //     return $this->json($newMatch);
-        // }     
+  
         $match->club1_name = $request->c1_name;
         $match->club2_name = $request->c2_name;
         $match->club1_score = $request->c1_score;
         $match->club2_score = $request->c2_score;
+
+        $match->odd_1 = round($request->odd_1,2);
+        $match->odd_x = round($request->odd_x,2);
+        $match->odd_2 = round($request->odd_2,2);    
+        $match->link = $request->link;     
 
         $match->time = $request->time;
         $match->save();
 
         $matches = $round->matches()->get();
 /////////////////
-
         $club1 = Club::where('name',$request->c1_name)->first();
         $this->club_name = $club1->name;
         $players1 = $club1->players;
-        return $players1;
-        foreach($players1 as $player){
-            $match = Match::where('round_id',$round->id)->where('league_id',$request->l_id)
-                ->where(function($query){
-                    $query->where('club1_name',$this->club_name)
-                        ->orWhere('club2_name',$this->club_name);
-                })
-                ->get();
+        $match1 = Match::where('round_id',$round->id)->where('league_id',$request->l_id)
+            ->where(function($query){
+                $query->where('club1_name',$this->club_name)
+                    ->orWhere('club2_name',$this->club_name);
+            })
+            ->get();
+        // foreach($players1 as $player){
+        //     if($round->players()->where('player_id',$player->id)->exists()){
+        //         if(count($match1)===1){
+        //             $round->players()->updateExistingPivot($player->id,['match_id' => $match1[0]->id]);  
+        //         }elseif(count($match1)>1){
+        //             foreach($match1 as $m){
+        //                 $round->players()->updateExistingPivot($player->id,['match_id' => $m->id]); 
+        //             }
+        //         }
+        //     }else{
+        //         if(count($match1)===1){
+        //             $round->players()->attach($player,['match_id' => $match1[0]->id]);  
+        //         }elseif(count($match1)>1){
+        //             foreach($match1 as $m){
+        //                 $round->players()->attach($player,['match_id' => $m->id]); 
+        //             }
+        //         }            
+        //     }
+        // }
 
-            if($round->players()->where('player_id',$player->id)->exists()){
-                if(count($match)===1){
-                    $round->players()->updateExistingPivot($player,['match_id' => $match[0]->id]);  
-                }elseif(count($match)>1){
-                    foreach($match as $m){
-                        $round->players()->updateExistingPivot($player,['match_id' => $m->id]); 
-                    }
+        foreach($players1 as $player){
+            foreach($match1 as $m){
+                if($round->players()->where('player_id',$player->id)->where('match_id',$m->id)->exists()){
+                    // $round->players()->updateExistingPivot($player->id,['match_id' => $m->id]);                      
+                }else{
+                    $round->players()->attach($player,['match_id' => $m->id]);                      
                 }
-            }else{
-                if(count($match)===1){
-                    $round->players()->attach($player,['match_id' => $match[0]->id]);  
-                }elseif(count($match)>1){
-                    foreach($match as $m){
-                        $round->players()->attach($player,['match_id' => $m->id]); 
-                    }
-                }            
             }
         }
 
         $club2 = Club::where('name',$request->c2_name)->first();
-        $this->club_name = $club1->name;        
+        $this->club_name = $club2->name;        
         $players2 = $club2->players;
-        foreach($players2 as $player){
-            $match = Match::where('round_id',$round->id)->where('league_id',$request->l_id)
-                ->where(function($query){
-                    $query->where('club1_name',$this->club_name)
-                        ->orWhere('club2_name',$this->club_name);
-                })
-                ->get();
+        $match2 = Match::where('round_id',$round->id)->where('league_id',$request->l_id)
+            ->where(function($query){
+                $query->where('club1_name',$this->club_name)
+                    ->orWhere('club2_name',$this->club_name);
+            })
+            ->get();
+        // foreach($players2 as $player){
+        //     if($round->players()->where('player_id',$player->id)->exists()){
+        //         if(count($match2)===1){
+        //             $round->players()->updateExistingPivot($player->id,['match_id' => $match2[0]->id]);  
+        //         }elseif(count($match2)>1){
+        //             foreach($match2 as $m){
+        //                 $round->players()->updateExistingPivot($player->id,['match_id' => $m->id]); 
+        //             }
+        //         }
+        //     }else{
+        //         if(count($match2)===1){
+        //             $round->players()->attach($player,['match_id' => $match2[0]->id]);  
+        //         }elseif(count($match2)>1){
+        //             foreach($match2 as $m){
+        //                 $round->players()->attach($player,['match_id' => $m->id]); 
+        //             }
+        //         }            
+        //     }
+        // }
 
-            if($round->players()->where('player_id',$player->id)->exists()){
-                if(count($match)===1){
-                    $round->players()->updateExistingPivot($player,['match_id' => $match[0]->id]);  
-                }elseif(count($match)>1){
-                    foreach($match as $m){
-                        $round->players()->updateExistingPivot($player,['match_id' => $m->id]); 
-                    }
+        foreach($players2 as $player){
+            foreach($match2 as $m){
+                if($round->players()->where('player_id',$player->id)->where('match_id',$m->id)->exists()){
+                    // $round->players()->updateExistingPivot($player->id,['match_id' => $m->id]);                      
+                }else{
+                    $round->players()->attach($player,['match_id' => $m->id]);                      
                 }
-            }else{
-                if(count($match)===1){
-                    $round->players()->attach($player,['match_id' => $match[0]->id]);  
-                }elseif(count($match)>1){
-                    foreach($match as $m){
-                        $round->players()->attach($player,['match_id' => $m->id]); 
-                    }
-                }            
             }
         }
         
@@ -897,6 +1048,7 @@ class AdminController extends Controller
         $article->league_id = $request->l_id;
         $article->image_path = $png_url;
         $article->public = $request->public;
+        $article->scheduled_time = $request->scheduled_time;
         $article->slug = strtolower(str_replace(' ','-',$article->title));
         if($article->scheduled_time !== null){
             $article->published = 0;
@@ -930,7 +1082,8 @@ class AdminController extends Controller
         $article->title = $request->title;
         $article->body = $request->body;
         $article->league_id = $request->l_id;
-        $article->public = $request->public;        
+        $article->public = $request->public;   
+        $article->scheduled_time = $request->scheduled_time;             
         $oldpath = $article->image;
         $article->save();
 
@@ -950,24 +1103,24 @@ class AdminController extends Controller
     //Tips CRUD
 
   	public function getTips(Request $request)
-      {
-          $tips = Tip::where('league_id',$request->l_id)->get();
-          $i = 0;
-          foreach($tips as $tip){
-              $user = $tip->user()->select('email','first_name','last_name')->first();
-              $results[$i] = [
-                  'tip' => $tip,
-                  'user' => $user,
-              ];
-              $i++;
-          }
-          
-          if ($results === null) {
-              $response = 'There was a problem fetching your data.';
-              return $this->json($response, 404);
-          }
-          return $this->json($results);
-      }
+    {
+        $tips = Tip::where('league_id',$request->l_id)->get();
+        $i = 0;
+        foreach($tips as $tip){
+            $user = $tip->user()->select('email','first_name','last_name')->first();
+            $results[$i] = [
+                'tip' => $tip,
+                'user' => $user,
+            ];
+            $i++;
+        }
+        
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+        return $this->json($results);
+    }
   
     public function getTip(Request $request)
     {
@@ -1149,6 +1302,8 @@ class AdminController extends Controller
         return $this->json($results);
     }
 
+    // new functions for match_id
+
     public function getPlayersStats(Request $request)
     {  
         // $round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
@@ -1220,7 +1375,7 @@ class AdminController extends Controller
     public function postPlayerStats(Request $request)
     {
         $round = Round::where('id',$request->input('data.round_id'))->where('league_id',$request->l_id)->first();
-        $player = $round->players->where('pivot.player_id',$request->input('data.player_id'))->where('pivot.round_id',$round->id)->where('pivot.match_id',$request->m_id)->first()->pivot;
+        $player = $round->players->where('pivot.player_id',$request->input('data.player_id'))->where('pivot.round_id',$round->id)->where('pivot.match_id',$request->input('data.m_id'))->first()->pivot;
         $position = Player::where('id',$request->input('data.player_id'))->first()->position;
         $stats = [
             "start"     =>  $player->start = $request->input('data.start'),
@@ -1237,9 +1392,26 @@ class AdminController extends Controller
             "captain"   =>  $player->captain = $request->input('data.captain'),
             "position"  =>  $position
         ];
-        $player->save();
-        $player->total = $this->playerTotalPoints($stats);
-        $player->save();
+
+        // $player->save();
+        $total = $this->playerTotalPoints($stats);        
+        $match_id = $request->input('data.m_id');
+        $p_id = $request->input('data.player_id');
+        DB::statement("UPDATE round_player SET total = $total, 
+                    round_player.start=$player->start,
+                    sub=$player->sub,
+                    assist=$player->assist,
+                    miss=$player->miss,
+                    score=$player->score,
+                    clean=$player->clean,
+                    k_save=$player->k_save,
+                    kd_3strike=$player->kd_3strike,
+                    yellow=$player->yellow,
+                    red=$player->red,
+                    own_goal=$player->own_goal
+                     where round_player.match_id = $match_id AND round_player.player_id = $p_id");
+        $player->total = $this->playerTotalPoints($stats);                    
+        // $player->save();
 
         if ($player === null) {
             $response = 'There was a problem fetching your data.';
@@ -1247,6 +1419,105 @@ class AdminController extends Controller
         }
         return $this->json($player);
     }
+
+    // public function getPlayersStats(Request $request)
+    // {  
+    //     // $round = Round::where('round_no',$request->r_no)->where('league_id',$request->l_id)->first();
+        
+    //     // return $round->matches->where('round_id',$request->r_no);
+    //     // $players = $round->players;
+        
+    //     // $i = 0;
+    //     // foreach($players as $player){
+    //     //     $results[$i] = $player->pivot;
+    //     //     $i++;
+    //     // }
+
+    //     ////////////////////////////////
+
+    //     $match = Match::where('id', $request->m_id)->first();
+    //     $club1 = Club::where('league_id',$request->l_id)->where('name', $match->club1_name)->first();
+    //     $club2 = Club::where('league_id',$request->l_id)->where('name', $match->club2_name)->first();
+
+
+    //     $c1 = DB::table('players')
+    //                 ->join('round_player','players.id','=','round_player.player_id')
+    //                 ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+    //                         'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+    //                         'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+    //                 ->where([
+    //                             // ['round_player.round_id','=',$request->r_id],
+    //                             ['round_player.round_id','=',$match->round_id],
+    //                             ['players.club_id', '=', $club1->id],
+    //                         ])
+    //                 ->get();
+
+    //     $c2 = DB::table('players')
+    //                 ->join('round_player','players.id','=','round_player.player_id')
+    //                 ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+    //                         'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+    //                         'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+    //                 ->where([
+    //                             // ['round_player.round_id','=',$request->r_id],
+    //                             ['round_player.round_id','=',$match->round_id],
+    //                             ['players.club_id', '=', $club2->id],
+    //                         ])
+    //                 ->get();
+
+    //     $results = [
+    //         "club1" => $c1,
+    //         "club2" => $c2,
+    //     ];
+                    
+    //     // $c1 = DB::table('players')
+    //     //             ->join('round_player', function($join){
+    //     //                 $join->on('round_player','players.id','=','round_player.player_id')
+    //     //                         ->select('players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+    //     //                         'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+    //     //                         'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub')
+    //     //                         ->where('players.club_id', '=', $club1->id);
+    //     //             })
+    //     //             ->get();
+
+
+
+    //     if ($results === null) {
+    //         $response = 'There was a problem fetching your data.';
+    //         return $this->json($response, 404);
+    //     }
+    //     return $this->json($results);
+    // }
+
+    // public function postPlayerStats(Request $request)
+    // {
+    //     $round = Round::where('id',$request->input('data.round_id'))->where('league_id',$request->l_id)->first();
+    //     $player = $round->players->where('pivot.player_id',$request->input('data.player_id'))->where('pivot.round_id',$round->id)->first()->pivot;
+    //     $position = Player::where('id',$request->input('data.player_id'))->first()->position;
+    //     $stats = [
+    //         "start"     =>  $player->start = $request->input('data.start'),
+    //         "sub"       =>  $player->sub = $request->input('data.sub'),
+    //         "assist"    =>  $player->assist = $request->input('data.assist'),
+    //         "miss"      =>  $player->miss = $request->input('data.miss'),
+    //         "score"     =>  $player->score = $request->input('data.score'),
+    //         "clean"     =>  $player->clean = $request->input('data.clean'),
+    //         "k_save"    =>  $player->k_save = $request->input('data.k_save'),
+    //         "kd_3strike"=>  $player->kd_3strike = $request->input('data.kd_3strike'),
+    //         "yellow"    =>  $player->yellow = $request->input('data.yellow'),
+    //         "red"       =>  $player->red = $request->input('data.red'),
+    //         "own_goal"  =>  $player->own_goal = $request->input('data.own_goal'),
+    //         "captain"   =>  $player->captain = $request->input('data.captain'),
+    //         "position"  =>  $position
+    //     ];
+    //     $player->save();
+    //     $player->total = $this->playerTotalPoints($stats);
+    //     $player->save();
+
+    //     if ($player === null) {
+    //         $response = 'There was a problem fetching your data.';
+    //         return $this->json($response, 404);
+    //     }
+    //     return $this->json($player);
+    // }
 
     public function playerTotalPoints($stats)
     {
@@ -1332,6 +1603,8 @@ class AdminController extends Controller
 
     public function evaluateUserPoints(Request $request)
     {
+
+
             $users = User::all();
             $prev = League::where('id',$request->l_id)->first()->current_round;
             $round = Round::where('round_no',$prev)->where('league_id',$request->l_id)->first();
@@ -1366,9 +1639,13 @@ class AdminController extends Controller
                             ->join('clubs','players.club_id','=','clubs.id')
                             ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                                     'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                                    'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                                    'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total','round_player.match_id')
                             ->where('round_player.round_id','=',$round->id)
                             ->whereIn('players.id',$starting_arr)
+                            // ->groupBy('round_player.match_id',
+                            // 'club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                            // 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                            // 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                             ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
                             ->get();
                     
@@ -1378,8 +1655,12 @@ class AdminController extends Controller
                             ->join('clubs','players.club_id','=','clubs.id')
                             ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
                                 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                                'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                                'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total','round_player.match_id')
                             ->where('round_player.round_id','=',$round->id)
+                            // ->groupBy('round_player.match_id',
+                            // 'club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                            // 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                            // 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
                             ->whereIn('players.id',$subs_arr)
                             ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                             ->get();
@@ -1489,11 +1770,6 @@ class AdminController extends Controller
                 }
                     $response = "success";
                     return $this->json($response);
-            
-                
-            
-            
-        
     }
 
     public function prevRound(Request $request)
@@ -1503,11 +1779,12 @@ class AdminController extends Controller
         if($league->current_round > 1){
             $league->current_round--;
             $league->save();
-            $users = User::all();
             foreach($users as $user){
-                $meta = $user->oneLeague($request->l_id)->first()->pivot;
-                $meta->transfers = 2;
-                $meta->save();
+                if($user->oneLeague($request->l_id)->first()!==null){
+                    $meta = $user->oneLeague($request->l_id)->first()->pivot;
+                    $meta->transfers = 2;
+                    $meta->save();
+                }
             }
         }else{
             $response = "There is no previous round.";
@@ -1536,10 +1813,115 @@ class AdminController extends Controller
             return $this->json($response,404);
         }
 
+        //adding players who don't play any match that round
+        $round = Round::where('league_id',$league->id)->where('round_no',$league->current_round)->first();
+        $clubs = Club::where('league_id',$league->id)->get();
+        foreach($clubs as $club){
+                $players = $club->players;
+                foreach($players as $player){
+                    if($round->players()->where('player_id',$player->id)->exists()){
+
+                        $n = 1; 
+                        
+                    }else{
+                        
+                        $round->players()->attach($player);  
+                        
+                    }
+                }
+        }
+
         $req = new Request;
         $req->l_id = $request->l_id;
         $this->evaluateUserPoints($req);
+        
         return $this->json($league->current_round);
     }
+
+    public function getSquads(Request $request)
+    {
+        $results = DB::table('users')
+        ->join('user_league','users.id','=','user_league.user_id')
+        ->select('users.*')
+        ->where('user_league.league_id','=',$request->l_id)
+        ->get();
+
+        $users = User::all();
+        foreach($users as $user){
+             $meta = $user->oneLeague($request->l_id)->first();
+             if($user->oneLeague($request->l_id)->first()===null){
+                 continue;
+             }
+             $meta = $meta->pivot;
+             $user->transfers = $meta->transfers;
+             $user->money = $meta->money;
+             if(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()===null
+                 || Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()->selected_team ===null
+                 || Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()->substitutions ===null){
+                 continue;
+             }
+             $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+             $starting = json_decode($team->selected_team);
+             $subs = json_decode($team->substitutions);
+     
+             $starting_arr = array_values(json_decode(json_encode($starting), true));
+             $subs_arr = array_values(json_decode(json_encode($subs), true));
+     
+             $team_val = 0;
+             for($i=0;$i<count($starting);$i++){
+                 $starting[$i]=Player::where('id',$starting[$i])->with('club')->first();
+                 $team_val += $starting[$i]->price;
+             }
+     
+             for($i=0;$i<count($subs);$i++){
+                 $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
+                 $team_val += $subs[$i]->price;
+             }
+             $user->team_val = $team_val;  
+        }
+        
+        $results = $users;
+        if ($results === null) {
+             $response = 'There was a problem fetching your data.';
+            return $this->json($response, 404);
+        }
+           return $this->json($results);
+    }
+
+    public function resetSquad(Request $request)
+    {
+        $user = User::where('uuid',$request->uuid)->first();
+        if($user->oneLeague($request->l_id)->first()===null){
+            $response = "Users has no league meta stats.";
+            return $this->json($response,404);
+        }
+        $meta = $user->oneLeague($request->l_id)->first();
+        $meta = $meta->pivot;
+        if(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()===null){
+            $response = "Users has no squad.";
+            return $this->json($response,404);
+        }
+        $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+
+        $meta->money = $request->money;
+        $meta->transfers = $request->transfers;
+        $meta->save();
+        $team->selected_team = NULL;
+        $team->substitutions = NULL;
+        $team->captain_id = NULL;
+        $team->has_squad = 0;
+        $team->save();
+        $results = [
+            "meta" => $meta,
+            "team" => $team
+        ];
+        if ($results === null) {
+            $response = 'There was a problem fetching your data.';
+           return $this->json($response, 404);
+        }
+          return $this->json($results);
+        
+    }
+
 
 }

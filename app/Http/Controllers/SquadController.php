@@ -59,9 +59,9 @@ class SquadController extends Controller
             ->join('clubs','players.club_id','=','clubs.id')
             ->join('round_player','players.id','=','round_player.player_id')
             ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number','clubs.name as club_name'
-                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
+                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total'),'round_player.match_id' )
             ->whereIn('players.id',$starting_arr)
-            ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+            ->groupBy('round_player.match_id','round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
             ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
             ->get();
 
@@ -70,9 +70,9 @@ class SquadController extends Controller
             ->join('clubs','players.club_id','=','clubs.id')
             ->join('round_player','players.id','=','round_player.player_id')
             ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name'
-                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
+                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total'),'round_player.match_id' )
             ->whereIn('players.id',$subs_arr)
-            ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+            ->groupBy('round_player.match_id','round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
             ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
             ->get();
             
@@ -557,12 +557,10 @@ class SquadController extends Controller
         $transfers = Transfer::where('league_id',1)->where('created_at','>','2018-04-15 10:59:43')->get();
         foreach($transfers as $t)
         {
-
                     // $t = Transfer::where('id',848)->first();
                     $squad = Squad::where('id',$t->squad->id)->first();
                     $selected_team = json_decode($squad->selected_team);
                     $substitutions = json_decode($squad->substitutions);
-    
     
                     $sell = json_decode($t->sell);
                     $buy = json_decode($t->buy);
