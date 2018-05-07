@@ -112,15 +112,20 @@ class HomeController extends Controller
 
     public function getTopFivePlayers()
     {
-        $results = DB::table('users')
+        $leagues = League::all();
+        $i = 0;
+        foreach($leagues as $league){
+            $results[$i] = DB::table('users')
                 ->join('user_league','users.id','=','user_league.user_id')
                 ->select('users.first_name','users.last_name','users.uuid','users.username',
-                         'user_league.points','user_league.squad_id')
+                        'user_league.points','user_league.squad_id')
+                ->where('user_league.league_id','=',$league->id)                        
                 ->orderBy('user_league.points', 'desc')
                 ->take(5)
                 ->get();
+            $i++;
+        }
 
-       // $results = User::orderBy('points', 'desc')->take(5)->get();
         if ($results === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);
@@ -131,49 +136,12 @@ class HomeController extends Controller
     // "id" = id lige (1 i 2)
     public function topFivePlayersDivision(Request $request)
     {
+        $leagues = League::all()->get();
         $results = DB::table('users')
                     ->join('user_league','users.id','=','user_league.user_id')
                     ->select('users.first_name','users.last_name','users.uuid','users.username',
                             'user_league.points','user_league.squad_id')
                     ->where('user_league.league_id','=',$request->l_id)
-                    ->orderBy('user_league.points', 'desc')
-                    ->take(5)
-                    ->get();
-
-     //   $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
-        if ($results === null) {
-            $response = 'There was a problem fetching players.';
-            return $this->json($response, 404);
-        }
-        return $this->json($results);
-    }
-
-    public function topFivePlayersDivision1()
-    {
-        $results = DB::table('users')
-                    ->join('user_league','users.id','=','user_league.user_id')
-                    ->select('users.first_name','users.last_name','users.uuid','users.username',
-                            'user_league.points','user_league.squad_id')
-                    ->where('user_league.league_id','=',1)
-                    ->orderBy('user_league.points', 'desc')
-                    ->take(5)
-                    ->get();
-
-     //   $results = User::with('leagues')->where('id', $request->id)->take(5)->get();
-        if ($results === null) {
-            $response = 'There was a problem fetching players.';
-            return $this->json($response, 404);
-        }
-        return $this->json($results);
-    }
-
-    public function topFivePlayersDivision2(Request $request)
-    {
-        $results = DB::table('users')
-                    ->join('user_league','users.id','=','user_league.user_id')
-                    ->select('users.first_name','users.last_name','users.uuid','users.username',
-                            'user_league.points','user_league.squad_id')
-                    ->where('user_league.league_id','=',2)
                     ->orderBy('user_league.points', 'desc')
                     ->take(5)
                     ->get();

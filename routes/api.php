@@ -37,10 +37,7 @@ Route::put('changePassword', 'UserController@changePassword')->middleware('jwt.a
 Route::post('sendResetPassword', 'UserController@sendResetPassword');
 Route::post('confirmPassword', 'UserController@confirmPassword');
 Route::get('getNewPassword/{token}', 'UserController@getNewPassword');
-//refactor ??
-Route::get('topFivePlayersDivision1', 'HomeController@topFivePlayersDivision1');
-Route::get('topFivePlayersDivision2', 'HomeController@topFivePlayersDivision2');
-//
+
 Route::post('payment', 'PaymentController@payment');
 Route::post('additionalPayment', 'PaymentController@additionalPayment')->middleware('jwt.auth');
 Route::post('users', 'HomeController@getUsers');
