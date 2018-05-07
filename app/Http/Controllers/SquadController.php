@@ -59,9 +59,9 @@ class SquadController extends Controller
             ->join('clubs','players.club_id','=','clubs.id')
             ->join('round_player','players.id','=','round_player.player_id')
             ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number','clubs.name as club_name'
-                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total'),'round_player.match_id' )
+                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total'))
             ->whereIn('players.id',$starting_arr)
-            ->groupBy('round_player.match_id','round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+            ->groupBy('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
             ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
             ->get();
 
@@ -70,9 +70,9 @@ class SquadController extends Controller
             ->join('clubs','players.club_id','=','clubs.id')
             ->join('round_player','players.id','=','round_player.player_id')
             ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name'
-                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total'),'round_player.match_id' )
+                    ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total'))
             ->whereIn('players.id',$subs_arr)
-            ->groupBy('round_player.match_id','round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
+            ->groupBy('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
             ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
             ->get();
             
@@ -393,16 +393,14 @@ class SquadController extends Controller
 
     public function makeTransfer(Request $request)
     {
-        // $buy = json_encode($request->buy);
-        // $sell = json_encode($request->sell);
+        // $buy = json_decode(json_encode($request->buy));
+        // $sell = json_decode(json_encode($request->sell));
         $buy = $request->buy;
         $sell = $request->sell;
 
         $user = JWTAuth::authenticate();
-        // $user = User::where('id',1)->first();
         $meta = $user->oneLeague($request->l_id)->first();
    
-        
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
         $selected_team = json_decode($team->selected_team);
         $substitutions = json_decode($team->substitutions);
@@ -439,18 +437,26 @@ class SquadController extends Controller
 
         $i=0;
         foreach($sell as $s){
-            $selac = array();
+            // $selac = array();
+            if($buy[$i]===null){
+                $response = "Player does not exist";
+                return $this->json($response,404);
+            }
             if(in_array($s,$selected_team)){
-                array_push($selac,$s);
-                $selected_team = array_diff($selected_team, $selac);
-                $selected_team = array_values(json_decode(json_encode($selected_team), true));   
-                array_push($selected_team,$buy[$i]);
+                // array_push($selac,$s);
+                $key = array_search($s,$selected_team);                
+                // $selected_team = array_diff($selected_team, $selac);
+                // $selected_team = array_values(json_decode(json_encode($selected_team), true));   
+                // array_push($selected_team,$buy[$i]);
+                $selected_team[$key] = $buy[$i];                
                 $i++;   
             }else{
-                array_push($selac,$s);
-                $substitutions = array_diff($substitutions, $selac);
-                $substitutions = array_values(json_decode(json_encode($substitutions), true));   
-                array_push($substitutions,$buy[$i]); 
+                // array_push($selac,$s);
+                // $substitutions = array_diff($substitutions, $selac);
+                // $substitutions = array_values(json_decode(json_encode($substitutions), true));   
+                // array_push($substitutions,$buy[$i]); 
+                $key = array_search($s,$substitutions);                    
+                $substitutions[$key] = $buy[$i];                
                 $i++;
             }
         }

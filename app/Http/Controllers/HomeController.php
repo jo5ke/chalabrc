@@ -761,8 +761,8 @@ class HomeController extends Controller
 
         $st = DB::table('players')
             ->join('round_player','players.id','=','round_player.player_id')
-            // ->join('clubs','players.club_id','=','clubs.id')
-            ->select('players.first_name','players.last_name','players.id as id','players.number','players.position','players.price','players.club_id',
+            ->join('clubs','players.club_id','=','clubs.id')
+            ->select('players.id','players.first_name','players.last_name','players.number','players.position','players.price','players.club_id',
             DB::raw('SUM(round_player.assist) as assist'),
             DB::raw('SUM(round_player.captain) as captain'),
             DB::raw('SUM(round_player.clean) as clean'),
@@ -776,20 +776,18 @@ class HomeController extends Controller
             DB::raw('SUM(round_player.start) as start'),            
             DB::raw('SUM(round_player.sub) as sub'),          
             DB::raw('SUM(round_player.total) as total'),                        
-                     'round_player.player_id','round_player.round_id')
-            ->whereIn('players.id',$starting)
+                'clubs.name as club_name','round_player.round_id')
+           ->whereIn('players.id',$starting)
            ->where('round_player.round_id','=',$round->id)
-           ->groupBy('id','round_player.player_id','round_player.round_id','round_player.match_id',
-           'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id')
+           ->groupBy('players.id','round_player.round_id','players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name','round_player.round_id')
            ->orderBy('players.position','desc')
            ->get();
-
 
             $subs_ = implode(',', $subs_arr);
             $su = DB::table('players')
                     ->join('round_player','players.id','=','round_player.player_id')
                     ->join('clubs','players.club_id','=','clubs.id')
-                    ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                    ->select('players.id','players.first_name','players.last_name','players.number','players.position','players.price','players.club_id',
                     DB::raw('SUM(round_player.assist) as assist'),
                     DB::raw('SUM(round_player.captain) as captain'),
                     DB::raw('SUM(round_player.clean) as clean'),
@@ -803,10 +801,9 @@ class HomeController extends Controller
                     DB::raw('SUM(round_player.start) as start'),            
                     DB::raw('SUM(round_player.sub) as sub'),          
                     DB::raw('SUM(round_player.total) as total'),                        
-                           'round_player.player_id','round_player.round_id')
+                        'clubs.name as club_name','round_player.round_id')
                     ->where('round_player.round_id','=',$round->id)
-                    ->groupBy('round_player.player_id','players.id','round_player.round_id','round_player.match_id',
-                    'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name')           
+                    ->groupBy('players.id','round_player.round_id','players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name','round_player.round_id')
                     ->whereIn('players.id',$subs)
                     ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                     ->get();
@@ -819,7 +816,7 @@ class HomeController extends Controller
                 $st = DB::table('players')
                     ->join('round_player','players.id','=','round_player.player_id')
                     ->join('clubs','players.club_id','=','clubs.id')
-                    ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                    ->select('players.id','players.first_name','players.last_name','players.number','players.position','players.price','players.club_id',
                     DB::raw('SUM(round_player.assist) as assist'),
                     DB::raw('SUM(round_player.captain) as captain'),
                     DB::raw('SUM(round_player.clean) as clean'),
@@ -832,12 +829,11 @@ class HomeController extends Controller
                     DB::raw('SUM(round_player.score) as score'),            
                     DB::raw('SUM(round_player.start) as start'),            
                     DB::raw('SUM(round_player.sub) as sub'),          
-                    DB::raw('SUM(round_player.total) as total'),                           
-                           'round_player.player_id','round_player.round_id')
+                    DB::raw('SUM(round_player.total) as total'),                        
+                        'clubs.name as club_name','round_player.round_id')
                     ->whereIn('players.id',$starting_arr)
                     ->where('round_player.round_id','=',$round->id)
-                    ->groupBy('id','round_player.player_id','round_player.round_id','round_player.match_id',
-                    'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name')                             
+                    ->groupBy('players.id','round_player.round_id','players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name','round_player.round_id')
                     ->orderBy('players.position','desc')
                     ->get();
     
@@ -845,7 +841,7 @@ class HomeController extends Controller
                 $su = DB::table('players')
                     ->join('round_player','players.id','=','round_player.player_id')
                     ->join('clubs','players.club_id','=','clubs.id')
-                    ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                    ->select('players.id','players.first_name','players.last_name','players.number','players.position','players.price','players.club_id',
                     DB::raw('SUM(round_player.assist) as assist'),
                     DB::raw('SUM(round_player.captain) as captain'),
                     DB::raw('SUM(round_player.clean) as clean'),
@@ -858,12 +854,11 @@ class HomeController extends Controller
                     DB::raw('SUM(round_player.score) as score'),            
                     DB::raw('SUM(round_player.start) as start'),            
                     DB::raw('SUM(round_player.sub) as sub'),          
-                    DB::raw('SUM(round_player.total) as total'),                         
-                           'round_player.player_id','round_player.round_id')
+                    DB::raw('SUM(round_player.total) as total'),                        
+                        'clubs.name as club_name','round_player.round_id')
                     ->whereIn('players.id',$subs)
                     ->where('round_player.round_id','=',$round->id)
-                    ->groupBy('id','round_player.player_id','players.id','round_player.round_id','round_player.match_id',
-                    'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name')                               
+                    ->groupBy('players.id','round_player.round_id','players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name','round_player.round_id')
                     ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
                     ->get();
                     // privremeno resenje
