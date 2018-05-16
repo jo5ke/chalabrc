@@ -376,7 +376,7 @@ class PrivateLeagueController extends Controller
         $score = DB::table('users')
                 ->join('squads','users.id','=','squads.user_id')
                 ->join('squad_round','squads.id','=','squad_round.squad_id')
-                ->select('users.first_name','users.last_name','users.username','users.email',
+                ->select('users.first_name','users.last_name','users.username','users.email','users.uuid',
                         'squad_round.round_no','squad_round.points', 'squad_round.points')
                 ->whereIn('users.email',$emails)
                 ->where('squad_round.league_id','=',$pl->league_id)
@@ -442,7 +442,7 @@ class PrivateLeagueController extends Controller
         $total_sorted = DB::table('users')
                 ->join('user_league','users.id','=','user_league.user_id')
                 ->join('private_leagues','private_leagues.league_id','=','user_league.league_id')
-                ->select('users.username','user_league.points','users.email')
+                ->select('users.username','user_league.points','users.email','users.uuid')
                 ->whereIn('users.email',$emails)
                 ->where('user_league.league_id','=',$pl->league_id)
                 ->where('private_leagues.id','=',$pl->id)
@@ -459,7 +459,7 @@ class PrivateLeagueController extends Controller
                 })     
                 ->join('squads','users.id','=','squads.user_id')
                 ->join('squad_round','squads.id','=','squad_round.squad_id')
-                ->select('users.username','user_league.points as total','squad_round.points','users.email','squad_round.round_no')
+                ->select('users.username','user_league.points as total','squad_round.points','users.email','squad_round.round_no','users.uuid')
                 ->whereIn('users.email',$emails)
                 ->where('squad_round.league_id','=',$pl->league_id)
                 ->where('squads.league_id','=',$pl->league_id)
