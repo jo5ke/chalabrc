@@ -16,7 +16,7 @@ class CreatePlayersRoundsTable extends Migration
         Schema::create('round_player', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('round_id')->onDelete('cascade');
-            $table->integer('player_id')->onDelete('cascade');
+            $table->integer('player_id');
             $table->integer('match_id')->onDelete('cascade');
             $table->integer('start')->unsigned()->nullable();
             $table->integer('sub')->unsigned()->nullable();

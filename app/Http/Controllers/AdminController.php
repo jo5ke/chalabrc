@@ -19,6 +19,8 @@ use Faker\Factory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Mail as Mail;
+use App\Mail\RegistrationMail;
 use Image;
 use Carbon\Carbon;
 
@@ -185,15 +187,56 @@ class AdminController extends Controller
     {
         $player = Player::where('id',$request->id)->first();
         $current_round = League::where('id',$player->league_id)->first()->current_round;
-        $round_players = $player->rounds()->where('player_id',$player->id)->where('round_id','>',$current_round)->get();
-        
+        $cr_id = Round::where('league_id',$player->league_id)->where('round_no',$current_round)->first()->id;
+        // $round_players = $player->rounds()->where('player_id',$player->id)->where('round_id','>',$current_round)->get();
+        $round_players = $player->rounds()->where('player_id',$player->id)->where('round_id','>',$cr_id)->orderBy('round_id','asc')->get();
+
+        //check if users have removed player
+
+        // $users = DB::table('users')
+        // ->join('user_league','users.id','=','user_league.user_id')
+        // ->select('users.*')
+        // ->where('user_league.league_id','=',$player->league_id)
+        // ->get();
+
+        $users = User::all();
+        foreach($users as $user){
+            $squad = $user->squads()->where('league_id',$player->league_id)->first();           
+            if($squad==null || $squad->selected_team==null || $squad->substitutions==null){
+                continue;
+            }
+            $deleted_players = json_decode($squad->deleted_players);   
+            if($deleted_players==null){
+                $deleted_players = array();
+            }         
+            $selected_team = json_decode($squad->selected_team);
+            $substitutions = json_decode($squad->substitutions);      
+            if(array_search($request->id,$selected_team)!=null){
+                $key = array_search($request->id,$selected_team);
+                // $selected_team[$key] = ("0" . $request->id);
+                $selected_team[$key] = "*";
+                array_push($deleted_players,$request->id);
+                $squad->deleted_players = json_encode($deleted_players);                
+                $squad->save();
+            }elseif(array_search($request->id,$substitutions)!=null){
+                $key = array_search($request->id,$substitutions);   
+                // $substitutions[$key] = ("0" . $request->id);
+                $substitutions[$key] = "*";
+                array_push($deleted_players,$request->id);
+                $squad->deleted_players = json_encode($deleted_players);
+                $squad->save();             
+            }
+        }
+
+
         foreach($round_players as $round_player){
             $round_player->pivot->delete();
         }
         // $club = Club::where('id',$player->club_id)->first();
         // $league = League::where('id',$club->league_id)->first();
         // $round = Round::where('league_id',$league->id)->where()
-        
+
+
         if ($player === null) {
             $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -1525,6 +1568,7 @@ class AdminController extends Controller
  
         $total = 0;
         
+        // they wanted k_save for all positions 15.05.2018
         switch($stats["position"]):
             case 'ATK':
                 $total += $stats["start"]*2;
@@ -1533,7 +1577,7 @@ class AdminController extends Controller
                 $total += $stats["assist"]*3;
                 // ?
                 // $total += $stats["clean"]*0;
-                // $total += $stats["k_save"]*0;
+                $total += $stats["k_save"]*5;
                 // $total += $stats["kd_3strike"]*0;
                 //
                 $total += $stats["miss"]*(-2);
@@ -1550,7 +1594,7 @@ class AdminController extends Controller
                 $total += $stats["assist"]*3;
                 // ?
                 $total += $stats["clean"]*2;
-                // $total += $stats["k_save"]*0;
+                $total += $stats["k_save"]*5;
                 // $total += $stats["kd_3strike"]*0;
                 //
                 $total += $stats["miss"]*(-2);
@@ -1567,7 +1611,7 @@ class AdminController extends Controller
                 $total += $stats["assist"]*3;
                 // ?
                 $total += $stats["clean"]*5;
-                // $total += $stats["k_save"]*0;
+                $total += $stats["k_save"]*5;
                 $total += $stats["kd_3strike"]*(-1);
                 //
                 $total += $stats["miss"]*(-2);
@@ -1880,19 +1924,26 @@ class AdminController extends Controller
     {
         $results = DB::table('users')
         ->join('user_league','users.id','=','user_league.user_id')
-        ->select('users.*')
+        ->select('users.*','user_league.transfers','user_league.money')
         ->where('user_league.league_id','=',$request->l_id)
         ->get();
 
-        $users = User::all();
-        foreach($users as $user){
-             $meta = $user->oneLeague($request->l_id)->first();
-             if($user->oneLeague($request->l_id)->first()===null){
-                 continue;
-             }
-             $meta = $meta->pivot;
-             $user->transfers = $meta->transfers;
-             $user->money = $meta->money;
+        // $users = User::all();
+        foreach($results as $user){
+            //temporary solution
+            if($user->id==403 || $user->id==237 || $user->id==67 ||
+               $user->id==346 || $user->id==399 || $user->id==71 || $user->id==120){
+                continue;
+            }
+
+
+            //  $meta = $user->oneLeague($request->l_id)->first();
+            //  if($user->oneLeague($request->l_id)->first()===null){
+            //      continue;
+            //  }
+            //  $meta = $meta->pivot;
+            //  $user->transfers = $meta->transfers;
+            //  $user->money = $meta->money;
              if(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()===null
                  || Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()->selected_team ===null
                  || Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()->substitutions ===null){
@@ -1907,18 +1958,30 @@ class AdminController extends Controller
      
              $team_val = 0;
              for($i=0;$i<count($starting);$i++){
+                 // added for checking nulls 
+                if(Player::where('id',$starting[$i])->with('club')->first() === null){
+                    continue;
+                    // return $i;
+                    // return json_encode($user);
+                }
                  $starting[$i]=Player::where('id',$starting[$i])->with('club')->first();
                  $team_val += $starting[$i]->price;
              }
      
              for($i=0;$i<count($subs);$i++){
+                // added for checking nulls 
+                if(Player::where('id',$subs[$i])->with('club')->first() === null){
+                    continue;
+                    // return $i;
+                    // return json_encode($user);
+                }
                  $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
                  $team_val += $subs[$i]->price;
              }
              $user->team_val = $team_val;  
         }
         
-        $results = $users;
+        // $results = $users;
         if ($results === null) {
              $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -1959,6 +2022,23 @@ class AdminController extends Controller
         }
           return $this->json($results);
         
+    }
+
+    public function sendNewsletter(Request $request)
+    {
+        $users = User::all();
+        // return $obj = [
+        //     "subject" => $request->subject,
+        //     "view" => $request->view,
+        // ];
+        foreach($users as $user){
+            if($user->email=="joskekostic@gmail.com"){
+            Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter ","newsletters.newsletter1"));        
+            // Mail::to($user->email)->send(new RegistrationMail($user,$request->subject,"newsletters.newsletter1"));                    
+            }
+        }
+
+        return "You have successfully sent newsletter to breddefantasy.com users!";        
     }
 
 

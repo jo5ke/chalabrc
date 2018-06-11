@@ -489,6 +489,21 @@ class PrivateLeagueController extends Controller
         return $this->json($res);
     }
 
+    public function sendNewsletter(Request $request)
+    {
+        $users = User::all();
+        return $obj = [
+            "subject" => $request->subject,
+            "view" => $request->view,
+        ];
+        foreach($users as $user){
+            if($user->email=="joskekostic@gmail.com"){
+            Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter, ","emails.newsletters.newsletter1"));        
+            // Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter, ","emails.newsletters.newsletter1"));                    
+            }
+        }
+    }
+
 
 
 }

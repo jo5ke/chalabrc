@@ -32,6 +32,11 @@ class User extends Authenticatable
         return $this->hasMany('App\Squad');
     }
 
+    public function squadPerLeague($id)
+    {
+        return $this->hasMany('App\Squad')->where('league_id',$id)->first();
+    }
+
     public function leagues()
     {
         return $this->belongsToMany('App\League','user_league')->withPivot('money','points','transfers','privates','joined_privates')->withTimestamps();

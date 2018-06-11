@@ -78,7 +78,7 @@ class SquadController extends Controller
             
         $league = League::where('id',$request->l_id)->first();
         $deadline = Round::where('league_id',$league->id)->where('round_no',$league->current_round)->first()->deadline;
-        
+
         $results = [ 
             "user" => $user,
             "meta" => $meta,
@@ -89,7 +89,8 @@ class SquadController extends Controller
                 "subs" => $subs_stats
             ],
             "deadline" => $deadline,
-            "current_round" => $league->current_round
+            "current_round" => $league->current_round,
+            "deleted_players" => $team->deleted_players
         ];
         if ($results === null) {
             $response = 'There was a problem fetching players.';
@@ -131,6 +132,7 @@ class SquadController extends Controller
                 ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name',
                         DB::raw('SUM(round_player.sub) as total_sub'),DB::raw('SUM(round_player.start) as total_start'),DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total') )
                 ->where('clubs.league_id','=',$request->l_id)
+                ->whereNull('deleted_at')
                 ->groupBy('round_player.player_id','players.first_name','players.last_name','players.id','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
                 ->get();
 
@@ -176,9 +178,6 @@ class SquadController extends Controller
             $pstat->per_user = round($per_user,2);
         }
 
-        // $players = League::where('id',$request->l_id)->with('players')->get();
-        $results = Player::with('club')->where('league_id',$request->l_id)->get();
-     //   $players = Player::all();
         if ($pstats === null) {
             $response = 'There was a problem fetching players.';
             return $this->json($response, 404);

@@ -1160,7 +1160,7 @@ class HomeController extends Controller
 
     public function getPlayerInfo(Request $request)
     {
-        $player = Player::where('id',$request->id)->first();
+        $player = Player::where('id',$request->id)->withTrashed()->first();
         $club = $player->club;
         $current_round = League::where('id',$club->league_id)->first()->current_round;
         // if($current_round > 1){

@@ -23,6 +23,7 @@ class CreateSquadsTable extends Migration
             $table->string('name')->nullable();
             $table->text('selected_team')->nullable();
             $table->text('substitutions')->nullable();
+            $table->text('deleted_players')->nullable();
             $table->timestamps();
         });
     }
