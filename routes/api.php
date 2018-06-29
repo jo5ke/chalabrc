@@ -105,7 +105,7 @@ Route::get('privateLeague/joinLeague/{email}/{code}', 'PrivateLeagueController@j
 
 
 // Admin routes
-Route::get('admin/newsletter', 'AdminController@sendNewsletter');
+Route::post('admin/newsletter', 'AdminController@sendNewsletter');
 
 //club
 Route::post('admin/getClubs', 'AdminController@getClubs');

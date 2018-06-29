@@ -120,4 +120,9 @@ return [
         ],
     ],
 
+    'to' => [
+        'address' => 'joskekostic@gmail.com',
+        'name' => 'Example'
+    ],
+
 ];

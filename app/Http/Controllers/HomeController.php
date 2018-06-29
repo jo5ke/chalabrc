@@ -505,13 +505,14 @@ class HomeController extends Controller
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
-                        'round_player.total','clubs.name')
+                        (DB::raw('SUM(round_player.total) as total')),'clubs.name')
                 ->where([
                             ['round_player.round_id','=',$round->id],
                             ['players.position','=','GK'],
                             ['clubs.league_id','=',$request->l_id],                            
                         ])
-                ->orderBy('round_player.total','desc')
+                ->groupBy('players.id','players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','clubs.name')                        
+                ->orderBy('total','desc')
                 ->take(1)
                 ->get();
 
@@ -534,13 +535,14 @@ class HomeController extends Controller
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
-                        'round_player.total','clubs.name')
+                        (DB::raw('SUM(round_player.total) as total')),'clubs.name')
                 ->where([
                             ['round_player.round_id','=',$round->id],
                             ['players.position','=','DEF'],
                             ['clubs.league_id','=',$request->l_id],
                         ])
-                ->orderBy('round_player.total','desc')
+                ->groupBy('players.id','players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','clubs.name')                        
+                ->orderBy('total','desc')
                 ->take(4)
                 ->get();
 
@@ -562,14 +564,14 @@ class HomeController extends Controller
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
-                        'round_player.total','clubs.name')
+                        (DB::raw('SUM(round_player.total) as total')),'clubs.name')
                 ->where([
                             ['round_player.round_id','=',$round->id],
                             ['players.position','=','MID'],
                             ['clubs.league_id','=',$request->l_id],                            
                         ])
-                        
-                ->orderBy('round_player.total','desc')
+                ->groupBy('players.id','players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','clubs.name')                        
+                ->orderBy('total','desc')
                 ->take(4)
                 ->get();
 
@@ -591,13 +593,14 @@ class HomeController extends Controller
                 ->join('round_player','players.id','=','round_player.player_id')
                 ->join('clubs','players.club_id','=','clubs.id')
                 ->select('players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','players.id',
-                        'round_player.total','clubs.name')
+                         (DB::raw('SUM(round_player.total) as total')),'clubs.name')
                 ->where([
                             ['round_player.round_id','=',$round->id],
                             ['players.position','=','ATK'],
                             ['clubs.league_id','=',$request->l_id],                            
                         ])
-                ->orderBy('round_player.total','desc')
+                ->groupBy('players.id','players.first_name','players.last_name','players.number','players.price','players.position','players.club_id','clubs.name')                        
+                ->orderBy('total','desc')
                 ->take(2)
                 ->get();
 

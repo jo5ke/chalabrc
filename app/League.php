@@ -64,4 +64,9 @@ class League extends Model
         return $this->hasMany('App\Tip');
     }
 
+    public function newsletters()
+    {
+        return $this->hasMany('App\Newsletter');
+    }
+
 }

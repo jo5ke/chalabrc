@@ -21,6 +21,13 @@ Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
+Route::get('/newsletter', function () {
+    return view('newsletters.newsletter');
+});
+
+Route::get('/newsletter1', function () {
+    return view('newsletters.newsletter1');
+});
 
 
 /*

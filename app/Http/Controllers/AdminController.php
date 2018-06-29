@@ -15,14 +15,18 @@ use App\User as User;
 use App\PlayerStats as PlayerStats;
 use App\Squad as Squad;
 use App\Tip as Tip;
+use App\Newsletter as Newsletter;
 use Faker\Factory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Mail as Mail;
 use App\Mail\RegistrationMail;
-use Image;
+use App\Mail\NewsletterMail;
+// use Image;
+use Intervention\Image\Facades\Image;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\URL;
 
 
 class AdminController extends Controller
@@ -2024,22 +2028,92 @@ class AdminController extends Controller
         
     }
 
+    // public function sendNewsletter(Request $request)
+    // {
+    //     $users = User::all();
+    //     // return $obj = [
+    //     //     "subject" => $request->subject,
+    //     //     "view" => $request->view,
+    //     // ];
+    //     foreach($users as $user){
+    //         if($user->email=="joskekostic@gmail.com"){
+    //         Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter ","newsletters.newsletter1"));        
+    //         // Mail::to($user->email)->send(new RegistrationMail($user,$request->subject,"newsletters.newsletter1"));                    
+    //         }
+    //     }
+
+    //     return "You have successfully sent newsletter to breddefantasy.com users!";        
+    // }
+
     public function sendNewsletter(Request $request)
     {
-        $users = User::all();
-        // return $obj = [
-        //     "subject" => $request->subject,
-        //     "view" => $request->view,
-        // ];
-        foreach($users as $user){
-            if($user->email=="joskekostic@gmail.com"){
-            Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter ","newsletters.newsletter1"));        
+        $users = DB::table('users')
+            ->join('user_league','users.id','=','user_league.user_id')
+            ->select('users.*')
+            ->where('user_league.league_id','=',$request->l_id)
+            ->get();
+
+        $newsletter = new Newsletter();
+        $newsletter->league_id = $request->l_id;
+        $newsletter->title = $request->title;
+        $newsletter->text = $request->text;
+
+        $newsletter->title1 = $request->title1;
+        $newsletter->h1 = $request->h1;
+        $newsletter->text1 = $request->text1;
+        // $newsletter->image1 = $request->image1;
+
+        $newsletter->title2 = $request->title2;
+        $newsletter->h2 = $request->h2;
+        $newsletter->text2 = $request->text2;
+        // $newsletter->image2 = $request->image2;
+        
+        $newsletter->title3 = $request->title3;
+        $newsletter->h3 = $request->h3;
+        $newsletter->text3 = $request->text3;
+        $newsletter->subject = $request->subject;
+
+        //processing image 1
+        //get the base-64 from data
+        $base64_str = substr($request->image1, strpos($request->image1, ",")+1);
+        //decode base64 string
+        $image1 = base64_decode($base64_str);
+        $png_url = $newsletter->subject."-img1.png";
+        $png_url=str_replace(' ','_',$png_url);
+        $png_url=str_replace(':','_',$png_url);
+        $path1 = "/public/image/newsletters/" . $png_url;        
+        Image::make($image1)->resize(580,300)->save(public_path('image/newsletters/'.$png_url));
+        $newsletter->image1 = URL::to('/').$path1;
+
+        //processing image 2
+        //get the base-64 from data
+        $base64_str = substr($request->image2, strpos($request->image2, ",")+1);
+        //decode base64 string
+        $image2 = base64_decode($base64_str);
+        $png_url2 = $newsletter->subject."-img2.png";
+        $png_url2=str_replace(' ','_',$png_url2);
+        $png_url2=str_replace(':','_',$png_url2);
+        $path2 = "/public/image/newsletters/" . $png_url2;        
+        Image::make($image2)->resize(580,300)->save(public_path('image/newsletters/'.$png_url2));
+        $newsletter->image2 = URL::to('/').$path2;
+
+        $newsletter->save();        
+
+        $subject = $request->subject;
+
+        foreach($users as $u){
+            $user = User::where('id',$u->id)->first();
+            // if($user->email==="joskekostic@gmail.com"){
+            Mail::to($user->email)->send(new NewsletterMail($user,$request->subject,"newsletters.newsletter",$newsletter));        
             // Mail::to($user->email)->send(new RegistrationMail($user,$request->subject,"newsletters.newsletter1"));                    
-            }
+            // }
         }
 
-        return "You have successfully sent newsletter to breddefantasy.com users!";        
+        $response = "You have successfully sent newsletter to breddefantasy.com users!";  
+        return $this->json($response, 404);      
     }
+
+
 
 
 }
