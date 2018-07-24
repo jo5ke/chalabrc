@@ -20,7 +20,8 @@ class CreateUsersLeaguesTable extends Migration
             $table->integer('squad_id')->nullable()->onDelete('cascade');
             $table->integer('money')->nullable();
             $table->integer('points')->default(0)->nullable();            
-            $table->integer('transfers')->default(2)->unsigned()->nullable();            
+            // $table->integer('transfers')->default(2)->unsigned()->nullable();            
+            $table->integer('transfers')->default(2)->nullable();            
             $table->integer('privates')->default(0)->unsigned()->nullable();       
             $table->text('joined_privates')->nullable();     
             $table->timestamps();

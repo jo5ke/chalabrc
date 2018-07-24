@@ -460,12 +460,14 @@ class SquadController extends Controller
             }
         }
 
-        if(count($buy) <= $transfers_left){
+        if($transfers_left != -1){
+            if(count($buy) <= $transfers_left){
                 $meta->pivot->transfers = $transfers_left - count($buy);
                 $meta->pivot->save();
-        }else{
-            $meta->pivot->transfers = 0;
-            $meta->pivot->save();     
+            }else{
+                $meta->pivot->transfers = 0;
+                $meta->pivot->save();     
+            }
         }
         // $meta->pivot->save();     
         $transfer->save();
