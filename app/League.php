@@ -26,7 +26,7 @@ class League extends Model
 
     public function usersPerLeague($id)
     {
-        return $this->hasMany('App\User','user_league')->wherePivot('league_id',$id)->get();
+        return $this->belongsToMany('App\User','user_league')->wherePivot('league_id',$id)->withPivot('money','points','transfers','privates','joined_privates')->get();
     }
 
     public function clubs()

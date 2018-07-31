@@ -24,6 +24,7 @@ class CreateTransfersTable extends Migration
             $table->text('sell')->nullable();
             $table->integer('ammount_buy')->unsigned();
             $table->integer('ammount_sell')->unsigned();
+            $table->integer('points')->unsigned();
             $table->timestamps();
         });
     }

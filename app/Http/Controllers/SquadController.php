@@ -35,6 +35,9 @@ class SquadController extends Controller
         $user = JWTAuth::authenticate();
         $meta = $user->leagues->where('id',$request->l_id)->first();
         $meta = $meta->pivot;
+                    
+        $league = League::where('id',$request->l_id)->first();
+        $deadline = Round::where('league_id',$league->id)->where('round_no',$league->current_round)->first()->deadline;
         
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
         $starting = json_decode($team->selected_team);
@@ -54,6 +57,28 @@ class SquadController extends Controller
         //     $team_val += $subs[$i]->price;
         // }
 
+        //Checking if there's removed player in a team
+
+        $deleted_players = null;
+        if($team->deleted_players !== null){
+            $deleted_players = array();
+            $i = 0;
+            foreach(json_decode($team->deleted_players) as $dp){
+                $deleted_players[$i++] = Player::withTrashed()->where('id',$dp)->first();
+            }
+        }
+        
+        // foreach($starting_arr as $start){
+        //     if(!Player::where('id',$start)->exists()){
+
+        //     }
+        // }
+        // foreach($subs_arr as $sub){
+        //     if(!Player::where('id',$sub)->exists()){
+
+        //     }
+        // }
+
         $start_ = implode(',', $starting_arr);
         $starting_stats = DB::table('players')
             ->join('clubs','players.club_id','=','clubs.id')
@@ -61,6 +86,7 @@ class SquadController extends Controller
             ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number','clubs.name as club_name'
                     ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total'))
             ->whereIn('players.id',$starting_arr)
+            ->whereNull('deleted_at')
             ->groupBy('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
             ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
             ->get();
@@ -71,13 +97,11 @@ class SquadController extends Controller
             ->join('round_player','players.id','=','round_player.player_id')
             ->select('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','players.number' ,'clubs.name as club_name'
                     ,DB::raw('SUM(round_player.score) as total_score'),DB::raw('SUM(round_player.assist) as total_assist'),DB::raw('SUM(round_player.clean) as total_clean'),DB::raw('SUM(round_player.yellow) as total_yellow'),DB::raw('SUM(round_player.red) as total_red'),DB::raw('SUM(round_player.total) as total'))
+            ->whereNull('deleted_at')
             ->whereIn('players.id',$subs_arr)
             ->groupBy('players.id','players.first_name','players.last_name','players.position','players.price','players.wont_play','players.reason','players.league_id','clubs.name','players.number')
             ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
             ->get();
-            
-        $league = League::where('id',$request->l_id)->first();
-        $deadline = Round::where('league_id',$league->id)->where('round_no',$league->current_round)->first()->deadline;
 
         $results = [ 
             "user" => $user,
@@ -90,7 +114,8 @@ class SquadController extends Controller
             ],
             "deadline" => $deadline,
             "current_round" => $league->current_round,
-            "deleted_players" => $team->deleted_players
+            "deleted_players" => $team->deleted_players,
+            "del" => $deleted_players,
         ];
         if ($results === null) {
             $response = 'There was a problem fetching players.';
@@ -403,6 +428,9 @@ class SquadController extends Controller
         $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
         $selected_team = json_decode($team->selected_team);
         $substitutions = json_decode($team->substitutions);
+        $deleted_players = null;
+        if($team->deleted_players !== null)
+            $deleted_players = json_decode($team->deleted_players);
   
         $transfer = new Transfer;
         $transfer->user_id = $user->id;
@@ -425,13 +453,14 @@ class SquadController extends Controller
         }
         for($i=0;$i<count($sell);$i++)
         {
-            $selled[$i] = Player::where('id',$sell[$i])->first();
+            $selled[$i] = Player::withTrashed()->where('id',$sell[$i])->first();
             $amm_sell += $selled[$i]->price;                
         }
         $transfer->ammount_buy = $amm_buy;   
         $transfer->ammount_sell = $amm_sell;
         $meta->pivot->money -= $amm_buy;           
         $meta->pivot->money += $amm_sell; 
+        $point_cost = $meta->pivot->points - $request->points;
         $meta->pivot->points = $request->points;
 
         $i=0;
@@ -441,6 +470,16 @@ class SquadController extends Controller
                 $response = "Player does not exist";
                 return $this->json($response,404);
             }
+            if($deleted_players !== null){
+                if(in_array($s,$deleted_players)){
+                    $key = array_search($s,$deleted_players);  
+                    // return $deleted_players;
+                    array_splice($deleted_players, $key, 1);
+                    if(empty($deleted_players)){
+                        $deleted_players = null;
+                    }
+                }
+            }
             if(in_array($s,$selected_team)){
                 // array_push($selac,$s);
                 $key = array_search($s,$selected_team);                
@@ -449,7 +488,7 @@ class SquadController extends Controller
                 // array_push($selected_team,$buy[$i]);
                 $selected_team[$key] = $buy[$i];                
                 $i++;   
-            }else{
+            }elseif(in_array($s,$substitutions)){
                 // array_push($selac,$s);
                 // $substitutions = array_diff($substitutions, $selac);
                 // $substitutions = array_values(json_decode(json_encode($substitutions), true));   
@@ -457,24 +496,39 @@ class SquadController extends Controller
                 $key = array_search($s,$substitutions);                    
                 $substitutions[$key] = $buy[$i];                
                 $i++;
+            }else{
+                $response = "Missing player in your team!";
+                return $this->json($response,404);
             }
         }
 
         if($transfers_left != -1){
             if(count($buy) <= $transfers_left){
                 $meta->pivot->transfers = $transfers_left - count($buy);
-                $meta->pivot->save();
+                // $meta->pivot->save();
             }else{
                 $meta->pivot->transfers = 0;
-                $meta->pivot->save();     
+                // $last_transfer = null;
+                // if($squad->transfers()->where('league_id',$league->id)->where('round_no',$league->current_round)->latest()->first() !== null)
+                //     $last_transfer = $squad->transfers()->where('league_id',$league->id)->where('round_no',$league->current_round)->latest()->first()->points;
+                // else
+                //     $last_transfer = 0;
+                $transfer->points = $point_cost;
+                // $meta->pivot->save();     
             }
         }
+        $meta->pivot->save();     
+
         // $meta->pivot->save();     
         $transfer->save();
         // $meta->pivot->money = $request->money;
         // $meta->pivot->save();  
         $team->selected_team = json_encode($selected_team);
         $team->substitutions = json_encode($substitutions);
+        if($deleted_players !== null)
+            $team->deleted_players = json_encode($deleted_players);
+        else
+            $team->deleted_players = null;
         $team->save();
 
         // $transfer = Transfer::where('user_id',$user->id)->where('squad_id',$team->id)->where('league_id',$request->l_id)->get();
@@ -509,20 +563,34 @@ class SquadController extends Controller
     {
         $league = League::where('id',$request->l_id)->first();
         $user = JWTAuth::authenticate();
+        $squad = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
 
-        // $user = User::where('id',1)->first();
         $meta = $user->oneLeague($request->l_id)->first();
         
-        if($league->current_round == 1 ){
-            $meta->pivot->transfers = 2;
-            $meta->pivot->save();
-        } 
+        // if($league->current_round == 1 ){
+        //     $meta->pivot->transfers = 2;
+        //     $meta->pivot->save();
+        // } 
         
         $transfer = $meta->pivot->transfers;
+        // $no_of_transfers = 0;
+        // if($transfer == 0){
+        //     $transfers = $squad->transfers()->where('league_id',$league->id)->where('round_no',$league->current_round)->get();
+        //     foreach($transfers as $t){
+        //         $no_of_transfers += count(json_decode($t->buy));
+        //     }
+        //     return $no_of_transfers;
+        // }
+        $last_transfer = null;
+        if($squad->transfers()->where('league_id',$league->id)->where('round_no',$league->current_round)->latest()->first() !== null)
+            $last_transfer = $squad->transfers()->where('league_id',$league->id)->where('round_no',$league->current_round)->latest()->first()->points;
+        else
+            $last_transfer = 0;
         
         $results = [
             "transfers" => $transfer,
-            "current_round" => $league->current_round
+            "current_round" => $league->current_round,
+            "points" => $last_transfer
         ];
 
         if ($results === null) {

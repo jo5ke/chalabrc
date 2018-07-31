@@ -2015,6 +2015,7 @@ class AdminController extends Controller
         $team->substitutions = NULL;
         $team->captain_id = NULL;
         $team->has_squad = 0;
+        $team->deleted_players = NULL;
         $team->save();
         $results = [
             "meta" => $meta,
