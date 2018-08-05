@@ -37,6 +37,7 @@ Route::put('changePassword', 'UserController@changePassword')->middleware('jwt.a
 Route::post('sendResetPassword', 'UserController@sendResetPassword');
 Route::post('confirmPassword', 'UserController@confirmPassword');
 Route::get('getNewPassword/{token}', 'UserController@getNewPassword');
+Route::post('unlockFreeLeague', 'UserController@unlockFreeLeague')->middleware('jwt.auth');
 
 Route::post('payment', 'PaymentController@payment');
 Route::post('additionalPayment', 'PaymentController@additionalPayment')->middleware('jwt.auth');

@@ -158,10 +158,10 @@ class HomeController extends Controller
     {
         // $file = Storage::disk('public')->get($request->name);
         // return new Response($file, 200);
-        if(Storage::disk('public')->exists($request->name)){
-            $response = Response::make(Storage::disk('public')->get($request->name));
+        if(Storage::disk('clubs')->exists($request->name)){
+            $response = Response::make(Storage::disk('clubs')->get($request->name));
         }else{
-            $response = Response::make(Storage::disk('public')->get('dzoniDefault.png'));
+            $response = Response::make(Storage::disk('clubs')->get('dzoniDefault.png'));
         }
         $response->header('Content-Type', 'image/png');
         return $response;
@@ -1510,6 +1510,7 @@ class HomeController extends Controller
         }
         return $this->json($results);
     }
+
 
     
     

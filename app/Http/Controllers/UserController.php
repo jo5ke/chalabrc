@@ -12,6 +12,7 @@ use App\Mail\RegistrationMail;
 use App\Mail\SendTip;
 use Carbon\Carbon;
 use App\User as User;
+use App\Squad as Squad;
 
 class UserController extends Controller
 {
@@ -139,5 +140,31 @@ class UserController extends Controller
                 return $this->json($response, 404);
             }
         return $this->json($user);
+    }
+
+    public function unlockFreeLeague(Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        if(!$user->leagues()->where('league_id',$request->l_id)->exists()){
+            $squad = new Squad;
+            $squad->user_id = $user->id;
+            $squad->league_id = $request->l_id;
+            $squad->save();
+            $user->leagues()->attach($user,['money' => 100000 ,'points' => 0,'league_id'=>$request->l_id ,'squad_id'=> $squad->id]);
+
+            $leagues = DB::table('users')
+            ->join('user_league','users.id','=','user_league.user_id')
+            ->select('user_league.league_id')
+            ->where('user_league.user_id',$user->id)
+            ->get();
+
+            $i=0;
+            foreach($leagues as $league){
+                $league_ids[$i] = intval($league->league_id);
+                $i++;
+            }
+
+            return $this->json($league_ids);
+        }
     }
 }
