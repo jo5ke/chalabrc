@@ -13,7 +13,11 @@ use App\Round as Round;
 use JWTAuth;
 use Illuminate\Support\Facades\DB;
 
-
+/**
+ * @resource Squad
+ *
+ * User squads routes, My Team page controller
+ */
 class SquadController extends Controller
 {
 

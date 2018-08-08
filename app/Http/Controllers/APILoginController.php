@@ -14,7 +14,11 @@ use Illuminate\Support\Facades\Hash;
 use Mail as Mail;
 use App\Mail\RegistrationMail;
 
-
+/**
+ * @resource Login
+ *
+ * User login route
+ */
 class APILoginController extends Controller
 {
     public function login(Request $request)

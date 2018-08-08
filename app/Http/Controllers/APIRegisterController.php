@@ -13,6 +13,11 @@ use Faker\Factory;
 use Mail as Mail;
 use App\Mail\RegistrationMail;
 
+/**
+ * @resource Registration
+ *
+ * User registration routes
+ */
 class APIRegisterController extends Controller
 {
     public function register(Request $request)

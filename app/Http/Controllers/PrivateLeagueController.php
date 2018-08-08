@@ -16,6 +16,11 @@ use JWTAuth;
 use Mail as Mail;
 use App\Mail\LeagueMail as LeagueMail;
 
+/**
+ * @resource PrivateLeague
+ *
+ * Private league functions
+ */
 class PrivateLeagueController extends Controller
 {
     public $l_id;

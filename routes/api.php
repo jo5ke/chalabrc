@@ -138,7 +138,7 @@ Route::post('admin/updateMatch', 'AdminController@updateMatch');
 Route::post('admin/getRounds', 'AdminController@getRounds');
 Route::post('admin/getRound', 'AdminController@getRound');
 Route::post('admin/postRound', 'AdminController@postRound');
-Route::post('admin/removeRound', 'AdminController@removeRound');
+// Route::post('admin/removeRound', 'AdminController@removeRound');
 Route::put('admin/updateRound', 'AdminController@updateRound');
 Route::put('admin/setDeadline', 'AdminController@setDeadline');
 //season

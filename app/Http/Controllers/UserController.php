@@ -14,6 +14,11 @@ use Carbon\Carbon;
 use App\User as User;
 use App\Squad as Squad;
 
+/**
+ * @resource User
+ *
+ * User account routes
+ */
 class UserController extends Controller
 {
     //
@@ -106,6 +111,11 @@ class UserController extends Controller
         return $this->json($user);
     }
 
+    /**
+     * Function for sending password on email.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function getNewPassword($token)
     {
         $email = DB::table('users')

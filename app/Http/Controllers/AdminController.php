@@ -24,9 +24,10 @@ use Mail as Mail;
 use App\Mail\RegistrationMail;
 use App\Mail\NewsletterMail;
 // use Image;
-use Intervention\Image\Facades\Image;
 use Carbon\Carbon;
+use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\URL;
+
 
 
 class AdminController extends Controller
@@ -99,6 +100,16 @@ class AdminController extends Controller
         $club->name = $request->name;
         $club->league_id = $request->l_id;
         $club->save();
+
+        $png_url = $club->name . ".png";
+        // $path = public_path() . "/images/clubs/" . $png_url;
+        // $img = Image::make(file_get_contents($request->image))->save($path);
+
+        //get the base-64 from data
+        $base64_str = substr($request->image, strpos($request->image, ",")+1);
+        //decode base64 string
+        $image = base64_decode($base64_str);
+        Storage::disk('clubs')->put($png_url,$image);
 
         if ($club === null) {
             $response = 'There was a problem fetching your data.';
@@ -202,10 +213,16 @@ class AdminController extends Controller
         // ->select('users.*')
         // ->where('user_league.league_id','=',$player->league_id)
         // ->get();
+        $league = $player->league()->first();
 
-        $users = User::all();
+
+        // $users = User::all();
+        $users = $league->usersPerLeague($league->id);
+        // $users = $users->oneLeague($league->id);
         foreach($users as $user){
-            $squad = $user->squads()->where('league_id',$player->league_id)->first();           
+            $squad = $user->squads()->where('league_id',$player->league_id)->first();
+            // return $user->squads()->where('league_id',$player->league_id)->where('id',495)->first();
+            
             if($squad==null || $squad->selected_team==null || $squad->substitutions==null){
                 continue;
             }
@@ -214,22 +231,37 @@ class AdminController extends Controller
                 $deleted_players = array();
             }         
             $selected_team = json_decode($squad->selected_team);
-            $substitutions = json_decode($squad->substitutions);      
-            if(array_search($request->id,$selected_team)!=null){
+            $substitutions = json_decode($squad->substitutions);   
+            if(false !== array_search($request->id,$selected_team)){
                 $key = array_search($request->id,$selected_team);
                 // $selected_team[$key] = ("0" . $request->id);
-                $selected_team[$key] = "*";
-                array_push($deleted_players,$request->id);
-                $squad->deleted_players = json_encode($deleted_players);                
+                // $selected_team[$key] = 000;
+                array_push($deleted_players,$request->id);          
+                $squad->deleted_players = json_encode($deleted_players);  
+                // $squad->selected_team = json_encode($selected_team);
                 $squad->save();
-            }elseif(array_search($request->id,$substitutions)!=null){
+
+                //adding money and transfer           
+                // $meta = $user->oneLeague($player->league_id)->first();
+                $user->pivot->money += $player->price;
+                $user->pivot->transfers++;
+                $user->pivot->save();
+            }elseif(false !== array_search($request->id,$substitutions)){
                 $key = array_search($request->id,$substitutions);   
                 // $substitutions[$key] = ("0" . $request->id);
-                $substitutions[$key] = "*";
-                array_push($deleted_players,$request->id);
+                // $substitutions[$key] = 000;
+                array_push($deleted_players,$request->id);           
                 $squad->deleted_players = json_encode($deleted_players);
-                $squad->save();             
+                // $squad->substitutions = json_encode($substitutions);
+                $squad->save();     
+                
+                //adding money and transfer           
+                // $meta = $user->oneLeague($player->league_id)->first();
+                $user->pivot->money += $player->price;
+                $user->pivot->transfers++;
+                $user->pivot->save();        
             }
+
         }
 
 
@@ -975,7 +1007,7 @@ class AdminController extends Controller
         // $results = User::all();
         $results = DB::table('users')
                     ->join('user_league','users.id','=','user_league.user_id')
-                    ->select('users.*')
+                    ->select('users.*','user_league.points','user_league.transfers')
                     ->where('user_league.league_id','=',$request->l_id)
                     ->get();
             
@@ -1040,9 +1072,13 @@ class AdminController extends Controller
     public function updateUser(Request $request)
     {
         $user = User::where('uuid',$request->id)->first();
-        $user->name = $request->name;
+        $user->username = $request->name;
         $user->email = $request->email;
 
+        $meta = $user->oneLeague($request->l_id)->first()->pivot;
+        $meta->transfers = $request->transfers;
+        $meta->points = $request->points;
+        $meta->save();
     	$user->save();
 
         $user = User::where('id', $user->id)->get();
@@ -1163,7 +1199,7 @@ class AdminController extends Controller
         }
         
         if ($results === null) {
-            $response = 'There was a problem fetching your data.';
+            $response = 'There was a problem fetchingg your data.';
             return $this->json($response, 404);
         }
         return $this->json($results);
@@ -1439,7 +1475,6 @@ class AdminController extends Controller
             "captain"   =>  $player->captain = $request->input('data.captain'),
             "position"  =>  $position
         ];
-
         // $player->save();
         $total = $this->playerTotalPoints($stats);        
         $match_id = $request->input('data.m_id');
@@ -1572,7 +1607,7 @@ class AdminController extends Controller
  
         $total = 0;
         
-        // they wanted k_save for all positions 15.05.2018
+        // they wanted k_save for all positions 15.05.2018        
         switch($stats["position"]):
             case 'ATK':
                 $total += $stats["start"]*2;
@@ -1651,213 +1686,226 @@ class AdminController extends Controller
 
     public function evaluateUserPoints(Request $request)
     {
-
-
-            $users = User::all();
-            $prev = League::where('id',$request->l_id)->first()->current_round;
-            $round = Round::where('round_no',$prev)->where('league_id',$request->l_id)->first();
-            // if($prev >1){
-            //     $prev = $prev-1;
+        $users = User::all();
+        $prev = League::where('id',$request->l_id)->first()->current_round;
+        $round = Round::where('round_no',$prev)->where('league_id',$request->l_id)->first();
+        // if($prev >1){
+        //     $prev = $prev-1;
+        // }
+        foreach($users as $user){
+            if(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()!==null){
+                $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
+            }else{
+                continue;
+            }
+            // if($user->id == 78){
+            //     continue;
             // }
-            foreach($users as $user){
-                if(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()!==null){
-                    $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
-                }else{
-                    continue;
-                }
-                // if($team->created_at!==null){
-                //     if($team->created_at > $round->deadline){
-                //         continue;
-                //     }
-                // }
-                // return $team->with('rounds')->where()->get();
-                $cpt = null;
-                if($team->selected_team === NULL || $team->substitutions === NULL){
-                    continue;
-                }else{
-                    $cpt = $team->captain_id;
-                    $starting = json_decode($team->selected_team);
-                    $subs = json_decode($team->substitutions);
-                    $starting_arr = array_values(json_decode(json_encode($starting), true));
-                    $subs_arr = array_values(json_decode(json_encode($subs), true));
+            // if($user->id==403 || $user->id==237 ||
+            // $user->id==346 || $user->id==399 || $user->id==71){
+            //   continue;
+            //  }
+            //  if($user->id==238){
+            //     continue;
+            // }
+            // if($user->id==237 || $user->id===356 
+            // || $user->id===39){
+            // continue;
+            //  }
 
-                    $start_ = implode(',', $starting_arr);
-                    // $st = DB::table('players')
-                    //         ->join('round_player','players.id','=','round_player.player_id')
-                    //         ->join('clubs','players.club_id','=','clubs.id')
-                    //         ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-                    //                 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                    //                 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total','round_player.match_id')
-                    //         ->where('round_player.round_id','=',$round->id)
-                    //         ->whereIn('players.id',$starting_arr)
-                    //         ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
-                    //         ->get();
+            // if($team->created_at!==null){
+            //     if($team->created_at > $round->deadline){
+            //         continue;
+            //     }
+            // }
+            // return $team->with('rounds')->where()->get();
+            $cpt = null;
+            if($team->selected_team === NULL || $team->substitutions === NULL){
+                continue;
+            }else{
+                $cpt = $team->captain_id;
+                $starting = json_decode($team->selected_team);
+                $subs = json_decode($team->substitutions);
+                $starting_arr = array_values(json_decode(json_encode($starting), true));
+                $subs_arr = array_values(json_decode(json_encode($subs), true));
 
-                    $st = DB::table('players')
-                            ->join('round_player','players.id','=','round_player.player_id')
-                            ->select('players.id','players.position',
-                                    DB::raw('SUM(round_player.assist) as assist'),
-                                    DB::raw('SUM(round_player.captain) as captain'),
-                                    DB::raw('SUM(round_player.clean) as clean'),
-                                    DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
-                                    DB::raw('SUM(round_player.k_save) as k_save'),
-                                    DB::raw('SUM(round_player.miss) as miss'),
-                                    DB::raw('SUM(round_player.own_goal) as own_goal'),
-                                    DB::raw('SUM(round_player.red) as red'),            
-                                    DB::raw('SUM(round_player.yellow) as yellow'),            
-                                    DB::raw('SUM(round_player.score) as score'),            
-                                    DB::raw('SUM(round_player.start) as start'),            
-                                    DB::raw('SUM(round_player.sub) as sub'),          
-                                    DB::raw('SUM(round_player.total) as total')
-                                    )
-                            ->where('round_player.round_id','=',$round->id)
-                            ->whereIn('players.id',$starting_arr)
-                            ->groupBy('players.id','players.position')
-                            ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
-                            ->get();
+                $start_ = implode(',', $starting_arr);
+                // $st = DB::table('players')
+                //         ->join('round_player','players.id','=','round_player.player_id')
+                //         ->join('clubs','players.club_id','=','clubs.id')
+                //         ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                //                 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                //                 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total','round_player.match_id')
+                //         ->where('round_player.round_id','=',$round->id)
+                //         ->whereIn('players.id',$starting_arr)
+                //         ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
+                //         ->get();
 
-                    $subs_ = implode(',', $subs_arr);
-                    // $su = DB::table('players')
-                    //         ->join('round_player','players.id','=','round_player.player_id')
-                    //         ->join('clubs','players.club_id','=','clubs.id')
-                    //         ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-                    //             'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                    //             'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total','round_player.match_id')
-                    //         ->where('round_player.round_id','=',$round->id)
-                    //         // ->groupBy('round_player.match_id',
-                    //         // 'club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
-                    //         // 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
-                    //         // 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
-                    //         ->whereIn('players.id',$subs_arr)
-                    //         ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
-                    //         ->get();
+                $st = DB::table('players')
+                        ->join('round_player','players.id','=','round_player.player_id')
+                        ->select('players.id','players.position',
+                                DB::raw('SUM(round_player.assist) as assist'),
+                                DB::raw('SUM(round_player.captain) as captain'),
+                                DB::raw('SUM(round_player.clean) as clean'),
+                                DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
+                                DB::raw('SUM(round_player.k_save) as k_save'),
+                                DB::raw('SUM(round_player.miss) as miss'),
+                                DB::raw('SUM(round_player.own_goal) as own_goal'),
+                                DB::raw('SUM(round_player.red) as red'),            
+                                DB::raw('SUM(round_player.yellow) as yellow'),            
+                                DB::raw('SUM(round_player.score) as score'),            
+                                DB::raw('SUM(round_player.start) as start'),            
+                                DB::raw('SUM(round_player.sub) as sub'),          
+                                DB::raw('SUM(round_player.total) as total')
+                                )
+                        ->where('round_player.round_id','=',$round->id)
+                        ->whereIn('players.id',$starting_arr)
+                        ->groupBy('players.id','players.position')
+                        ->orderByRaw(DB::raw("FIELD(players.id,$start_)"))
+                        ->get();
 
-                    $su = DB::table('players')
-                            ->join('round_player','players.id','=','round_player.player_id')
-                            ->select('players.id','players.position',
-                                    DB::raw('SUM(round_player.assist) as assist'),
-                                    DB::raw('SUM(round_player.captain) as captain'),
-                                    DB::raw('SUM(round_player.clean) as clean'),
-                                    DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
-                                    DB::raw('SUM(round_player.k_save) as k_save'),
-                                    DB::raw('SUM(round_player.miss) as miss'),
-                                    DB::raw('SUM(round_player.own_goal) as own_goal'),
-                                    DB::raw('SUM(round_player.red) as red'),            
-                                    DB::raw('SUM(round_player.yellow) as yellow'),            
-                                    DB::raw('SUM(round_player.score) as score'),            
-                                    DB::raw('SUM(round_player.start) as start'),            
-                                    DB::raw('SUM(round_player.sub) as sub'),          
-                                    DB::raw('SUM(round_player.total) as total')                                        
-                                    )
-                            ->where('round_player.round_id','=',$round->id)
-                            ->whereIn('players.id',$subs_arr)
-                            ->groupBy('players.id','players.position')                            
-                            ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
-                            ->get();
-            
-                    // $meta = $user->oneLeague($l_id)->first();
-                    $meta = $user->oneLeague($request->l_id)->first();
-                    if($meta==null){
-                        continue;
-                    }else{
-                        $meta = $meta->pivot;
-                        $prev_total = $meta->points;
-                        $total = 0;
-                        $started = 0;
-                        $gk = 0; 
-                        foreach($st as $s){
-                            if(($s->start>=1 || $s->sub>=1) && $s->position!="GK"){
-                                if($s->id===$cpt){
-                                    $total += ($s->total)*2;
-                                }else{
-                                    $total += $s->total;
-                                }
-                                $started++;
-                            }elseif(($s->start>=1 || $s->sub>=1) && $s->position==="GK"){
-                                if($s->id===$cpt){
-                                    $total += ($s->total)*2;
-                                }else{
-                                    $total += $s->total;
-                                }
-                                $gk = 1;
-                            }
-                            
-                        }
-                        
-                        $left = 10-$started;
-                        if($left>3){
-                            $left=3;
-                        }
+                $subs_ = implode(',', $subs_arr);
+                // $su = DB::table('players')
+                //         ->join('round_player','players.id','=','round_player.player_id')
+                //         ->join('clubs','players.club_id','=','clubs.id')
+                //         ->select('clubs.name as club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                //             'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                //             'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total','round_player.match_id')
+                //         ->where('round_player.round_id','=',$round->id)
+                //         // ->groupBy('round_player.match_id',
+                //         // 'club_name','players.first_name','players.last_name','players.id','players.number','players.position','players.price','players.club_id',
+                //         // 'round_player.assist','round_player.captain','round_player.clean','round_player.kd_3strike','k_save','round_player.miss',
+                //         // 'round_player.own_goal','round_player.player_id','round_player.red','round_player.yellow','round_player.round_id','round_player.score','round_player.start','round_player.sub','round_player.total')
+                //         ->whereIn('players.id',$subs_arr)
+                //         ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
+                //         ->get();
 
-                        // $count_su = count($su);
-                        $c_players = 0;
-                        foreach($su as $s){
-                            if($s->position!=="GK"){
-                                $c_players++;
-                            }
-                        }
-
-                        if($c_players < $left){
-                            $left = $c_players;
-                        }
-
-                        if($gk==0){
-                            if($su[0]->id===$cpt && $su[0]->position==="GK"){
-                                $total += ($su[0]->total)*2;
-                            }elseif($su[0]->position==="GK"){
-                                $total += $su[0]->total;
-                            }
-                        }
-
-                        if($su[0]->position==="GK"){
-                            $g = 1;
-                        }else{
-                            $g = 0;
-                        }
-                        
-                        if($left>0 && $g===1){
-                            for($i=1;$i<=$left;$i++){
-                                if($su[$i]->id===$cpt){
-                                    $total += ($su[$i]->total)*2;
-                                }else{
-                                    $total += $su[$i]->total;
-                                }
-                            }
-                        }elseif($g===0){
-                            for($i=0;$i<$left;$i++){
-                                if($su[$i]->id===$cpt){
-                                    $total += ($su[$i]->total)*2;
-                                }else{
-                                    $total += $su[$i]->total;
-                                }
-                            } 
-                        }
+                $su = DB::table('players')
+                        ->join('round_player','players.id','=','round_player.player_id')
+                        ->select('players.id','players.position',
+                                DB::raw('SUM(round_player.assist) as assist'),
+                                DB::raw('SUM(round_player.captain) as captain'),
+                                DB::raw('SUM(round_player.clean) as clean'),
+                                DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
+                                DB::raw('SUM(round_player.k_save) as k_save'),
+                                DB::raw('SUM(round_player.miss) as miss'),
+                                DB::raw('SUM(round_player.own_goal) as own_goal'),
+                                DB::raw('SUM(round_player.red) as red'),            
+                                DB::raw('SUM(round_player.yellow) as yellow'),            
+                                DB::raw('SUM(round_player.score) as score'),            
+                                DB::raw('SUM(round_player.start) as start'),            
+                                DB::raw('SUM(round_player.sub) as sub'),          
+                                DB::raw('SUM(round_player.total) as total')                                        
+                                )
+                        ->where('round_player.round_id','=',$round->id)
+                        ->whereIn('players.id',$subs_arr)
+                        ->groupBy('players.id','players.position')                            
+                        ->orderByRaw(DB::raw("FIELD(players.id,$subs_)"))
+                        ->get();
         
-
-                        // foreach($su as $s){
-                        //     $total += $s->total;
-                        // }
-                        $round = Round::where('round_no',$prev)->where('league_id',$request->l_id)->first();
-
-                        $q = $team->rounds()->where('round_id',$round->id)->first();     
-                        if(empty($q)){
-                            $team->rounds()->attach($team,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id , "selected_team" => $team->selected_team, "substitutions" => $team->substitutions, "captain_id" => $team->captain_id]);
-                            // return "prazno";
-                        }else{
-                            $prev_total -= $q->pivot->points;
-                            $team->rounds()->updateExistingPivot($round->id,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id, "selected_team" => $team->selected_team, "substitutions" => $team->substitutions, "captain_id" => $team->captain_id]);
-                            // return "neprazno";
+                // $meta = $user->oneLeague($l_id)->first();
+                $meta = $user->oneLeague($request->l_id)->first();
+                if($meta==null){
+                    continue;
+                }else{
+                    $meta = $meta->pivot;
+                    $prev_total = $meta->points;
+                    $total = 0;
+                    $started = 0;
+                    $gk = 0; 
+                    foreach($st as $s){
+                        if(($s->start>=1 || $s->sub>=1) && $s->position!="GK"){
+                            if($s->id===$cpt){
+                                $total += ($s->total)*2;
+                            }else{
+                                $total += $s->total;
+                            }
+                            $started++;
+                        }elseif(($s->start>=1 || $s->sub>=1) && $s->position==="GK"){
+                            if($s->id===$cpt){
+                                $total += ($s->total)*2;
+                            }else{
+                                $total += $s->total;
+                            }
+                            $gk = 1;
                         }
-
-                        $total += $prev_total;
-
-                        $meta->points = $total;
-                        $meta->save();
+                        
                     }
+                    
+                    $left = 10-$started;
+                    if($left>3){
+                        $left=3;
+                    }
+
+                    // $count_su = count($su);
+                    $c_players = 0;
+                    foreach($su as $s){
+                        if($s->position!=="GK"){
+                            $c_players++;
+                        }
+                    }
+
+                    if($c_players < $left){
+                        $left = $c_players;
+                    }
+
+                    if($gk==0){
+                        if($su[0]->id===$cpt && $su[0]->position==="GK"){
+                            $total += ($su[0]->total)*2;
+                        }elseif($su[0]->position==="GK"){
+                            $total += $su[0]->total;
+                        }
+                    }
+
+                    if($su[0]->position==="GK"){
+                        $g = 1;
+                    }else{
+                        $g = 0;
+                    }
+                    
+                    if($left>0 && $g===1){
+                        for($i=1;$i<=$left;$i++){
+                            if($su[$i]->id===$cpt){
+                                $total += ($su[$i]->total)*2;
+                            }else{
+                                $total += $su[$i]->total;
+                            }
+                        }
+                    }elseif($g===0){
+                        for($i=0;$i<$left;$i++){
+                            if($su[$i]->id===$cpt){
+                                $total += ($su[$i]->total)*2;
+                            }else{
+                                $total += $su[$i]->total;
+                            }
+                        } 
+                    }
+    
+
+                    // foreach($su as $s){
+                    //     $total += $s->total;
+                    // }
+                    $round = Round::where('round_no',$prev)->where('league_id',$request->l_id)->first();
+
+                    $q = $team->rounds()->where('round_id',$round->id)->first();     
+                    if(empty($q)){
+                        $team->rounds()->attach($team,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id , "selected_team" => $team->selected_team, "substitutions" => $team->substitutions, "captain_id" => $team->captain_id]);
+                        // return "prazno";
+                    }else{
+                        $prev_total -= $q->pivot->points;
+                        $team->rounds()->updateExistingPivot($round->id,['round_id' => $round->id, 'points' => $total,'league_id' => $request->l_id,'round_no' => $prev , "squad_id" => $team->id, "selected_team" => $team->selected_team, "substitutions" => $team->substitutions, "captain_id" => $team->captain_id]);
+                        // return "neprazno";
+                    }
+
+                    $total += $prev_total;
+
+                    $meta->points = $total;
+                    $meta->save();
                 }
-                }
-                    $response = "success";
-                    return $this->json($response);
+            }
+            }
+                $response = "success";
+                return $this->json($response);
     }
 
     public function prevRound(Request $request)
@@ -1886,13 +1934,21 @@ class AdminController extends Controller
        
         $league = League::where('id',$request->l_id)->first();
         if($league->current_round < $league->number_of_rounds){
+            if($request->next_transfers=="other"){
+                $transfers = $request->no_of_transfers;
+            }elseif($request->next_transfers=="unlimited"){
+                $transfers = -1;
+            }else{
+                $transfers = 2;
+            }
+
             $league->current_round++;
             $league->save();
             $users = User::all();
             foreach($users as $user){
                 if($user->oneLeague($request->l_id)->first()!==null){
                     $meta = $user->oneLeague($request->l_id)->first()->pivot;
-                    $meta->transfers = 2;
+                    $meta->transfers = $transfers;
                     $meta->save();
                 }
             }
@@ -1928,26 +1984,40 @@ class AdminController extends Controller
     {
         $results = DB::table('users')
         ->join('user_league','users.id','=','user_league.user_id')
-        ->select('users.*','user_league.transfers','user_league.money')
+        ->select('users.*')
         ->where('user_league.league_id','=',$request->l_id)
         ->get();
 
-        // $users = User::all();
-        foreach($results as $user){
+        $users = User::all();
+        foreach($users as $user){
+            // $user = User::where('id',$u->id)->first();
             //temporary solution
-            if($user->id==403 || $user->id==237 || $user->id==67 ||
-               $user->id==346 || $user->id==399 || $user->id==71 || $user->id==120){
-                continue;
-            }
 
-
-            //  $meta = $user->oneLeague($request->l_id)->first();
-            //  if($user->oneLeague($request->l_id)->first()===null){
-            //      continue;
+            // if($user->id == 78 || $user->id==80  || $user->id==169){
+            //     continue;
+            // }
+            // if($user->id==403 || $user->id==237 || $user->id==67 || 
+            // $user->id==346 || $user->id==399 || $user->id==71 || $user->id==120
+            // || $user->id==213){
+            //   continue;
             //  }
-            //  $meta = $meta->pivot;
-            //  $user->transfers = $meta->transfers;
-            //  $user->money = $meta->money;
+            //  if($user->id==222 || $user->id==238){
+            //     continue;
+            // }
+            // if($user->id==237 || $user->id===356 
+            //     || $user->id===39){
+            //     continue;
+            // }
+
+
+             $meta = $user->oneLeague($request->l_id)->first();
+             
+             if($user->oneLeague($request->l_id)->first()===null){
+                 continue;
+             }
+             $meta = $meta->pivot;
+             $user->transfers = $meta->transfers;
+             $user->money = $meta->money;
              if(Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()===null
                  || Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()->selected_team ===null
                  || Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first()->substitutions ===null){
@@ -1963,21 +2033,19 @@ class AdminController extends Controller
              $team_val = 0;
              for($i=0;$i<count($starting);$i++){
                  // added for checking nulls 
-                if(Player::where('id',$starting[$i])->with('club')->first() === null){
+                 if(Player::where('id',$starting[$i])->with('club')->first() === null){
+                    //  return $user->squads()->get();
                     continue;
-                    // return $i;
-                    // return json_encode($user);
-                }
+                 }
                  $starting[$i]=Player::where('id',$starting[$i])->with('club')->first();
                  $team_val += $starting[$i]->price;
              }
      
              for($i=0;$i<count($subs);$i++){
                 // added for checking nulls 
-                if(Player::where('id',$subs[$i])->with('club')->first() === null){
+                if(Player::where('id',$subs[$i])->with('club')->first() === null){                 
+                    // return $user->squads()->get();
                     continue;
-                    // return $i;
-                    // return json_encode($user);
                 }
                  $subs[$i]=Player::where('id',$subs[$i])->with('club')->first();
                  $team_val += $subs[$i]->price;
@@ -1985,7 +2053,7 @@ class AdminController extends Controller
              $user->team_val = $team_val;  
         }
         
-        // $results = $users;
+        $results = $users;
         if ($results === null) {
              $response = 'There was a problem fetching your data.';
             return $this->json($response, 404);
@@ -2036,14 +2104,15 @@ class AdminController extends Controller
     //     //     "subject" => $request->subject,
     //     //     "view" => $request->view,
     //     // ];
-    //     foreach($users as $user){
-    //         if($user->email=="joskekostic@gmail.com"){
-    //         Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter ","newsletters.newsletter1"));        
-    //         // Mail::to($user->email)->send(new RegistrationMail($user,$request->subject,"newsletters.newsletter1"));                    
-    //         }
-    //     }
 
-    //     return "You have successfully sent newsletter to breddefantasy.com users!";        
+    //     // foreach($users as $user){
+    //     //     // if($user->email=="joskekostic@gmail.com" || $user->email=="christoffern1@hotmail.com"){
+    //     //     Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter ","newsletters.newsletter1"));        
+    //     //     // Mail::to($user->email)->send(new RegistrationMail($user,$request->subject,"newsletters.newsletter1"));                    
+    //     //     // }
+    //     // }
+
+    //     return "You have successfully sent newsletter to breddefantasy.com users!";
     // }
 
     public function sendNewsletter(Request $request)
@@ -2102,18 +2171,31 @@ class AdminController extends Controller
 
         $subject = $request->subject;
 
-        foreach($users as $u){
-            $user = User::where('id',$u->id)->first();
-            // if($user->email==="joskekostic@gmail.com"){
-            Mail::to($user->email)->send(new NewsletterMail($user,$request->subject,"newsletters.newsletter",$newsletter));        
-            // Mail::to($user->email)->send(new RegistrationMail($user,$request->subject,"newsletters.newsletter1"));                    
-            // }
-        }
+        if($request->test==="yes"){
+            $users = DB::table('users')->whereIn('email',["christoffern1@hotmail.com","kim.skaug.kristiansen@gmail.com","joskekostic@gmail.com"])->get();
+            foreach($users as $u){
+                $user = User::where('id',$u->id)->first();
+                Mail::to($user->email)->send(new NewsletterMail($user,$request->subject,"newsletters.newsletter",$newsletter));        
+            }
+            $response = "You have successfully sent test newsletter email!";  
+        }else{
+            if($request->everyone){
+                $users = User::all();
+                foreach($users as $user){
+                    Mail::to($user->email)->send(new NewsletterMail($user,$request->subject,"newsletters.newsletter",$newsletter));        
+                }
+            }else{
+                foreach($users as $u){
+                    $user = User::where('id',$u->id)->first();
+                    Mail::to($user->email)->send(new NewsletterMail($user,$request->subject,"newsletters.newsletter",$newsletter));        
+                    // Mail::to($user->email)->send(new RegistrationMail($user,$request->subject,"newsletters.newsletter1"));                    
+                }
+            }
 
-        $response = "You have successfully sent newsletter to breddefantasy.com users!";  
+            $response = "You have successfully sent newsletter to breddefantasy.com users!";  
+        }
         return $this->json($response, 404);      
     }
-
 
 
 

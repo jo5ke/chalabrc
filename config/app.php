@@ -146,9 +146,9 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-      //  Thujohn\Twitter\TwitterServiceProvider::class,
         'Tymon\JWTAuth\Providers\JWTAuthServiceProvider',
         Intervention\Image\ImageServiceProvider::class,
+        Mpociot\ApiDoc\ApiDocGeneratorServiceProvider::class,
 
 
         /*
