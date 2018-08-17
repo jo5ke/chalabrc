@@ -16,24 +16,19 @@ use Illuminate\Support\Facades\DB;
 /**
  * @resource Squad
  *
- * User squads routes, My Team page controller
+ * User squads routes, My Team & Transfer page controller
  */
 class SquadController extends Controller
 {
 
-    // "l_id" = id lige, 
-    public function getSquad()
-    {
-        $user = auth()->user();
-        $results = Squad::where('league_id', $request->l_id)->where('user_id',$user->id);
-        if ($results === null) {
-            $response = 'There was a problem fetching players.';
-            return $this->json($response, 404);
-        }
-        return $this->json($results);
-    }
-
-    // big function for sending all the data about current player's team
+    // big function for sending all the data about logged in player's team
+   
+    /**
+     * Get my team 
+     *
+     * Getter for all info(user,ranking,squad with players,current round deadline,squad value) on My team page for authorized user (jwt auth token required) // params: l_id (league id)
+     * 
+     */ 
     public function getMyTeamPage(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -128,31 +123,14 @@ class SquadController extends Controller
         return $this->json($results);
     }
 
-    // getting all the info about the player(for lists and popups)
-    // "p_id" get route for getting the player info;
-    public function getPlayer(Request $request)
-    {
-        $user = auth()->user()->first();
-        $players = Player::all();
-        $player = $players->where('user_id',$user->id)->where('player_id', $p_id)->first();
-        if ($results === null) {
-            $response = 'There was a problem fetching players.';
-            return $this->json($response, 404);
-        }
-        return $this->json($player);
-    }
-
-    public function getAllPlayers()
-    {
-        $results = Player::with('club')->get();
-        if ($results->isEmpty()) {
-            $response = 'There was a problem fetching your data.';
-            return $this->json($response, 404);
-        }
-        return $this->json($results);
-    }
-
     //getting All Players from all Clubs
+    
+    /**
+     * Get all players with stats
+     *
+     * Getter for all footballers with stats on Transfer and Statistics pages // params: l_id (league id)
+     * 
+     */ 
     public function getPlayers(Request $request)
     {
         $pstats = DB::table('players')
@@ -214,8 +192,12 @@ class SquadController extends Controller
         return $this->json($pstats);
     }
 
-    //  get the info and its players
-    // "l_id" - league id
+    /**
+     * Get all clubs
+     *
+     * Getter for all clubs // params: l_id (league id)
+     * 
+     */ 
     public function getClubs(Request $request)
     {
         $clubs = Club::where('league_id',$request->l_id)->get();
@@ -226,16 +208,12 @@ class SquadController extends Controller
         return $this->json($clubs);
     }
 
-    public function getClub(Request $request)
-    {
-        $club = Club::where('league_id',$request->l_id)->get();
-        if ($results === null) {
-            $response = 'There was a problem fetching players.';
-            return $this->json($response, 404);       
-        }
-        return $this->json($club);
-    }
-
+    /**
+     * Post user squad
+     *
+     * Create user's squad after registration (jwt auth token required) // params: l_id (league id), selected_team(array[11] of ids of starting 11), substitutions(array[4] of ids of 4 subs), name (optional, squad name)
+     * 
+     */ 
     public function postSquad(Request $request)
     {
 
@@ -261,15 +239,6 @@ class SquadController extends Controller
         // $user->leagues()->updateExistingPivot($user->id,['money' => $money]);
         $user->leagues()->updateExistingPivot($request->l_id,['money' =>  $request->money]);
         
-        // $meta = $user->leagues->where('id',$request->l_id)->first();
-        // $meta = $meta->pivot;
-        // $squad = $user->squads->first();
-        // $players = $squad->players;
-        // for($i=0;$i<count($full_squad);$i++){
-        //     $player = Player::where('id',$full_squad[$i])->first();
-        //     $squad->updatePlayers($user->id)->attach($player,['user_id' => $user->id]);    
-        // }
-        // $players = $squad->players;
 
         if ($squad === null) {
             $response = 'There was a problem fetching players.';
@@ -280,6 +249,13 @@ class SquadController extends Controller
 
 
     // dodati array igraca na terenu i array zamena
+
+    /**
+     * Update user squad
+     *
+     * Update user's squad on My team page or after resetting team (jwt auth token required) // params: l_id (league id), selected_team(array[11] of ids of starting 11), substitutions(array[4] of ids of 4 subs), name (optional, squad name), captain (optional, id of captain)
+     * 
+     */ 
     public function updateSquad(Request $request)
     {
         $starting_ids = json_encode($request->selected_team);
@@ -309,116 +285,12 @@ class SquadController extends Controller
         return $this->json($squad);
     }
 
-    // public function makeTransfer(Request $request)
-    // {
-    //     // $buy = json_encode($request->buy);
-    //     // $sell = json_encode($request->sell);
-    //     $buy = $request->buy;
-    //     $sell = $request->sell;
-
-    //     $user = JWTAuth::authenticate();
-    //     // $user = User::where('id',1)->first();
-    //     $meta = $user->oneLeague($request->l_id)->first();
-        
-
-    //     $team = Squad::where('user_id',$user->id)->where('league_id',$request->l_id)->first();
-    //     $selected_team = json_decode($team->selected_team);
-    //     $substitutions = json_decode($team->substitutions);
-  
-
-
-    //     $transfer = new Transfer;
-    //     $transfer->user_id = $user->id;
-    //     $transfer->squad_id = $team->id;
-    //     $transfer->league_id = $request->l_id;
-    //     $transfer->buy = json_encode($request->buy);
-    //     $transfer->sell = json_encode($request->sell);
-
-    //     if(count($buy) >= 2){
-    //         $b1 = Player::where('id',$buy[0])->first();
-    //         $b2 = Player::where('id',$buy[1])->first();  
-    //         $s1 = Player::where('id',$sell[0])->first();
-    //         $s2 = Player::where('id',$sell[1])->first();   
-    //         $meta->pivot->transfers = 0;
-    //         $meta->pivot->money -= $b1->price;         
-    //         $meta->pivot->money -= $b2->price;  
-    //         $transfer->ammount_buy = $b1->price + $b2->price;   
-    //         $meta->pivot->money += $s1->price;         
-    //         $meta->pivot->money += $s2->price; 
-    //         $transfer->ammount_sell = $s1->price + $s2->price;    
-    //         $meta->pivot->save();
-    //         // if(count($selected_team)==11){     
-    //         //     array_push($selected_team, $buy[0], $buy[1]); 
-    //         // }elseif(count($selected_team)==12){
-    //         //     array_push($selected_team, $buy[0]);   
-    //         //     array_push($substitutions, $buy[0]);   
-    //         // }else{
-    //         //     array_push($substitutions, $buy[0], $buy[1]); 
-    //         // }  
-    //         if(in_array($sell[0],$selected_team)){
-    //             $selac = [$sell[0]];
-    //             $selected_team = array_diff($selected_team, $selac);
-    //             $selected_team = array_values(json_decode(json_encode($selected_team), true));
-    //             array_push($selected_team,$buy[0]);
-    //         }else{
-    //             $selac = [$sell[0]];
-    //             $substitutions = array_diff($substitutions, $selac);
-    //             $substitutions = array_values(json_decode(json_encode($substitutions), true));
-    //             array_push($substitutions,$buy[0]);                
-    //         }
-    //         if(in_array($sell[1],$selected_team)){
-    //             $selac = [$sell[1]];
-    //             $selected_team = array_diff($selected_team, $selac);
-    //             $selected_team = array_values(json_decode(json_encode($selected_team), true));  
-    //             array_push($selected_team,$buy[1]);                              
-    //         }else{
-    //             $selac = [$sell[1]];
-    //             $substitutions = array_diff($substitutions, $selac);
-    //             $substitutions = array_values(json_decode(json_encode($substitutions), true));    
-    //             array_push($substitutions,$buy[1]);                                           
-    //         }
-    //     }elseif(count($buy)==1){
-    //         $b1 = Player::where('id',$buy[0])->first();
-    //         $s1 = Player::where('id',$sell[0])->first();
-    //         $meta->pivot->transfers--;
-    //         $meta->pivot->money -= $b1->price;    
-    //         $transfer->ammount_buy = $b1->price;       
-    //         $meta->pivot->money += $s1->price;   
-    //         $transfer->ammount_sell = $s1->price;      
-    //         $meta->pivot->save();     
-    //         // if(count($selected_team)==12){     
-    //         //     array_push($selected_team, $buy[0]); 
-    //         // }else{ 
-    //         //     array_push($substitutions, $buy[0]);   
-    //         // }
-    //         $selac = [$sell[0]];
-    //         if(in_array($sell[0],$selected_team)){
-    //             $selected_team = array_diff($selected_team, $selac);
-    //             $selected_team = array_values(json_decode(json_encode($selected_team), true));    
-    //             array_push($selected_team,$buy[0]);                            
-    //         }else{
-    //             $substitutions = array_diff($substitutions, $selac);
-    //             $substitutions = array_values(json_decode(json_encode($substitutions), true));  
-    //             array_push($substitutions,$buy[0]);                                                              
-    //         }
-    //     }
-    //     $transfer->save();
-    //     // $meta->pivot->money = $request->money;
-    //     // $meta->pivot->save();  
-    //     $team->selected_team = json_encode($selected_team);
-    //     $team->substitutions = json_encode($substitutions);
-    //     $team->save();
-
-    //     // $transfer = Transfer::where('user_id',$user->id)->where('squad_id',$team->id)->where('league_id',$request->l_id)->get();
-    //     // $no_of_transfers = $transfer->count();
-
-    //     if ($team === null) {
-    //         $response = 'There was a problem fetching players.';
-    //         return $this->json($response, 404);
-    //     }
-    //     return $this->json($team);
-    // }
-
+    /**
+     * Make transfer
+     *
+     * Sell and buy player(s) on Transfer page (jwt auth token required) // params: l_id (league id), buy(array of ids of bought players),sell(array of ids of selled players)
+     * 
+     */ 
     public function makeTransfer(Request $request)
     {
         // $buy = json_decode(json_encode($request->buy));
@@ -544,7 +416,7 @@ class SquadController extends Controller
         return $this->json($team);
     }
 
-    //old not-used function
+    //deprecated function
     public function sellPlayer(Request $request)
     {
         $user = User::where('id',1)->first();
@@ -563,6 +435,12 @@ class SquadController extends Controller
         return $user->with('squads.players')->get();
     }
 
+    /**
+     * Check transfers
+     *
+     * Check number of free transfers left, get how many points was cost of last transfers (jwt auth token required) // params: l_id (league id)
+     * 
+     */ 
     public function checkTransfer(Request $request)
     {
         $league = League::where('id',$request->l_id)->first();
@@ -604,6 +482,12 @@ class SquadController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get next round
+     *
+     * Get next round with matches // params: l_id (league id)
+     * 
+     */ 
     public function getNextRound(Request $request)
     {
         $league = League::where('id', $request->l_id)->first();
@@ -617,6 +501,12 @@ class SquadController extends Controller
         return $this->json($round);
     }
 
+    /**
+     * Check squad
+     *
+     * Check if user's squad has bought 15 players (jwt auth token required) // params: l_id (league id)
+     * 
+     */ 
     public function hasSquad(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -630,6 +520,8 @@ class SquadController extends Controller
         return $this->json($flag);
     }
 
+    // database fix function
+    
     public function transferRevert(Request $request)
     {
         return "no access";

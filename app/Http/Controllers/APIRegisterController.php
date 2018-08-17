@@ -20,6 +20,12 @@ use App\Mail\RegistrationMail;
  */
 class APIRegisterController extends Controller
 {
+    /**
+     * Registration route
+     *
+     * User login function, returning token,user's info,role,leagues  // params: first_name, last_name, username, country, email. city, address, zip, phone, password
+     * 
+     */ 
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -29,7 +35,6 @@ class APIRegisterController extends Controller
         ]);
         if ($validator->fails()) {
             return $this->json($validator->errors(),404);
-            // return response()->json($validator->errors());
         }
         User::create([
             'first_name' => $request->get('first_name'),
@@ -43,7 +48,6 @@ class APIRegisterController extends Controller
             'phone' => $request->get('phone'),
             'password' => bcrypt($request->get('password')),
         ]);
-     //   $user = User::first();
         $user = User::where('email', $request->email)->first();
         $user->uuid = Factory::create()->uuid;
         $user->roles()->attach($user,['role_id'=>1]);
@@ -57,11 +61,6 @@ class APIRegisterController extends Controller
 
         Mail::to($user->email)->send(new RegistrationMail($user,"Welcome to breddefantasy.com,  $user->first_name $user->last_name. Please verify your account!","emails.registration"));
         
-        
-     //  return Response::json(compact('token'));
-     //   return response()->json($user);
          return $this->json($user);
     }
 }
-
-// jZLNLcdbCe?)z>5DJ,4ZGt9tbR5P:x

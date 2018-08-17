@@ -22,13 +22,14 @@ use Mail as Mail;
 use App\Mail\RegistrationMail;
 use App\Mail\SendTip;
 
+
+/**
+ * @resource Home
+ *
+ * Home,Points,Ranking,Stats,News pages routes
+ */
 class HomeController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     // public function __construct()
     // {
     //     $this->middleware('auth');
@@ -41,6 +42,14 @@ class HomeController extends Controller
      */
     public $term = "";
 
+
+    /**
+     * Get all leagues
+     *
+     * Fetch all existing leagues
+     * 
+     * 
+     */
     public function getAllLeagues()
     {
         $results = League::all();
@@ -51,6 +60,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get user's leagues
+     *
+     * Fetch leagues logged in user is playing (jwt auth token required)
+     * 
+     */
     public function getMyLeagues()
     {
         $user = JWTAuth::authenticate();
@@ -68,6 +83,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get all news
+     *
+     * Fetch all public published news (public=1,published=1)
+     * 
+     */
     public function getAllNews()
     {
         $results = Article::where('public',1)->where('published',1)->get();
@@ -78,6 +99,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get news per league
+     *
+     * Fetch all public published news per league (public=1,published=1) // params: l_id (league id)
+     * 
+     */
     public function getNewsByLeague(Request $request)
     {
         $results = Article::where('league_id', $request->l_id)->orWhere('public',1)->where('published',1)->orderBy('created_at','desc')->paginate(3);
@@ -88,6 +115,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get latests news per league
+     *
+     * Fetch the last published article in certain league (published=1) // params: l_id (league id)
+     * 
+     */
     public function getLatestNewsByLeague(Request $request)
     {
         $results = Article::where('league_id',$request->l_id)->where('published',1)->orderBy('created_at', 'desc')->first();
@@ -99,6 +132,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get latests news
+     *
+     * Fetch the last published article for homepage (published=1,public=1)
+     * 
+     */
     public function getLatestNews(Request $request)
     {
         $results = Article::where('public',1)->where('published',1)->orderBy('created_at', 'desc')->first();
@@ -110,6 +149,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get top five users
+     *
+     * Fetch top 5 users by points for each league
+     * 
+     */
     public function getTopFivePlayers()
     {
         $leagues = League::all();
@@ -134,6 +179,13 @@ class HomeController extends Controller
     }
 
     // "id" = id lige (1 i 2)
+    
+    /**
+     * Get top five users per league
+     *
+     * Fetch top 5 users by points per league // params: l_id (league id)
+     * 
+     */
     public function topFivePlayersDivision(Request $request)
     {
         $leagues = League::all()->get();
@@ -154,6 +206,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get jersey image
+     *
+     * Fetch image for club's jersey from local storage(clubs) // params: name (club name)
+     * 
+     */
     public function getJersey(Request $request)
     {
         // $file = Storage::disk('public')->get($request->name);
@@ -168,6 +226,13 @@ class HomeController extends Controller
     }
 
     // with i argument???
+
+    /**
+     * Get users on Ranking page 
+     *
+     * Fetch all users in league, or search them by name  // params: l_id (league id) optional: per_page(users to be displayed per page), term (string to be searched by last or first name)
+     * 
+     */
     public function getUsers(Request $request)
     {
         $league = League::where('id',$request->l_id)->first();
@@ -254,7 +319,13 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
-    public function getUserPointsPerWeek(Request $request)
+    /**
+     * Get users points per round
+     *
+     * Getter for all users with their points per round // params: l_id (league id) optional: per_page(users to be displayed per page), term (string to be searched by last or first name)
+     * 
+     */
+    public function getUserPointsPerRound(Request $request)
     {
         $league = League::where('id',$request->l_id)->first();
         $this->term = $request->term ? $request->term : "";
@@ -333,6 +404,13 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+
+    /**
+     * Get current round
+     *
+     * Getter for number of the current round in league // params: l_id (league id) 
+     * 
+     */
     public function getCurrentRound(Request $request)
     {
         $league = League::where('id', $request->l_id)->first();
@@ -344,6 +422,8 @@ class HomeController extends Controller
         }
         return $this->json($results);
     }
+
+    // helper function,unused
 
     public function saveImage(Request $request)
     { 
@@ -366,8 +446,9 @@ class HomeController extends Controller
         Image::make(file_get_contents($request->image))->save($path);     
 
         return $this->json($response);
-        
     }
+
+    // helper function,unused
 
     public function viewFile($name)
     {
@@ -378,6 +459,13 @@ class HomeController extends Controller
     }
     
     //l_id,uuid
+
+    /**
+     * Get user squad 
+     *
+     * Getter for certain user squad with players, points, ranking stats // params: l_id (league id) , uuid (user's uuid)
+     * 
+     */
     public function getUserSquad(Request $request)
     {
         $user = User::where('uuid',$request->uuid)->first();
@@ -464,6 +552,13 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    
+    /**
+     * Get news image
+     *
+     * Getter for image from storage(news) // params: name
+     * 
+     */
     public function getImage($name)
     {
         $results = Response::make(Storage::disk('news')->get($name));
@@ -477,7 +572,12 @@ class HomeController extends Controller
         // return $this->json($results);
     }
 
-    // invalid function
+    /**
+     * Get jersey image by id
+     *
+     * Getter for image by club's id // params: id (club's id)
+     * 
+     */    
     public function getJerseyId($id)
     {
         $club = Club::where('id',$id)->first();
@@ -493,6 +593,12 @@ class HomeController extends Controller
         // return $this->json($results);
     }
 
+    /**
+     * Get dream team on homepage
+     *
+     * Getter for top 11 players in total and from last round (1 gk, 4 defs, 4 mid, 2 atk) // params: l_id (league id)
+     * 
+     */ 
     public function getDreamTeam(Request $request)
     {
         $current_round = $league = League::where('id',$request->l_id)->first()->current_round;
@@ -640,7 +746,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
-
+    /**
+     * Get single article
+     *
+     * Getter for an article // params: slug (slug of the article in database)
+     * 
+     */ 
     public function getArticle($slug)
     {
         $article = Article::where('slug',$slug)->first();
@@ -651,43 +762,12 @@ class HomeController extends Controller
         return $this->json($article);
     }
 
-    // public function getUserSettings()
-    // {
-    //     $user = JWTAuth::authenticate();
-    //     $results = [
-    //         "first_name" => $user->first_name,
-    //         "last_name"  => $user->last_name,
-    //         "city"       => $user->city,
-    //         "country"    => $user->country,
-    //         "birthdate"  => $user->birthdate   
-    //     ];
-
-    //     if ($results === null) {
-    //         $response = 'There was a problem updating your data.';
-    //         return $this->json($response, 404);
-    //     }
-    //     return $this->json($results);
-    // }
-
-    // public function updateUserSettings(Request $request)
-    // {
-    //     $user = JWTAuth::authenticate();
-    //     $user->birthdate = $request->birthdate;
-    //     $user->country = $request->country;
-    //     $user->city = $request->city;
-    //     $user->first_name = ucwords($request->first_name);
-    //     $user->last_name = ucwords($request->last_name);
-    //     // $full_name = $request->full_name;
-    //     // $full_name = explode(" ",$full_name);
-    //     $user->save();
-
-    //     if ($user === null) {
-    //         $response = 'There was a problem updating your data.';
-    //         return $this->json($response, 404);
-    //     }
-    //     return $this->json($user);
-    // }
-
+    /**
+     * Get authorized user's squad points
+     *
+     * Getter for user's squad points by rounds (jwt auth token required) // params: l_id (league id)
+     * 
+     */ 
     public function getAllPoints(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -705,30 +785,6 @@ class HomeController extends Controller
         $round = Round::where('league_id',$request->l_id)->where('round_no',$round_no)->first();        
 
         if($current_round == $round_no){
-        //     $st = DB::table('players')
-        //     ->join('round_player','players.id','=','round_player.player_id')
-        //     ->join('clubs','players.club_id','=','clubs.id')
-        //     ->select('clubs.name as club_name','players.first_name','players.last_name','players.id as id','players.number','players.position','players.price','players.club_id',
-        //     DB::raw('SUM(round_player.assist) as assist'),
-        //     DB::raw('SUM(round_player.captain) as captain'),
-        //     DB::raw('SUM(round_player.clean) as clean'),
-        //     DB::raw('SUM(round_player.kd_3strike) as kd_3strike'),
-        //     DB::raw('SUM(round_player.k_save) as k_save'),
-        //     DB::raw('SUM(round_player.miss) as miss'),
-        //     DB::raw('SUM(round_player.own_goal) as own_goal'),
-        //     DB::raw('SUM(round_player.red) as red'),            
-        //     DB::raw('SUM(round_player.yellow) as yellow'),            
-        //     DB::raw('SUM(round_player.score) as score'),            
-        //     DB::raw('SUM(round_player.start) as start'),            
-        //     DB::raw('SUM(round_player.sub) as sub'),          
-        //     DB::raw('SUM(round_player.total) as total'),                        
-        //              'round_player.player_id','round_player.round_id')
-        //     ->whereIn('players.id',$starting)
-        //    ->where('round_player.round_id','=',$round->id)
-        //    ->groupBy('id','round_player.player_id','round_player.round_id','round_player.match_id',
-        //    'players.first_name','players.last_name','players.number','players.position','players.price','players.club_id','club_name')
-        //    ->orderBy('players.position','desc')
-        //    ->get();
 
         $st = DB::table('players')
             ->join('round_player','players.id','=','round_player.player_id')
@@ -934,6 +990,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get authorized user's ranking
+     *
+     * Getter for user's ranking points in current and last round (jwt auth token required) // params: l_id (league id)
+     * 
+     */ 
     public function getUserRank(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -992,12 +1054,11 @@ class HomeController extends Controller
             "current"       => $current
         ];
 
-        //this gets back exact position in table
+        //this returns exact position in table
         // $i=0;
         // while(($results[$i]->uuid != $user->uuid))
         // {
         //     $i++;
-        //     $kralj = "ostaje kralj";
         // }
     
         // return $i;
@@ -1009,6 +1070,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get authorized user's ranking
+     *
+     * Getter for user's ranking points in current and last round (jwt auth token required) // params: l_id (league id)
+     * 
+     */ 
     public function getRankingTable($l_id)
     {
         $results = DB::table('users')
@@ -1026,6 +1093,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Send tip 
+     *
+     * Send tips(tickets) to admins in that league (jwt auth token required) // params: l_id (league id)
+     * 
+     */ 
     public function sendTip(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -1056,6 +1129,12 @@ class HomeController extends Controller
         return $this->json($tip);
     }
 
+    /**
+     * Check if username or email exists
+     *
+     * Used on registration, checking if user with username or email already exists  // params: username, email 
+     * 
+     */ 
     public function checkUser(Request $request)
     {
         $response_email = null;
@@ -1080,6 +1159,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get single user's ranking
+     *
+     * Getter for single user's ranking points in current,last round and avg on Ranking page // params: l_id (league id), uuid
+     * 
+     */ 
     public function getUserStats(Request $request)
     {
         $user = User::where('uuid',$request->uuid)->first();
@@ -1121,6 +1206,12 @@ class HomeController extends Controller
 
     }
 
+    /**
+     * Get all user's ranking
+     *
+     * Getter for all users` ranking points in current,last round and avg on Ranking page // params: l_id (league id)
+     * 
+     */ 
     public function getUsersStats(Request $request)
     {
         $prev_round = League::where('id',$request->l_id)->first()->current_round;
@@ -1161,6 +1252,12 @@ class HomeController extends Controller
 
     }
 
+    /**
+     * Get all user's ranking
+     *
+     * Getter for all users` ranking points in current,last round and avg on Ranking page // params: l_id (league id)
+     * 
+     */ 
     public function getPlayerInfo(Request $request)
     {
         $player = Player::where('id',$request->id)->withTrashed()->first();
@@ -1252,6 +1349,12 @@ class HomeController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Get single match statistics
+     *
+     * Getter for single match stats(score, assists, yellow and red cards) // params: l_id (league id), m_id (match id)
+     * 
+     */ 
     public function getMatchInfo(Request $request)
     {
         $match = Match::where('id', $request->m_id)->first();

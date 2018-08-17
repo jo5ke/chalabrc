@@ -21,6 +21,12 @@ use App\Mail\RegistrationMail;
  */
 class APILoginController extends Controller
 {
+    /**
+     * Login route
+     *
+     * User login function, returning token,user's info,role,leagues  // params: email, password
+     * 
+     */ 
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -29,7 +35,6 @@ class APILoginController extends Controller
         ]);
         if ($validator->fails()) {
             return $this->json($validator->errors());            
-            // return response()->json($validator->errors());
         }
         $token=null;
         $credentials = $request->only('email', 'password');
@@ -40,16 +45,13 @@ class APILoginController extends Controller
         try {
             if (! $token ) {
                 return $this->json(['error' => 'invalid_credentials'], 401);
-           //     return response()->json(['error' => 'invalid_credentials'], 401);
             }
         } catch (JWTException $e) {
             return $this->json(['error' => 'could_not_create_token'], 500);
-            // return response()->json(['error' => 'could_not_create_token'], 500);
         }
         
         $role_id = $user->roles()->first();
         $role = Role::where('id',$role_id->pivot->role_id)->first();
-       //  $user = $user->with('leagues')->where('email',$user->email)->get();
         
          $leagues = DB::table('users')
                         ->join('user_league','users.id','=','user_league.user_id')
@@ -85,9 +87,7 @@ class APILoginController extends Controller
                 'admin' =>  $a_league
                 ];
         }
-        // Mail::to($user->email)->send(new RegistrationMail($user,"Welcome to breddefantasy.com,  $user->first_name $user->last_name. Please verify your account!","emails.registration"));
         
       return $this->json($response);
-     //   return response()->json($response);
     }
 }

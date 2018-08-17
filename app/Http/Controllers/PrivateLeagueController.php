@@ -25,6 +25,12 @@ class PrivateLeagueController extends Controller
 {
     public $l_id;
 
+    /**
+     * Create private league
+     *
+     * Create private league on League page (jwt auth token required) // params: l_id (league id), name (private league name) 
+     * 
+     */ 
     public function createLeague(Request $request)
     {
         $league = League::where('id',$request->l_id)->first();
@@ -54,7 +60,12 @@ class PrivateLeagueController extends Controller
         return $this->json($pl);
     }
 
-    
+    /**
+     * Get private leagues for authenticated user
+     *
+     * Getter for all joined and created private leagues on League page (jwt auth token required) // params: l_id (league id)
+     * 
+     */ 
     public function getPrivateLeagues(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -87,6 +98,12 @@ class PrivateLeagueController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Leave a league
+     *
+     * Leave joined private league (jwt auth token required) // params: id (id of private league)
+     * 
+     */ 
     public function leaveLeague(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -148,7 +165,12 @@ class PrivateLeagueController extends Controller
         
     }
 
-    //add condition to check if all users are kicked first, check if emails null
+    /**
+     * Delete a league
+     *
+     * Delete a created private league. All users must be kicked first (jwt auth token required) // params: id (id of private league)
+     * 
+     */ 
     public function deleteLeague(Request $request)
     {
       //  $user = JWTAuth::authenticate();
@@ -167,6 +189,12 @@ class PrivateLeagueController extends Controller
         return $this->json($pl);    
     }
 
+    /**
+     * Join a league
+     *
+     * Join a  private league on League page, must be invited first (jwt auth token required) // params: code (code of private league)
+     * 
+     */ 
     public function joinLeague(Request $request)
     {
         $user = JWTAuth::authenticate();        
@@ -248,6 +276,12 @@ class PrivateLeagueController extends Controller
         return $this->json($pl); 
     }
 
+    /**
+     * Join a league from email
+     *
+     * Join a private league from email invite, must be invited first // params: code (code of private league), email (invited user's email)
+     * 
+     */ 
     public function joinLeagueLink(Request $request)
     {
         // $user = JWTAuth::authenticate();        
@@ -326,6 +360,12 @@ class PrivateLeagueController extends Controller
 
     }
 
+    /**
+     * Send an invite
+     *
+     * Invite users to join your private leagues // params: code (code of private league), email (invited user's email)
+     * 
+     */ 
     public function sendInvite(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -370,6 +410,12 @@ class PrivateLeagueController extends Controller
         
     }
 
+    /**
+     * Get the score table for private league
+     *
+     * Invite users to join your private leagues // params: id (id of private league)
+     * 
+     */ 
     public function getTable(Request $request)
     {
         $pl = PrivateLeague::where('id',$request->id)->first();
@@ -396,6 +442,12 @@ class PrivateLeagueController extends Controller
         return $this->json($score);      
     }
 
+    /**
+     * Ban user from league
+     *
+     * Ban user from your private league (jwt auth token required) // params: id (id of private league), email (user's email)
+     * 
+     */ 
     public function banUser(Request $request)
     {
         // $user = JWTAuth::authenticate();
@@ -434,6 +486,12 @@ class PrivateLeagueController extends Controller
         return $this->json($pl);
     }
 
+    /**
+     * Show private league table
+     *
+     * Show private league table with total points and points for specific round // params: name (name of private league), gw (number of wanted round)
+     * 
+     */ 
     public function showTable(Request $request)
     {
         $pl = PrivateLeague::where('name',$request->name)->first();
@@ -493,22 +551,6 @@ class PrivateLeagueController extends Controller
         }
         return $this->json($res);
     }
-
-    public function sendNewsletter(Request $request)
-    {
-        $users = User::all();
-        return $obj = [
-            "subject" => $request->subject,
-            "view" => $request->view,
-        ];
-        foreach($users as $user){
-            if($user->email=="joskekostic@gmail.com"){
-            Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter, ","emails.newsletters.newsletter1"));        
-            // Mail::to($user->email)->send(new RegistrationMail($user,"breddefantasy.com newsletter, ","emails.newsletters.newsletter1"));                    
-            }
-        }
-    }
-
 
 
 }

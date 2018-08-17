@@ -21,12 +21,13 @@ use App\Squad as Squad;
  */
 class UserController extends Controller
 {
-    //
-    public function getHome()
-    {
-        return view('home');
-    }
 
+    /**
+     * Get authorized user's info 
+     *
+     * Getter for logged in user's information under settings component (jwt auth token required)
+     * 
+     */ 
     public function getUserSettings()
     {
         $user = JWTAuth::authenticate();
@@ -47,6 +48,12 @@ class UserController extends Controller
         return $this->json($results);
     }
 
+    /**
+     * Update authorized user's info 
+     *
+     * Update logged in user's information under settings component (jwt auth token required) // params(optional): birthdate,country,phone,address,city,zip,first_name,last_name
+     * 
+     */ 
     public function updateUserSettings(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -69,6 +76,12 @@ class UserController extends Controller
         return $this->json($user);
     }
 
+    /**
+     * Update authorized user's password
+     *
+     * Update logged in user's password under settings component (jwt auth token required) // params: old_password, new_password, new_password_confirm
+     * 
+     */ 
     public function changePassword(Request $request)
     {
         $user = JWTAuth::authenticate();
@@ -89,6 +102,12 @@ class UserController extends Controller
         return $this->json($user);  
     }
 
+    /**
+     * Send reset password link
+     *
+     * Send reset password link to user // params: email
+     * 
+     */ 
     public function sendResetPassword(Request $request)
     {
         $user = User::where('email',$request->email)->first();
@@ -112,10 +131,11 @@ class UserController extends Controller
     }
 
     /**
-     * Function for sending password on email.
+     * Check if reset link is still in use
      *
-     * @return \Illuminate\Http\Response
-     */
+     * Check if user is able to change password // params: token
+     * 
+     */ 
     public function getNewPassword($token)
     {
         $email = DB::table('users')
@@ -132,6 +152,12 @@ class UserController extends Controller
         return $this->json($user);
     }
 
+    /**
+     * Confirm new password 
+     *
+     * Confirm new password after clicking on link from email // params: email,new_password,new_password_confirm
+     * 
+     */ 
     public function confirmPassword(Request $request)
     {
         $user = User::where('email',$request->email)->first();
@@ -152,29 +178,4 @@ class UserController extends Controller
         return $this->json($user);
     }
 
-    public function unlockFreeLeague(Request $request)
-    {
-        $user = JWTAuth::authenticate();
-        if(!$user->leagues()->where('league_id',$request->l_id)->exists()){
-            $squad = new Squad;
-            $squad->user_id = $user->id;
-            $squad->league_id = $request->l_id;
-            $squad->save();
-            $user->leagues()->attach($user,['money' => 100000 ,'points' => 0,'league_id'=>$request->l_id ,'squad_id'=> $squad->id]);
-
-            $leagues = DB::table('users')
-            ->join('user_league','users.id','=','user_league.user_id')
-            ->select('user_league.league_id')
-            ->where('user_league.user_id',$user->id)
-            ->get();
-
-            $i=0;
-            foreach($leagues as $league){
-                $league_ids[$i] = intval($league->league_id);
-                $i++;
-            }
-
-            return $this->json($league_ids);
-        }
-    }
 }
