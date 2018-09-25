@@ -12,6 +12,7 @@ use App\Transfer as Transfer;
 use App\Round as Round;
 use JWTAuth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 
 class SquadController extends Controller
@@ -431,6 +432,7 @@ class SquadController extends Controller
         $deleted_players = null;
         if($team->deleted_players !== null)
             $deleted_players = json_decode($team->deleted_players);
+
   
         $transfer = new Transfer;
         $transfer->user_id = $user->id;
@@ -440,6 +442,17 @@ class SquadController extends Controller
         $transfer->sell = json_encode($request->sell);
         $transfer->round_no = League::where('id',$request->l_id)->first()->current_round;
         $transfers_left = $meta->pivot->transfers;
+
+        //added deadline check
+
+        $deadline = Round::where('league_id',$request->l_id)->where('round_no',$transfer->round_no)->first()->deadline;
+
+        if($deadline < Carbon::now('Europe/Oslo')) {
+            $response = 'Deadline has passed.';
+            return $this->json($response, 404);
+        }
+            
+
 
         $buyed = array();
         $selled = array();
